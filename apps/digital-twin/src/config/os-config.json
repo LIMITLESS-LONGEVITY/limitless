@@ -1,0 +1,8 @@
+{
+  "userMenu": [
+    { "label": "Profile", "href": "/learn/account/profile", "icon": "user", "roles": [] },
+    { "label": "My Courses", "href": "/learn/account/courses", "icon": "book-open", "roles": [] },
+    { "label": "Health Data", "href": "/health", "icon": "heart-pulse", "roles": [] },
+    { "label": "Clinician Portal", "href": "/book/clinician", "icon": "stethoscope", "roles": ["admin", "contributor"] }
+  ]
+}
