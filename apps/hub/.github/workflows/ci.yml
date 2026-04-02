@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: npx prisma generate
+      - run: pnpm build
+        env:
+          JWT_SECRET: ci-test-secret-minimum-32-characters
+          NEXT_PUBLIC_HUB_URL: http://localhost:3000
+          NEXT_PUBLIC_PATHS_URL: http://localhost:3001
+
+  staging-migration:
+    name: Test Migrations (Staging DB)
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+
+      - name: Test staging DB connection
+        run: |
+          npx tsx -e "
+            import pg from 'pg';
+            const url = new URL(process.env.DATABASE_URL!);
+            const isExternal = url.hostname.includes('-postgres.render.com');
+            console.log('External hostname:', isExternal ? 'yes' : 'NO');
+            console.log('Has credentials:', url.username ? 'yes' : 'no');
+            const c = new pg.Client({
+              connectionString: process.env.DATABASE_URL,
+              ssl: { rejectUnauthorized: false }
+            });
+            (async () => {
+              try {
+                await c.connect();
+                const r = await c.query('SELECT version()');
+                console.log('Connection OK');
+                console.log(r.rows[0].version);
+                await c.end();
+              } catch (e: any) {
+                console.error('Connection failed:', e.message);
+                process.exit(1);
+              }
+            })();
+          "
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+      - name: Run migrations against staging DB
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}

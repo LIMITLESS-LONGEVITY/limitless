@@ -1,0 +1,32 @@
+name: Post-Deploy Notification
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Render deploy
+        run: sleep 180
+
+      - name: Health check
+        id: health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://limitless-hub.onrender.com/book/api/health)
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+      - name: Notify via Telegram
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "${{ steps.health.outputs.status }}" = "200" ]; then
+            MSG="✅ HUB deployed. Health: 200. ${{ github.event.head_commit.message }}"
+          else
+            MSG="🔴 HUB deploy may have failed. Health: ${{ steps.health.outputs.status }}"
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
+            -d text="${MSG}" \
+            -d parse_mode="Markdown" || true
