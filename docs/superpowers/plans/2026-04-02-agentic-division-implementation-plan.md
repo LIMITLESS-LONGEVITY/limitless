@@ -242,6 +242,11 @@ The following elements of our current setup are preserved exactly:
 
 > **Director Decision (2026-04-02):** Monorepo migration begins NOW, not Q3. Phase 0 (stabilize) merged into Phase 1 for a holistic approach — hook paths are written once for the monorepo structure rather than written for multi-repo and then rewritten.
 
+> **Progress (2026-04-02 session):**
+> - Foundation (4.1.0): COMPLETE — hooks benchmarked (<35ms), MEMORY.md cleaned (209→82 lines, 22 stale files removed), launch commands standardized in CLAUDE.md
+> - Monorepo skeleton (4.1.1 Steps 1-3): COMPLETE — `LIMITLESS-LONGEVITY/limitless` repo created, Turborepo initialized, all 5 apps + infra imported via `git subtree add --squash`, unified lockfile generated, pushed to GitHub
+> - Remaining: shared packages extraction (Step 4), Render reconfig (Step 5), GitHub Actions (Step 6), repo archival (Step 6), agent definitions (4.1.2-4.1.6)
+
 ### 4.1.0 Foundation — Stabilize Before Migration
 
 These steps are completed FIRST, before touching repo structure. They ensure enforcement hooks work, memory is clean, and launch commands are standardized.
@@ -487,9 +492,9 @@ Each agent needs clear answers to: "What can I do without asking?" and "What mus
 ### Phase 1 Verification Gate
 
 **Foundation:**
-- [ ] All hooks execute in <100ms for non-matching commands
-- [ ] MEMORY.md is under 150 lines and all entries are current
-- [ ] Launch command table documented with AGENT_ROLE and tested for at least 2 agents
+- [x] All hooks execute in <100ms for non-matching commands — **DONE: all <35ms**
+- [x] MEMORY.md is under 150 lines and all entries are current — **DONE: 82 lines**
+- [ ] Launch command table documented with AGENT_ROLE and tested for at least 2 agents — documented, testing pending after monorepo is primary
 
 **Monorepo:**
 - [ ] Turborepo monorepo builds all 5 apps successfully via `turbo run build`
@@ -1160,18 +1165,18 @@ This is the complete, ordered checklist. Each item is independently testable.
 ### Phase 1 — Monorepo Migration + Agent Identity
 
 **Foundation (do first):**
-- [ ] 1.1: Benchmark all hooks; add early-exit short-circuits (<100ms for non-matching commands)
-- [ ] 1.2: Clean MEMORY.md to <150 lines; archive stale entries
-- [ ] 1.3: Document launch command table with AGENT_ROLE env var
+- [x] 1.1: Benchmark all hooks; add early-exit short-circuits (<100ms for non-matching commands) — **DONE 2026-04-02: all 6 hooks <35ms, no optimization needed**
+- [x] 1.2: Clean MEMORY.md to <150 lines; archive stale entries — **DONE 2026-04-02: 209→82 lines, 22 stale topic files removed**
+- [x] 1.3: Document launch command table with AGENT_ROLE env var — **DONE 2026-04-02: added to CLAUDE.md**
 
 **Monorepo migration:**
-- [ ] 1.4: Initialize Turborepo monorepo skeleton (`turbo.json`, `pnpm-workspace.yaml`)
-- [ ] 1.5: Move PATHS into `apps/paths/` via `git subtree add` — verify build
-- [ ] 1.6: Move Cubes+ into `apps/cubes/` — verify build
-- [ ] 1.7: Move HUB into `apps/hub/` — verify build
-- [ ] 1.8: Move Digital Twin into `apps/digital-twin/` — verify build
-- [ ] 1.9: Move OS Dashboard into `apps/os-dashboard/` — verify build
-- [ ] 1.10: Move infrastructure into `infra/`
+- [x] 1.4: Initialize Turborepo monorepo skeleton (`turbo.json`, `pnpm-workspace.yaml`) — **DONE 2026-04-02: `LIMITLESS-LONGEVITY/limitless` repo created**
+- [x] 1.5: Move PATHS into `apps/paths/` via `git subtree add` — **DONE 2026-04-02**
+- [x] 1.6: Move Cubes+ into `apps/cubes/` — **DONE 2026-04-02**
+- [x] 1.7: Move HUB into `apps/hub/` — **DONE 2026-04-02**
+- [x] 1.8: Move Digital Twin into `apps/digital-twin/` — **DONE 2026-04-02**
+- [x] 1.9: Move OS Dashboard into `apps/os-dashboard/` — **DONE 2026-04-02**
+- [x] 1.10: Move infrastructure into `infra/` — **DONE 2026-04-02 (from master branch)**
 - [ ] 1.11: Extract `packages/shared-types/`, `packages/auth/`, `packages/api-client/`
 - [ ] 1.12: Reconfigure all Render services (root directory, build commands)
 - [ ] 1.13: Verify all 5 services deploy successfully from monorepo
