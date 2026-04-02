@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --color-brand-dark: #0A0E1A;
+  --color-brand-dark-alt: #0F1424;
+  --color-brand-gold: #C9A84C;
+  --color-brand-gold-dim: rgba(201, 168, 76, 0.15);
+  --color-brand-teal: #00B4D8;
+  --color-brand-teal-dim: rgba(0, 180, 216, 0.12);
+  --color-brand-silver: #B0B8C1;
+  --color-brand-light: #FAFAFA;
+  --color-brand-glass-bg: rgba(255, 255, 255, 0.04);
+  --color-brand-glass-bg-hover: rgba(255, 255, 255, 0.08);
+  --color-brand-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+:root {
+  --limitless-dark: #0A0E1A;
+  --limitless-dark-alt: #0F1424;
+  --limitless-gold: #C9A84C;
+  --limitless-gold-dim: rgba(201, 168, 76, 0.15);
+  --limitless-teal: #00B4D8;
+  --limitless-teal-dim: rgba(0, 180, 216, 0.12);
+  --limitless-silver: #B0B8C1;
+  --limitless-light: #FAFAFA;
+  --limitless-glass-bg: rgba(255, 255, 255, 0.04);
+  --limitless-glass-bg-hover: rgba(255, 255, 255, 0.08);
+  --limitless-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  background-color: var(--limitless-dark);
+  color: var(--limitless-light);
+}
+
+@theme {
+  --animate-slideUp: slideUp 300ms ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slideUp {
+    animation: none !important;
+  }
+}
