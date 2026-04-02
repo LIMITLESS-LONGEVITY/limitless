@@ -1,0 +1,88 @@
+---
+title: "Creating & Managing Courses"
+description: "Build courses with modules and lessons, set access levels, and publish educational content."
+role: admin
+order: 5
+---
+
+# Creating & Managing Courses
+
+<RoleTag role="admin" />
+
+Courses are the core educational product of PATHS. Each course contains a structured hierarchy of modules and lessons that guide learners through longevity topics.
+
+## Course Structure
+
+<Screenshot src="admin/courses-list.png" alt="Courses collection list showing courses with titles, pillars, and status" caption="The Courses collection — each course contains modules and lessons in a structured hierarchy." />
+
+Courses follow a three-level hierarchy:
+
+- **Course** — The top-level container with a title, description, access level, and content pillar.
+- **Modules** — Thematic sections within a course (e.g., "Fundamentals of Sleep Hygiene").
+- **Lessons** — Individual learning units within a module, containing rich text content and optional video embeds.
+
+## Creating a Course
+
+<StepList>
+<Step number={1}>Navigate to **Courses** in the sidebar and click **Create New**.</Step>
+<Step number={2}>Enter the course **title** and **description**.</Step>
+<Step number={3}>Select a **content pillar** to categorize the course.</Step>
+<Step number={4}>Set the **access level** to control which membership tiers can access the course.</Step>
+<Step number={5}>Assign the course to a **tenant** (required for multi-tenancy).</Step>
+<Step number={6}>Click **Save** to create the course shell.</Step>
+</StepList>
+
+## Adding Modules
+
+<Screenshot src="admin/module-edit-form.png" alt="Module edit form showing title, parent course relationship, and order fields" caption="Modules link to a parent course and are ordered by the numeric order field." />
+
+<StepList>
+<Step number={1}>Navigate to **Modules** in the sidebar and click **Create New**.</Step>
+<Step number={2}>Enter the module **title** and **description**.</Step>
+<Step number={3}>Select the parent **course** from the relationship dropdown.</Step>
+<Step number={4}>Set the **order** number to control the module's position within the course (lower numbers appear first).</Step>
+<Step number={5}>Click **Save**.</Step>
+</StepList>
+
+## Adding Lessons
+
+<StepList>
+<Step number={1}>Navigate to **Lessons** in the sidebar and click **Create New**.</Step>
+<Step number={2}>Enter the lesson **title**.</Step>
+<Step number={3}>Select the parent **module** from the relationship dropdown.</Step>
+<Step number={4}>Set the **order** number to position the lesson within its module.</Step>
+<Step number={5}>Write the lesson content using the Lexical rich text editor. You can add text, headings, images, callout blocks, and quiz questions.</Step>
+<Step number={6}>To embed a video, use the **Video Embed** block and paste a YouTube or Vimeo URL. PATHS does not host videos directly.</Step>
+<Step number={7}>Click **Save**.</Step>
+</StepList>
+
+<Screenshot src="admin/lesson-lexical-editor.png" alt="Lesson editor showing Lexical rich text with video embed and quiz blocks" caption="The Lexical editor supports rich text, video embeds, callouts, and quiz question blocks." />
+
+<Callout type="info" title="No direct video hosting">
+PATHS uses YouTube and Vimeo embeds only. Upload your videos to either platform and paste the embed URL into the Video Embed block.
+</Callout>
+
+## Ordering Content
+
+Module and lesson order is controlled by the numeric **order** field. Items with lower order numbers appear first. If two items share the same order number, their display order may be unpredictable — assign unique order values.
+
+## Publishing Courses
+
+<Accordion>
+<AccordionItem title="Editorial workflow stages">
+Courses follow the same editorial workflow as articles:
+
+1. **Draft** — Initial creation, visible only to admins and the creator.
+2. **In Review** — Submitted for editorial review.
+3. **Approved** — Reviewed and approved by an editor.
+4. **Published** — Live and visible to learners with sufficient access level.
+</AccordionItem>
+</Accordion>
+
+<Callout type="warning" title="Access level gating">
+Even after publishing, a course is only visible to users whose membership tier meets or exceeds the course's access level. A premium course (access level 3) is invisible to free-tier users.
+</Callout>
+
+## Next Steps
+
+Learn how content is categorized in [Content Pillar Configuration](/guide/admin/content-pillars).

@@ -1,0 +1,113 @@
+---
+title: "Monitoring & Troubleshooting"
+description: "Diagnose and fix common admin issues on the PATHS platform."
+role: admin
+order: 11
+---
+
+# Monitoring & Troubleshooting
+
+<RoleTag role="admin" />
+
+This guide covers the most common issues admins encounter and how to resolve them.
+
+## Common Issues
+
+<Accordion>
+<AccordionItem title="Build fails on deploy">
+**Likely cause:** TypeScript errors or missing dependencies.
+
+**Solution:** Run `pnpm build` locally first to catch errors before pushing. Check build logs on Render for the specific error.
+</AccordionItem>
+<AccordionItem title="Database migration error">
+**Likely cause:** Schema changes deployed without a migration.
+
+**Solution:** Run `pnpm payload migrate:create` locally to generate the migration file, commit it, and redeploy. Never use `push: true` in production.
+</AccordionItem>
+<AccordionItem title="Stripe webhook not working">
+**Likely cause:** Incorrect webhook secret or endpoint URL.
+
+**Solution:** Verify `STRIPE_WEBHOOK_SECRET` matches the signing secret in your Stripe dashboard. Confirm the webhook endpoint URL is correct and receiving events.
+</AccordionItem>
+<AccordionItem title="AI features returning errors">
+**Likely cause:** Missing API keys.
+
+**Solution:** Check that `OPENAI_API_KEY` and `JINA_API_KEY` are set in the deployment environment variables on Render.
+</AccordionItem>
+<AccordionItem title="User cannot log in">
+**Likely cause:** Unverified email or incorrect password.
+
+**Solution:** Check the user's record — ensure `_verified` is `true`. If they forgot their password, they can use the forgot-password flow.
+</AccordionItem>
+<AccordionItem title="Content not appearing on frontend">
+**Likely cause:** Content not published or wrong access level.
+
+**Solution:** Verify the content status is **Published** and the access level is within the user's tier. Also check that a tenant is assigned.
+</AccordionItem>
+<AccordionItem title="New user has no tier or tenant">
+**Likely cause:** Foundation seed not run.
+
+**Solution:** Run `POST /next/seed` with admin auth. This assigns the default tenant and free tier to the admin user and creates foundation data.
+</AccordionItem>
+<AccordionItem title="Checkout returns 400 error">
+**Likely cause:** Missing Stripe price IDs on tier.
+
+**Solution:** Open the membership tier in the admin panel and add the `stripeMonthlyPriceId` and `stripeYearlyPriceId` values from your Stripe dashboard.
+</AccordionItem>
+<AccordionItem title="RAG search returns no results">
+**Likely cause:** Content not indexed.
+
+**Solution:** Embeddings are generated on content save. Edit the content body (even a small change) and save to trigger re-indexing. Check that `JINA_API_KEY` is configured.
+</AccordionItem>
+<AccordionItem title="Admin panel shows 'unknown node'">
+**Likely cause:** Missing Lexical block converter.
+
+**Solution:** Ensure all custom Lexical blocks (videoEmbed, quizQuestion, callout) have JSX converters registered in `src/components/RichText/index.tsx`.
+</AccordionItem>
+</Accordion>
+
+## Monitoring Recommendations
+
+### Check Regularly
+
+- **Render dashboard** — Monitor deploy status, build logs, and server health.
+- **Stripe dashboard** — Review failed payments, subscription status, and webhook delivery logs.
+- **AI Usage Logs** — Monitor the AI Usage Logs collection in the admin panel for unusual activity or error patterns.
+- **User registrations** — Review new user signups to catch spam accounts or role assignment needs.
+
+### Environment Variables to Verify
+
+After any deployment or infrastructure change, confirm these are set correctly:
+
+<Callout type="warning" title="Critical environment variables">
+Missing or incorrect environment variables are the root cause of most post-deploy issues. Always verify these first when troubleshooting.
+</Callout>
+
+<Accordion>
+<AccordionItem title="Core platform variables">
+| Variable | Required For |
+|----------|-------------|
+| `DATABASE_URI` | PostgreSQL connection |
+| `PAYLOAD_SECRET` | Payload CMS encryption |
+</AccordionItem>
+<AccordionItem title="Billing variables">
+| Variable | Required For |
+|----------|-------------|
+| `STRIPE_SECRET_KEY` | Billing and checkout |
+| `STRIPE_WEBHOOK_SECRET` | Webhook verification |
+</AccordionItem>
+<AccordionItem title="AI feature variables">
+| Variable | Required For |
+|----------|-------------|
+| `OPENAI_API_KEY` | AI tutor and quiz generation |
+| `JINA_API_KEY` | Embeddings and semantic search |
+</AccordionItem>
+</Accordion>
+
+## When to Escalate
+
+If you encounter issues not covered here, or if a fix does not resolve the problem after two attempts:
+
+1. Check the Render server logs for detailed error messages.
+2. Review the Payload CMS documentation at [payloadcms.com/docs](https://payloadcms.com/docs).
+3. Contact the development team with the error message, steps to reproduce, and any relevant log output.

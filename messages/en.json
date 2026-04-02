@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "articles": "Articles",
+    "discover": "Discover",
+    "guide": "Guide",
+    "search": "Search",
+    "dashboard": "Dashboard"
+  },
+  "auth": {
+    "logIn": "Log In",
+    "logOut": "Log Out",
+    "getStarted": "Get Started",
+    "signIn": "Sign in",
+    "userMenu": "User menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "footer": {
+    "tagline": "Evidence-based longevity education for executives and high-performers.",
+    "copyright": "\u00a9 {year} Limitless Longevity.",
+    "allRightsReserved": "All rights reserved.",
+    "platform": "Platform",
+    "account": "Account",
+    "company": "Company",
+    "location": "Marbella, Spain \u00b7 Global Reach",
+    "courses": "Courses",
+    "articles": "Articles",
+    "discover": "Discover",
+    "platformGuide": "Platform Guide",
+    "dashboardLink": "Dashboard",
+    "healthProfile": "Health Profile",
+    "certificates": "Certificates",
+    "billing": "Billing",
+    "enterpriseSales": "Enterprise Sales",
+    "diagnosticPackages": "Diagnostic Packages"
+  },
+  "common": {
+    "loading": "Loading...",
+    "noResults": "No results found.",
+    "search": "Search",
+    "backTo": "Back to {target}",
+    "learnMore": "Learn More",
+    "viewAll": "View All"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search with natural language... e.g. 'how to improve sleep quality'"
+  },
+  "discover": {
+    "signInPrompt": "Sign in to get personalized learning paths based on your health goals."
+  },
+  "locale": {
+    "en": "English",
+    "es": "Espa\u00f1ol",
+    "ru": "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
+    "switchLocale": "Language"
+  }
+}

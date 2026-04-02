@@ -1,0 +1,53 @@
+---
+title: Compliance Management
+description: Track B2B staff compliance, certification status, and training completion across tenants.
+---
+
+# Compliance Management
+
+<RoleTag role="admin" />
+
+The **Compliance Dashboard** provides tenant managers with real-time visibility into staff training completion, certification status, and compliance requirements. As an admin, you configure the compliance features and can view dashboards for any tenant.
+
+## How It Works
+
+The compliance system builds on PATHS' existing multi-tenant architecture:
+
+- **Tenants** define organizations (hospitals, hotels, corporate clients)
+- **Users** are scoped to tenants, with enrollments and certificates tracked per-user
+- **Tenant managers** (publisher role + tenant assignment) can access `/account/team` to view their team's data
+- **Admins** can view compliance data for any tenant
+
+## Tenant Certification Configuration
+
+Navigate to **Tenants** in the admin panel and edit a tenant to configure:
+
+| Field | Description |
+|-------|-------------|
+| `certificationEnabled` | Toggle certification tracking for this tenant |
+| `certificationExpiry` | Number of months before certifications expire (e.g., 12) |
+| `organizationName` | Display name on certificates |
+| `organizationLogo` | Logo displayed on certificates |
+
+## Dashboard Features
+
+The `/account/team` page shows:
+
+- **Overview cards** — Staff count, total enrollments, certificates earned, overdue count
+- **Staff table** — Expandable per-member view with enrollments and certificates
+- **Sort options** — Sort by name, completion status, or certificate count
+- **Expiry warnings** — Badges on certificates within 30 days of expiration
+- **CSV export** — Full compliance data export for regulatory reporting
+
+## Access Control
+
+Dashboard access is controlled by the `isTenantManager` utility:
+
+- Users with **publisher** role AND a tenant assignment qualify as tenant managers
+- **Admin** users always qualify
+- The "Team" navigation item only appears for qualifying users
+
+## Next Steps
+
+- [Configure tenant organizations](/guide/admin/managing-tenants)
+- [Understand the certificate system](/guide/user-paid/certificates)

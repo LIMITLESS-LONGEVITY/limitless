@@ -1,0 +1,78 @@
+---
+title: "Managing Users & Roles"
+description: "Create, edit, and assign roles to users on the PATHS platform."
+role: admin
+order: 2
+---
+
+# Managing Users & Roles
+
+<RoleTag role="admin" />
+
+The Users collection is central to the PATHS platform. As an admin, you control who can access the platform, what role they hold, and which membership tier they belong to.
+
+## Role Hierarchy
+
+PATHS uses five roles, each with increasing permissions:
+
+| Role | Permissions |
+|------|------------|
+| **User** | Browse and consume content based on their membership tier. No admin panel access. |
+| **Contributor** | Create and edit their own articles. Submit content for review. |
+| **Editor** | Review submitted content, approve or request changes. |
+| **Publisher** | Publish approved content, manage the content lifecycle, archive material. |
+| **Admin** | Full access to all collections, globals, settings, and user management. |
+
+<Callout type="info" title="Permissions stack upward">
+Each role inherits all capabilities of the roles below it. An admin can do everything a publisher, editor, contributor, and user can do.
+</Callout>
+
+## Creating a New User
+
+<Screenshot src="admin/users-list.png" alt="Users collection list view showing registered users with roles and tiers" caption="The Users list view — filter and search across all registered accounts." />
+
+<StepList>
+<Step number={1}>Navigate to **Users** in the sidebar and click **Create New**.</Step>
+<Step number={2}>Enter the user's email address and set a temporary password.</Step>
+<Step number={3}>Select the appropriate **role** from the dropdown.</Step>
+<Step number={4}>Assign a **membership tier** (Free, Regular, Premium, or Enterprise).</Step>
+<Step number={5}>If the user belongs to an organization, select their **tenant**.</Step>
+<Step number={6}>Click **Save** to create the account.</Step>
+</StepList>
+
+<Screenshot src="admin/create-user-form.png" alt="Create user form with email, role, tier, and tenant fields" caption="The user creation form — assign role, tier, and tenant during account setup." />
+
+<Callout type="warning" title="Self-registration">
+Users can also self-register via the `/register` page. Self-registered users are automatically assigned the **User** role, the **Free** tier, and the default tenant. You can upgrade their role and tier afterward.
+</Callout>
+
+## Editing User Accounts
+
+<Screenshot src="admin/user-edit-form.png" alt="User edit view showing role dropdown and tier assignment" caption="Edit any user's role, tier, and tenant from their profile page." />
+
+Click any user in the Users list to edit their profile. You can change:
+
+- **Role** — Promote a user to contributor, editor, publisher, or admin.
+- **Membership tier** — Upgrade or downgrade their content access level.
+- **Tenant** — Move a user between organizations.
+- **Email verification** — Check whether the user has verified their email address.
+
+## Resetting Passwords
+
+Users can reset their own passwords via the **Forgot Password** flow on the login page. As an admin, you can also:
+
+1. Open the user's record in the admin panel.
+2. Set a new password directly in the password field.
+3. Save the record and communicate the new password to the user securely.
+
+## Managing User Tiers
+
+A user's membership tier determines which content they can access. Tiers are managed separately in the Membership Tiers collection, but you assign them per-user here. When a user subscribes via Stripe, their tier is updated automatically by the webhook.
+
+<Callout type="tip" title="Stripe sync">
+If a user's tier appears incorrect, check the Stripe dashboard for their subscription status. The webhook may have failed — see [Troubleshooting](/guide/admin/troubleshooting) for details.
+</Callout>
+
+## Next Steps
+
+Learn how to configure the tiers themselves in [Managing Membership Tiers](/guide/admin/managing-tiers).

@@ -1,0 +1,83 @@
+---
+title: "Stripe & Billing Setup"
+description: "Configure Stripe payment processing, webhooks, and subscription management for PATHS."
+role: admin
+order: 8
+---
+
+# Stripe & Billing Setup
+
+<RoleTag role="admin" />
+
+PATHS uses a custom Stripe SDK integration for subscription billing. When users subscribe to a paid tier, Stripe handles payment processing and notifies PATHS via webhooks to update the user's membership tier automatically.
+
+## How Billing Works
+
+The billing flow follows this sequence:
+
+<StepList>
+<Step number={1}>A user selects a membership tier and clicks "Subscribe" on the frontend.</Step>
+<Step number={2}>PATHS creates a Stripe Checkout Session via `POST /api/billing/checkout` and redirects the user to Stripe's hosted payment page.</Step>
+<Step number={3}>The user completes payment on Stripe's checkout page.</Step>
+<Step number={4}>Stripe sends a webhook event to PATHS confirming the subscription.</Step>
+<Step number={5}>PATHS processes the webhook and updates the user's membership tier to match their subscription.</Step>
+</StepList>
+
+## Stripe Dashboard Setup
+
+<Screenshot src="admin/stripe-products-reference.png" alt="Stripe dashboard showing PATHS products with monthly and yearly prices" caption="Create products and prices in Stripe, then link them to PATHS membership tiers." />
+
+Before billing works, configure these items in your Stripe dashboard:
+
+1. **Create Products** — One product per membership tier (e.g., "PATHS Regular", "PATHS Premium").
+2. **Create Prices** — Two prices per product: one monthly recurring, one yearly recurring.
+3. **Copy Price IDs** — Each price has an ID starting with `price_`. You will paste these into PATHS.
+4. **Configure Webhook** — Create a webhook endpoint pointing to `https://your-domain/api/billing/webhook`.
+
+<Callout type="warning" title="Webhook events">
+The webhook endpoint must receive at minimum: `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted` events.
+</Callout>
+
+## Linking Prices to Tiers
+
+After creating Stripe prices, link them to PATHS membership tiers:
+
+1. Navigate to **Membership Tiers** in the admin panel.
+2. Open each tier and paste the corresponding **monthly** and **yearly** Stripe price IDs.
+3. Save each tier.
+
+Without valid price IDs, the checkout endpoint returns a 400 error.
+
+<Accordion>
+<AccordionItem title="Required environment variables">
+| Variable | Purpose |
+|----------|---------|
+| `STRIPE_SECRET_KEY` | Server-side API key for creating checkout sessions and managing subscriptions |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`) for verifying webhook authenticity |
+
+Both must be set in your Render environment variables. The `STRIPE_WEBHOOK_SECRET` must match the signing secret shown in your Stripe webhook endpoint configuration.
+</AccordionItem>
+<AccordionItem title="Webhook endpoint configuration">
+Create a webhook endpoint in Stripe pointing to `https://your-domain/api/billing/webhook`. The endpoint must receive at minimum these events: `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`.
+</AccordionItem>
+<AccordionItem title="Testing webhooks locally">
+1. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli).
+2. Run `stripe listen --forward-to localhost:3000/api/billing/webhook`.
+3. The CLI will provide a temporary webhook secret — use it as `STRIPE_WEBHOOK_SECRET`.
+4. Trigger test events with `stripe trigger checkout.session.completed`.
+</AccordionItem>
+</Accordion>
+
+<Screenshot src="admin/stripe-webhook-config.png" alt="Stripe webhook endpoint configuration page" caption="Configure the webhook endpoint URL and select the required events." />
+
+## Customer Portal
+
+Users can manage their subscriptions (upgrade, downgrade, cancel) through the Stripe Customer Portal. PATHS redirects users to the portal via `POST /api/billing/portal`. Ensure the Customer Portal is configured in your Stripe dashboard under **Settings > Customer Portal**.
+
+<Callout type="tip" title="Subscription cancellation">
+When a subscription is canceled or expires, the webhook automatically downgrades the user to the Free tier. No manual intervention is needed.
+</Callout>
+
+## Next Steps
+
+Learn how to populate the platform with sample data in [Seeding Content](/guide/admin/seeding-content).

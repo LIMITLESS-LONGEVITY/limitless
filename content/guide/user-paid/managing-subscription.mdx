@@ -1,0 +1,76 @@
+---
+title: Managing Your Subscription
+description: How to view, upgrade, downgrade, or cancel your subscription and manage billing through Stripe.
+---
+
+# Managing Your Subscription
+
+<RoleTag role="user-paid" />
+
+Your PATHS subscription is managed through Stripe, a secure payment platform. This guide covers how to view your plan, make changes, and access billing history.
+
+## Viewing Your Current Plan
+
+<StepList>
+  <Step number={1}>Click your avatar in the top-right corner of the navigation bar.</Step>
+  <Step number={2}>Select **Account** from the dropdown menu.</Step>
+  <Step number={3}>Navigate to the **Billing** section to see your current plan, including tier name, billing cycle (monthly or yearly), and next renewal date.</Step>
+</StepList>
+
+<Screenshot src="user-paid/billing-section.png" alt="Billing section of the account page showing current plan and Manage Subscription button" caption="The Billing section displays your current plan details and subscription management options." />
+
+## Upgrading Your Plan
+
+If you want access to more content, you can upgrade to a higher tier at any time.
+
+<StepList>
+  <Step number={1}>Go to the **Billing** section of your account page.</Step>
+  <Step number={2}>Click **Manage Subscription** to open the Stripe customer portal.</Step>
+  <Step number={3}>In the Stripe portal, select a new plan. Available tiers are Regular, Premium, and Enterprise.</Step>
+  <Step number={4}>Confirm the change. Upgrades take effect immediately, and you will be charged the prorated difference for the current billing period.</Step>
+</StepList>
+
+<Screenshot src="user-paid/stripe-portal-plans.png" alt="Stripe customer portal showing available plan tiers" caption="The Stripe portal lets you select a new plan tier." />
+
+<Callout type="info">
+  When you upgrade, you gain immediate access to all content at your new tier level. There is no waiting period.
+</Callout>
+
+## Downgrading Your Plan
+
+You can downgrade to a lower tier through the same Stripe portal.
+
+- Downgrades take effect at the end of your current billing period.
+- You retain access to your current tier's content until the period ends.
+- Your course enrollments and progress are preserved, but you will not be able to access lesson content above your new tier.
+
+## Cancelling Your Subscription
+
+<StepList>
+  <Step number={1}>Open the **Billing** section and click **Manage Subscription**.</Step>
+  <Step number={2}>In the Stripe portal, select **Cancel plan**.</Step>
+  <Step number={3}>Confirm the cancellation. Your access continues until the end of the current billing period.</Step>
+</StepList>
+
+<Callout type="warning">
+  After cancellation takes effect, your account reverts to the free tier. You will lose access to paid content but your account, enrollments, and progress history are preserved. You can resubscribe at any time to regain access.
+</Callout>
+
+## Payment History
+
+The Stripe customer portal provides a full history of your invoices and payments. You can download invoices as PDF for your records.
+
+<Screenshot src="user-paid/stripe-portal-invoices.png" alt="Stripe customer portal showing invoice history" caption="Access your full payment history and download invoices from the Stripe portal." />
+
+## Billing Security
+
+All payment processing is handled by **Stripe**. The PATHS platform does not store your credit card details or sensitive payment information. Stripe is PCI DSS Level 1 certified, the highest level of payment security certification.
+
+<Accordion>
+  <AccordionItem title="What payment methods are accepted?">
+    Stripe supports all major credit and debit cards (Visa, Mastercard, American Express, and others). The available payment methods may vary by region.
+  </AccordionItem>
+  <AccordionItem title="Can I switch between monthly and yearly billing?">
+    Yes. You can change your billing cycle through the Stripe customer portal. Switching to yearly billing typically offers a discount compared to monthly payments.
+  </AccordionItem>
+</Accordion>

@@ -1,0 +1,62 @@
+---
+title: Organization Overview
+description: Understand how organization accounts work on PATHS and what access they provide.
+---
+
+# How Organization Accounts Work
+
+<RoleTag role="user-organization" />
+
+When your employer or organization subscribes to PATHS, they create a dedicated workspace — called a **tenant** — for their team. Your organization administrator sets up this workspace, invites members, and assigns content access levels to the group.
+
+## What Is Multi-Tenancy?
+
+PATHS uses a multi-tenant architecture, which means each organization operates within its own private space on the platform. In practice, this means:
+
+- **Your organization's content is separate** — articles, courses, and learning paths assigned to your org are visible only to members of your tenant.
+- **Your personal account still works** — if you have a personal PATHS subscription, you keep access to that content too.
+- **Data stays private** — your progress, quiz results, and activity within the org are visible to your administrator but not to other organizations.
+
+<Callout type="info" title="Think of it like email">
+  Just as your work email and personal email are separate but accessible from the same device, your organization content and personal content coexist on PATHS without interfering with each other.
+</Callout>
+
+## How Access Is Determined
+
+Your available content is determined by two factors:
+
+1. **Your personal subscription tier** — Free, Regular, Premium, or Enterprise
+2. **Your organization's access level** — set by your admin when they configure the tenant
+
+PATHS uses a "highest wins" policy. If your personal tier grants access to Regular content and your organization grants Premium access, you see everything up to and including Premium. You always get the superset of both.
+
+<Screenshot src="user-organization/org-overview-content.png" alt="PATHS content listing showing articles and courses available through organization access" />
+
+<Callout type="tip">
+  You do not need to manage or configure any of this yourself. Your organization administrator handles all access-level assignments. If you believe you are missing content, reach out to your admin.
+</Callout>
+
+<Accordion title="What your admin handles">
+Your organization administrator is responsible for:
+
+- Inviting and removing team members
+- Setting the organization's content access level
+- Assigning courses and learning paths to the team
+- Monitoring team progress and completion rates
+</Accordion>
+
+## Compliance & Certifications
+
+Organizations can track staff training compliance through PATHS:
+
+- **Certificates** are automatically generated when you complete a course — see [Team Certificates](/guide/user-organization/team-certificates)
+- **Team managers** can view compliance status, certificate expiry, and export data — see [Compliance Dashboard](/guide/user-organization/compliance-dashboard)
+- Some organizations configure **certification expiry** requiring periodic recertification
+
+## Next Steps
+
+- [Accessing Assigned Content](/guide/user-organization/assigned-content) — See what your org has enabled
+- [Team Learning Paths](/guide/user-organization/team-learning-paths) — Follow structured learning set by your admin
+- [Compliance Dashboard](/guide/user-organization/compliance-dashboard) — View team compliance status (managers only)
+- [Team Certificates](/guide/user-organization/team-certificates) — Understand how org certificates work
+- [Switching Between Personal & Org Content](/guide/user-organization/switching-content) — Navigate both content pools

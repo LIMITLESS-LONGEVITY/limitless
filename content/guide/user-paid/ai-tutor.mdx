@@ -1,0 +1,115 @@
+---
+title: Using the AI Tutor
+description: Get AI-powered help grounded in PATHS content, personalized to your health profile, with smart clinical escalation.
+---
+
+# Using the AI Tutor
+
+<RoleTag role="user-paid" />
+
+The AI tutor is an intelligent assistant built into PATHS. It answers your questions using content from the platform's knowledge base and — if you have a [Health Profile](/guide/user-paid/health-profile) — personalizes responses based on your biomarkers, goals, and conditions.
+
+## How It Works
+
+The AI tutor uses **retrieval-augmented generation (RAG)** to provide accurate, grounded answers:
+
+1. Searches the platform's articles, lessons, and course materials for relevant content.
+2. Retrieves the most relevant passages using semantic search and reranking.
+3. Incorporates your health profile data (if available) for personalized context.
+4. Generates a response grounded in retrieved content and your health data.
+
+<Callout type="info" title="Grounded in PATHS content">
+  The AI tutor's answers are based on content published on the PATHS platform, not general internet search results. Responses are curated, vetted, and aligned with the platform's educational standards.
+</Callout>
+
+## Accessing the AI Tutor
+
+<StepList>
+  <Step number={1}>Open any article or lesson on the platform.</Step>
+  <Step number={2}>Click the **Open Tutor** button in the sidebar (or the "Ask AI Tutor about this lesson" button on lesson pages).</Step>
+  <Step number={3}>The tutor panel opens on the right with 3 **starter questions** tailored to the content you're viewing.</Step>
+  <Step number={4}>Click a starter question or type your own in the input field.</Step>
+  <Step number={5}>The tutor streams its response in real time.</Step>
+</StepList>
+
+<Screenshot src="user-paid/ai-tutor-panel.png" alt="AI Tutor panel with starter questions" caption="The AI Tutor panel with three context-aware starter questions." />
+
+## Starter Questions
+
+When you open the tutor, three suggested questions appear based on the content you're viewing:
+
+- **"Summarize the key points"** — Get a concise summary of the article or lesson
+- **"What are the practical takeaways?"** — Extract actionable advice
+- **"How does this relate to other pillars?"** — Explore cross-pillar connections
+
+Click any starter to send it as your first question, or type your own.
+
+## Rich Responses
+
+The AI tutor renders responses with formatting:
+
+- **Bold text** for emphasis on key terms
+- **Numbered lists** for step-by-step explanations
+- **Code formatting** for technical values or measurements
+- **Bullet points** for grouped information
+
+A **copy button** appears on each assistant message — click it to copy the response text to your clipboard.
+
+<Screenshot src="user-paid/ai-tutor-question-example.png" alt="AI Tutor response with bold text and numbered list" caption="Tutor responses include formatted text with a copy button." />
+
+## Health-Aware Personalization
+
+If you have a [Health Profile](/guide/user-paid/health-profile) set up, the AI tutor incorporates your health data into its responses. For example:
+
+- *"Based on your Vitamin D level of 22 ng/mL, this article's recommendation of 4000 IU/day supplementation is particularly relevant for you."*
+- *"Given your goal of improving sleep quality and your current magnesium supplementation, consider the protocol described in Module 2."*
+
+<Callout type="tip">
+  The more complete your Health Profile, the more personalized the tutor's responses become. Add your biomarkers, goals, conditions, and medications for the best experience.
+</Callout>
+
+## Telemedicine Escalation
+
+When you ask questions that go beyond educational scope — such as medication decisions, symptom interpretation, or clinical judgment calls — the tutor may display a **gold consultation card** suggesting you speak with a clinician.
+
+This escalation includes:
+
+- A recommendation to book a telemedicine consultation
+- An **auto-prefilled booking form** with your name, email (from your account), and the topic of conversation
+- A link to the [Telemedicine](/guide/user-paid/telemedicine) page for more information
+
+<Callout type="info" title="Education, not medical advice">
+  The AI tutor provides educational content, not medical diagnoses or treatment plans. When it detects questions requiring professional judgment, it guides you toward expert consultation.
+</Callout>
+
+## Asking Effective Questions
+
+The tutor works best with specific, content-related questions:
+
+- "What are the key biomarkers for metabolic health?"
+- "How does sleep quality affect longevity outcomes?"
+- "Explain the difference between biological age and chronological age."
+
+General or off-topic questions may receive limited responses, since the tutor draws from PATHS content.
+
+## Conversation Context
+
+The tutor maintains context within your current conversation. You can ask follow-up questions that build on previous answers. Starting a new session begins a fresh conversation.
+
+<Accordion>
+  <AccordionItem title="How does RAG work behind the scenes?">
+    When you ask a question, the system converts it into a semantic embedding and searches the platform's vector database for the most relevant content passages. These passages are reranked for relevance and used as context for the AI to generate a grounded answer.
+  </AccordionItem>
+  <AccordionItem title="Can the AI Tutor access content above my tier?">
+    No. The AI Tutor respects your subscription tier. It only retrieves content your access level permits. Upgrading your plan gives the tutor a broader knowledge base.
+  </AccordionItem>
+  <AccordionItem title="Does the AI Tutor see my health data?">
+    Only yours, and only during your own conversations. Your health profile is injected into the AI context at query time and is not stored in the tutor's conversation history. Other users' health data is never accessible.
+  </AccordionItem>
+</Accordion>
+
+## Next Steps
+
+- [Set up your Health Profile](/guide/user-paid/health-profile) for personalized tutor responses
+- [Learn about telemedicine consultations](/guide/user-paid/telemedicine) when the tutor suggests clinical guidance
+- [Track your biomarkers](/guide/user-paid/biomarker-tracking) — the tutor can reference your trends
