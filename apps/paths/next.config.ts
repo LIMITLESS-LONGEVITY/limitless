@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
   basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
   redirects,
   turbopack: {
-    root: path.resolve(dirname),
+    root: path.resolve(dirname, '../..'),
   },
 }
 
