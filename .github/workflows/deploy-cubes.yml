@@ -1,0 +1,40 @@
+name: Deploy Cubes+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/cubes/**'
+      - 'packages/**'
+
+jobs:
+  deploy:
+    name: Deploy Cubes+ to Render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.render.com/v1/services/srv-d75rst9r0fns73f9qt70/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "Response: $BODY"
+          echo "HTTP Code: $HTTP_CODE"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Deploy trigger failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "Triggered deploy: $(echo "$BODY" | jq -r '.id // empty')"
+
+      - name: Wait for deploy and verify health
+        run: |
+          echo "Waiting 180s for Render to build and deploy..."
+          sleep 180
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+            "https://app.limitless-longevity.health/train/api/v1/domains")
+          echo "Health check: HTTP $STATUS"
+          if [ "$STATUS" != "401" ]; then
+            echo "::warning::Cubes+ health check returned $STATUS (expected 401). Deploy may still be in progress."
+          fi
