@@ -1,0 +1,89 @@
+---
+title: "Seeding Content"
+description: "Populate the PATHS platform with foundation data and sample educational content."
+role: admin
+order: 9
+---
+
+# Seeding Content
+
+<RoleTag role="admin" />
+
+PATHS provides seed endpoints to quickly populate the platform with foundation data and sample content. This is essential for initial setup, testing, and demo environments.
+
+## Two Seed Modes
+
+PATHS offers two seeding operations, both accessed via authenticated POST requests:
+
+| Endpoint | What It Creates |
+|----------|----------------|
+| `POST /next/seed` | Foundation data: membership tiers (Free, Regular, Premium, Enterprise), default tenant, content pillars (6 pillars), and assigns admin tier/tenant to the first user |
+| `POST /next/seed?content=true` | Sample content: 12 articles across 6 pillars (4 with quizzes), 3 courses with 8 modules and 24 lessons (3 with video embeds) |
+
+## Running the Foundation Seed
+
+<StepList>
+<Step number={1}>Register the first admin user via the PATHS registration page or Payload's first-register flow.</Step>
+<Step number={2}>Log in and obtain your JWT token (available in the auth cookie or via the login API response).</Step>
+<Step number={3}>Send an authenticated POST request to `/next/seed` with your JWT token in the Authorization header:
+
+```bash
+curl -X POST https://your-domain/next/seed \
+  -H "Authorization: JWT your-token-here"
+```
+</Step>
+<Step number={4}>Verify that membership tiers, the default tenant, and content pillars have been created in the admin panel.</Step>
+</StepList>
+
+<Callout type="warning" title="Seed before anything else">
+The foundation seed must be run immediately after the first user registration. Without it, the first user lacks a tenant and tier assignment, and the platform has no tiers or pillars for content creation.
+</Callout>
+
+## Running the Content Seed
+
+After the foundation seed, you can optionally populate sample content:
+
+```bash
+curl -X POST "https://your-domain/next/seed?content=true" \
+  -H "Authorization: JWT your-token-here"
+```
+
+The content seed creates 12 articles, 3 courses, and associated modules and lessons. Content is assigned to the default tenant and distributed across all 6 content pillars.
+
+<Callout type="info" title="Idempotency">
+The seed endpoints check for existing data before creating records. Running the seed multiple times will not create duplicate content.
+</Callout>
+
+## What Gets Created
+
+<Accordion>
+<AccordionItem title="Foundation seed data">
+- **Membership tiers** — Free (level 1), Regular (level 2), Premium (level 3), Enterprise (level 4)
+- **Default tenant** — For individual B2C users
+- **Content pillars** — Nutrition, Exercise, Sleep, Mental Health, Preventive Medicine, Longevity Science
+- **Admin assignment** — First user gets admin role, Enterprise tier, and default tenant
+</AccordionItem>
+<AccordionItem title="Content seed data">
+- **Articles** — 12 articles covering all six longevity pillars, with varied access levels. Four articles include interactive quiz questions.
+- **Courses** — 3 structured courses with modules and lessons, including video embed examples.
+- **Quizzes** — Embedded within articles and lessons as Lexical editor quiz blocks.
+</AccordionItem>
+</Accordion>
+
+## When to Seed
+
+<Accordion>
+<AccordionItem title="Fresh deployment">
+Always run the foundation seed after deploying to a new environment. Without it, there are no tiers, tenants, or pillars.
+</AccordionItem>
+<AccordionItem title="Testing and QA">
+Run the content seed to have realistic data for QA and user acceptance testing.
+</AccordionItem>
+<AccordionItem title="Demo environments">
+Seed both foundation and content to showcase the platform to potential clients.
+</AccordionItem>
+</Accordion>
+
+## Next Steps
+
+Configure platform-wide settings in [Site Settings](/guide/admin/site-settings).

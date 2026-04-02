@@ -1,0 +1,57 @@
+---
+title: Editorial Status Workflow
+description: Understanding all editorial statuses, their meanings, and the allowed transitions in the PATHS content pipeline.
+---
+
+# Editorial Status Workflow
+
+<RoleTag role="editor" />
+
+Every article in the PATHS platform moves through a defined set of statuses. Understanding this workflow helps you make the right decisions about content as it progresses through the pipeline.
+
+## Status Definitions
+
+| Status | Meaning |
+|--------|---------|
+| **Draft** | Content is being written or revised. Only visible to the author and editors in the admin panel. |
+| **In Review** | The contributor has submitted the article for editorial review. Waiting for an Editor to assess it. |
+| **Approved** | An Editor has confirmed the article meets quality standards. Ready for a Publisher to take it live. |
+| **Published** | The article is live and visible to learners on the frontend. |
+| **Archived** | The article has been removed from active listings but its URL is preserved for existing links. |
+
+<Screenshot src="editor/editorial-status-dropdown.png" alt="Status field dropdown in the admin panel showing all five editorial statuses" />
+
+## Status Transitions
+
+<Callout type="info" title="Who can do what">
+Not every role can make every transition. The workflow enforces separation of duties to maintain content quality.
+</Callout>
+
+### Contributors
+- **Draft → In Review** — Submit their work for editorial review
+
+### Editors
+- **In Review → Approved** — Article passes editorial review
+- **In Review → Draft** — Article needs revisions, sent back to the contributor
+- **Approved → In Review** — Retract approval if issues are discovered before publication
+
+### Publishers
+- **Approved → Published** — Take approved content live on the frontend
+- **Published → Archived** — Remove outdated content from active listings
+- **Archived → Draft** — Reopen archived content for a fresh revision cycle
+
+## Key Rules
+
+- **No skipping steps** — Content cannot jump from Draft directly to Published. Every article must pass through editorial review.
+- **Two-person minimum** — The person who writes the content is never the same person who publishes it. This ensures at least two sets of eyes on every piece.
+- **Archived is not deleted** — Archiving removes content from listings and search results but preserves the URL. Learners with existing bookmarks will see an archived notice rather than a broken link.
+
+<Callout type="warning">
+If you notice an approved article that should not be published, change it back to **In Review** immediately and add a note explaining the concern. Do not wait for a Publisher to catch the issue.
+</Callout>
+
+<Accordion title="Common scenarios">
+- **Contributor updates a draft after feedback** — The article stays in Draft until the contributor resubmits it to In Review.
+- **Editor finds a minor typo in an approved article** — Fix it directly and leave the status as Approved.
+- **Published article contains outdated information** — A Publisher can archive it, or it can be returned to Draft for a full revision.
+</Accordion>

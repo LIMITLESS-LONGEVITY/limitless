@@ -1,0 +1,92 @@
+---
+title: "Managing Tenants (Organizations)"
+description: "Set up and manage organizations for multi-tenant B2B access on PATHS."
+role: admin
+order: 4
+---
+
+# Managing Tenants (Organizations)
+
+<RoleTag role="admin" />
+
+PATHS supports multi-tenancy for B2B clients. Each tenant represents an organization — such as a hospital, hotel chain, or corporate wellness program — whose members access content scoped to that organization.
+
+## How Multi-Tenancy Works
+
+Multi-tenancy is powered by the `@payloadcms/plugin-multi-tenant` plugin. Key concepts:
+
+- Every user belongs to a **tenant** (organization).
+- Content collections (articles, courses, modules, lessons) are **scoped** to tenants.
+- Users only see content that belongs to their tenant, unless they have cross-tenant access.
+- A **default tenant** is created during the foundation seed for individual (B2C) users.
+
+<Callout type="info" title="Default tenant">
+All self-registered users and manually created individual users should be assigned to the default tenant. Create dedicated tenants only for B2B organizations.
+</Callout>
+
+## Creating a New Tenant
+
+<Screenshot src="admin/tenants-list.png" alt="Tenants collection list showing organizations" caption="The Tenants list — each row represents an organization with its own content scope." />
+
+<StepList>
+<Step number={1}>Navigate to **Tenants** in the sidebar and click **Create New**.</Step>
+<Step number={2}>Enter the organization **name** (e.g., "Acme Hospital Group").</Step>
+<Step number={3}>Set the **slug** (e.g., `acme-hospital-group`). This is used internally for scoping.</Step>
+<Step number={4}>Configure the **access level** to determine what content tier the organization's members can access.</Step>
+<Step number={5}>Click **Save**.</Step>
+</StepList>
+
+## Assigning Users to a Tenant
+
+To add a user to an organization:
+
+1. Open the user's record in the **Users** collection.
+2. Select the appropriate **tenant** from the tenant dropdown.
+3. Save the user record.
+
+The user will now see content scoped to that tenant when they log in.
+
+## Content Scoping
+
+<Screenshot src="admin/tenant-edit-form.png" alt="Tenant edit form with name, slug, and access level fields" caption="Configure each tenant's name, slug, and organization-wide access level." />
+
+When creating articles or courses for a specific organization, you must set the **tenant** field on the content record. This ensures:
+
+- Only members of that tenant can view the content.
+- The content appears in tenant-scoped searches and listings.
+- RAG retrieval respects tenant boundaries.
+
+<Callout type="warning" title="Tenant field is required">
+The multi-tenant plugin makes the `tenant` field required on all scoped collections. If you create an article or course without setting a tenant, the save will fail. Always select a tenant when creating content.
+</Callout>
+
+## Access Level Resolution
+
+<Accordion>
+<AccordionItem title="How access levels are resolved">
+A user's effective access level is the **highest** of:
+
+- Their personal membership tier's access level.
+- Their organization's (tenant's) access level.
+
+This "highest wins" model means an Enterprise-tier organization member always gets full access, regardless of their personal tier.
+</AccordionItem>
+</Accordion>
+
+## B2B Certification Configuration
+
+Each tenant can be configured for compliance tracking. Edit a tenant to set:
+
+| Field | Description |
+|-------|-------------|
+| `certificationEnabled` | Enable certificate tracking for this organization |
+| `certificationExpiry` | Months before certificates expire (e.g., 12 = annual recertification) |
+| `organizationName` | Name displayed on staff certificates |
+| `organizationLogo` | Logo displayed on certificates (upload via Media collection) |
+
+When certification is enabled, tenant managers can access the [Compliance Dashboard](/guide/admin/compliance-management) at `/account/team` to monitor staff progress.
+
+## Next Steps
+
+- [Configure compliance management](/guide/admin/compliance-management) for B2B clients
+- [Create courses](/guide/admin/managing-courses) for organizational training programs

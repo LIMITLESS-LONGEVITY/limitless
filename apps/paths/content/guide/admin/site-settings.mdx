@@ -1,0 +1,62 @@
+---
+title: "Site Settings"
+description: "Configure global platform settings for the PATHS platform."
+role: admin
+order: 10
+---
+
+# Site Settings
+
+<RoleTag role="admin" />
+
+The Site Settings global contains platform-wide configuration that affects how PATHS presents itself to users and search engines.
+
+## Accessing Site Settings
+
+<Screenshot src="admin/site-settings-global.png" alt="Site Settings global showing site name and description fields" caption="The Site Settings global — configure the platform name and SEO description." />
+
+Navigate to **Globals** in the admin sidebar and select **Site Settings**. This global is accessible only to admins.
+
+## Available Settings
+
+| Setting | Purpose |
+|---------|---------|
+| **Site Name** | The platform name displayed in the browser tab, header, and metadata. Default: "PATHS by Limitless Longevity" |
+| **Site Description** | A brief description used in meta tags for SEO and social sharing. |
+
+<Callout type="info" title="SEO impact">
+The site name and description are injected into the HTML `<title>` and `<meta name="description">` tags. Keep the description under 160 characters for optimal search engine display.
+</Callout>
+
+## When to Update
+
+You will typically configure Site Settings once during initial platform setup and rarely change them afterward. Common reasons to update:
+
+<Accordion>
+<AccordionItem title="Rebranding">
+If the platform name changes, update the Site Name field. This affects the browser tab title, header branding, and metadata.
+</AccordionItem>
+<AccordionItem title="SEO optimization">
+Refine the site description for better search visibility. Keep it under 160 characters for optimal search engine display.
+</AccordionItem>
+<AccordionItem title="White-labeling for B2B">
+Customize the platform name for a specific B2B tenant deployment. Each tenant deployment can have its own Site Settings values.
+</AccordionItem>
+</Accordion>
+
+<Callout type="tip" title="Save and verify">
+After updating Site Settings, visit the frontend and verify that the browser tab title and any header branding reflect your changes. Changes take effect immediately — no rebuild required.
+</Callout>
+
+## Other Globals
+
+<Screenshot src="admin/globals-sidebar.png" alt="Admin sidebar showing Site Settings and AI Config under Globals section" caption="Site Settings and AI Config are the two primary globals in the admin panel." />
+
+Site Settings is one of several globals available in the admin panel. Other globals include:
+
+- **AI Config** — OpenAI model selection and RAG settings (see [AI Configuration](/guide/admin/ai-configuration)).
+- Additional globals may be added as the platform evolves.
+
+## Next Steps
+
+Review common issues and their solutions in [Monitoring & Troubleshooting](/guide/admin/troubleshooting).

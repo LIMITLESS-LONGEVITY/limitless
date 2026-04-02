@@ -1,0 +1,32 @@
+[
+  {
+    "path": "admin/stripe-products-reference.png",
+    "source": "Stripe Dashboard > Products",
+    "capturedDate": "2026-03-26",
+    "notes": "Manual capture — shows PATHS products with monthly and yearly prices"
+  },
+  {
+    "path": "admin/stripe-webhook-config.png",
+    "source": "Stripe Dashboard > Developers > Webhooks",
+    "capturedDate": "2026-03-26",
+    "notes": "Manual capture — shows webhook endpoint configuration and selected events"
+  },
+  {
+    "path": "user-free/stripe-checkout.png",
+    "source": "Stripe Checkout (hosted page)",
+    "capturedDate": "2026-03-26",
+    "notes": "Manual capture — shows Stripe checkout session for PATHS subscription"
+  },
+  {
+    "path": "user-paid/stripe-portal-plans.png",
+    "source": "Stripe Customer Portal",
+    "capturedDate": "2026-03-26",
+    "notes": "Manual capture — shows available plan tiers in customer portal"
+  },
+  {
+    "path": "user-paid/stripe-portal-invoices.png",
+    "source": "Stripe Customer Portal",
+    "capturedDate": "2026-03-26",
+    "notes": "Manual capture — shows invoice history in customer portal"
+  }
+]
