@@ -1,0 +1,39 @@
+name: Post-Deploy Verification
+on:
+  workflow_run:
+    workflows: ["Deploy PATHS", "Deploy Cubes+", "Deploy HUB", "Deploy Digital Twin"]
+    types: [completed]
+
+jobs:
+  verify:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Render deploy to stabilize
+        run: sleep 180
+
+      - name: Health check all services
+        run: |
+          FAILED=""
+          SERVICES=(
+            "PATHS|https://app.limitless-longevity.health/learn/api/health|200"
+            "HUB|https://app.limitless-longevity.health/book/api/health|200"
+            "DT|https://limitless-digital-twin.onrender.com/api/health|200"
+            "Cubes+|https://app.limitless-longevity.health/train/api/v1/domains|401"
+            "OS Dashboard|https://app.limitless-longevity.health/|200"
+          )
+          for svc in "${SERVICES[@]}"; do
+            IFS='|' read -r NAME URL EXPECTED <<< "$svc"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$URL")
+            if [ "$STATUS" = "$EXPECTED" ]; then
+              echo "✅ $NAME: $STATUS (expected $EXPECTED)"
+            else
+              echo "❌ $NAME: $STATUS (expected $EXPECTED)"
+              FAILED="$FAILED $NAME"
+            fi
+          done
+          if [ -n "$FAILED" ]; then
+            echo "::error::Post-deploy health check failed for:$FAILED"
+            exit 1
+          fi
+          echo "All services healthy after deploy."

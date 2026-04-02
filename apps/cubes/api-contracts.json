@@ -1,0 +1,26 @@
+{
+  "app": "cubes",
+  "provides": [
+    {
+      "endpoint": "/api/v1/domains",
+      "method": "GET",
+      "description": "List exercise domains. Used by OS Dashboard for workout widget.",
+      "consumers": ["os-dashboard"],
+      "breaking_fields": ["id", "name"]
+    },
+    {
+      "endpoint": "/api/v1/billing/webhook",
+      "method": "POST",
+      "description": "Stripe webhook endpoint.",
+      "consumers": ["stripe"],
+      "breaking_fields": []
+    }
+  ],
+  "consumes": [
+    {
+      "app": "paths",
+      "endpoint": "/api/users/me",
+      "purpose": "JWT auth delegation — validates payload-token cookie"
+    }
+  ]
+}

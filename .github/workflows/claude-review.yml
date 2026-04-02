@@ -1,0 +1,113 @@
+name: Claude Code Review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  claude-review:
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect affected apps
+        id: detect
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD 2>/dev/null || echo "")
+          PATHS_CHANGED=$(echo "$CHANGED" | grep -c '^apps/paths/' || true)
+          CUBES_CHANGED=$(echo "$CHANGED" | grep -c '^apps/cubes/' || true)
+          HUB_CHANGED=$(echo "$CHANGED" | grep -c '^apps/hub/' || true)
+          DT_CHANGED=$(echo "$CHANGED" | grep -c '^apps/digital-twin/' || true)
+          DASH_CHANGED=$(echo "$CHANGED" | grep -c '^apps/os-dashboard/' || true)
+          PACKAGES_CHANGED=$(echo "$CHANGED" | grep -c '^packages/' || true)
+          INFRA_CHANGED=$(echo "$CHANGED" | grep -c '^infra/' || true)
+
+          AFFECTED=""
+          [ "$PATHS_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED PATHS"
+          [ "$CUBES_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED Cubes+"
+          [ "$HUB_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED HUB"
+          [ "$DT_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED DT"
+          [ "$DASH_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED OS-Dashboard"
+          [ "$PACKAGES_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED shared-packages"
+          [ "$INFRA_CHANGED" -gt 0 ] && AFFECTED="$AFFECTED infra"
+
+          echo "affected=$AFFECTED" >> $GITHUB_OUTPUT
+          echo "packages_changed=$PACKAGES_CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Check cross-app impact
+        id: impact
+        run: |
+          # If api-contracts.json exists, check for cross-app impact
+          IMPACT=""
+          for contract in apps/*/api-contracts.json; do
+            [ -f "$contract" ] || continue
+            APP_DIR=$(dirname "$contract")
+            APP_NAME=$(basename "$APP_DIR")
+
+            # Get list of provided endpoints from this app
+            PROVIDES=$(jq -r '.provides[]?.endpoint // empty' "$contract" 2>/dev/null)
+            if [ -z "$PROVIDES" ]; then continue; fi
+
+            # Check if any changed files implement a provided endpoint
+            CHANGED_IN_APP=$(git diff --name-only origin/main...HEAD -- "$APP_DIR/src/" 2>/dev/null || echo "")
+            if [ -n "$CHANGED_IN_APP" ]; then
+              CONSUMERS=$(jq -r '.provides[]?.consumers[]? // empty' "$contract" 2>/dev/null | sort -u)
+              if [ -n "$CONSUMERS" ]; then
+                IMPACT="$IMPACT\n⚠️ CROSS-APP: Changes in $APP_NAME may affect: $CONSUMERS"
+              fi
+            fi
+          done
+
+          if [ -n "$IMPACT" ]; then
+            echo "has_impact=true" >> $GITHUB_OUTPUT
+            echo "impact_message<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$IMPACT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "has_impact=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-6
+          direct_prompt: |
+            Review this PR. Affected apps: ${{ steps.detect.outputs.affected }}
+
+            Check for:
+            1. **Correctness**: Does the code do what the PR title/description says?
+            2. **Safety**: SQL injection, XSS, auth bypass, or data exposure risks?
+            3. **Cross-app impact**: Does this change an API contract consumed by other services?
+            4. **Migration safety** (PATHS): Schema change without migration file?
+            5. **Build risk**: Could this break the production build?
+            6. **Monorepo hygiene**: Changes scoped to the correct app directory?
+
+            ${{ steps.impact.outputs.has_impact == 'true' && steps.impact.outputs.impact_message || '' }}
+
+            Be concise. Flag only real issues, not style preferences.
+            If the PR looks good, say so briefly.
+
+      - name: Post cross-app impact warning
+        if: steps.impact.outputs.has_impact == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const impact = `${{ steps.impact.outputs.impact_message }}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `### Cross-App Impact Detected\n\n${impact}\n\nPlease verify these consumers still work after this change lands.`
+            });
