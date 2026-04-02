@@ -83,7 +83,8 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: claude-sonnet-4-6
-          direct_prompt: |
+          timeout_minutes: 5
+          prompt: |
             Review this PR. Affected apps: ${{ steps.detect.outputs.affected }}
 
             Check for:
