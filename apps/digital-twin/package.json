@@ -1,6 +1,7 @@
 {
   "name": "limitless-digital-twin",
   "version": "0.1.0",
+  "homepage": "https://limitless-longevity.health",
   "type": "module",
   "private": true,
   "engines": {
