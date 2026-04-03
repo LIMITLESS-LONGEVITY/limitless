@@ -130,6 +130,8 @@ function buildVolumeMounts(
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1',
     CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
+    GH_TOKEN: process.env.GH_TOKEN || '',
+    GITHUB_TOKEN: process.env.GH_TOKEN || '',
   };
   // Merge containerConfig.envVars (e.g., AGENT_ROLE, AGENT_SCOPE)
   const groupEnvVars = group.containerConfig?.envVars || {};
@@ -236,6 +238,12 @@ async function buildContainerArgs(
 
   // Pass host timezone so container's local time matches the user's
   args.push('-e', `TZ=${TIMEZONE}`);
+
+  // Pass GitHub token for git push + PR creation in worker containers
+  if (process.env.GH_TOKEN) {
+    args.push('-e', `GH_TOKEN=${process.env.GH_TOKEN}`);
+    args.push('-e', `GITHUB_TOKEN=${process.env.GH_TOKEN}`);
+  }
 
   // OneCLI gateway handles credential injection — containers never see real secrets.
   // The gateway intercepts HTTPS traffic and injects API keys or OAuth tokens.
