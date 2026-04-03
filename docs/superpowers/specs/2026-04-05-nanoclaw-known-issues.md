@@ -93,9 +93,76 @@ All Discord messages in channels the bot is in are now stored in the database, n
 
 ---
 
+---
+
+## 3. Director Commands Don't Reach Architect via #human Channel
+
+**Severity:** Medium — blocks the intended Director → Architect command flow
+**Discovered:** 2026-04-05 (F.4 end-to-end test)
+
+### Problem
+
+The intended flow is: Director posts to #human → Architect receives and orchestrates. But #human (`dc:1487865397045625074`) is registered as a **separate non-main group**. Posting there spawns a generic worker container with the global CLAUDE.md, not the Architect's orchestration CLAUDE.md.
+
+Additionally, the Director's commands posted via the Claude Code Discord plugin (a bot) are **filtered in #main-ops** because the main group blocks bot messages (PR #7, line 57: `if (message.author.bot && group?.isMain) return;`). The Director must type directly in Discord for the Architect to see the message.
+
+### Current Workaround
+
+Director types commands directly in #main-ops from their Discord account (human messages, not bot).
+
+### Planned Fix Options
+
+**Option A: Bot allowlist for main group**
+Add a trusted bot ID list to the main group's message filter. The Claude Code plugin bot and any future Director tools get allowlisted. Other bots still blocked.
+
+```typescript
+const TRUSTED_BOT_IDS = (process.env.TRUSTED_BOT_IDS || '').split(',').filter(Boolean);
+if (message.author.bot && group?.isMain && !TRUSTED_BOT_IDS.includes(message.author.id)) return;
+```
+
+**Option B: Route #human to Architect**
+Deregister #human as a separate group. Instead, make the Architect's proactive check (30-min cron) also scan #human for new messages. Latency: up to 30 minutes.
+
+**Option C: Merge #human into #main-ops**
+Eliminate #human entirely. Director commands go to #main-ops alongside Architect status posts. Simpler, but mixes Director commands with Architect output.
+
+**Recommendation:** Option A — most precise, minimal latency, preserves channel separation.
+
+### Impact on End-to-End Test
+
+The F.4 test requires the Director to type in Discord directly. This works but is inconvenient for a Director who wants to send commands via the Claude Code CLI session (which uses the bot).
+
+---
+
+## 4. Stale CLAUDE.md in Running Containers
+
+**Severity:** Low — one-time issue during deployment
+**Discovered:** 2026-04-05 (F.4 end-to-end test)
+
+### Problem
+
+NanoClaw loads the group CLAUDE.md when a container starts and caches it for the container's lifetime. If the CLAUDE.md is updated on the host while a container is running (e.g., during deployment), the running container still uses the old version. The Architect container that was alive during our deployment continued using the old "Andy" instructions instead of the new orchestration protocol.
+
+### Fix
+
+Stop the running container after deployment so the next message triggers a fresh spawn with the updated CLAUDE.md. Add this to the deploy script:
+
+```bash
+# After npm run build:
+docker stop $(docker ps -q --filter "name=nanoclaw-discord-limitless-ops") 2>/dev/null || true
+```
+
+### Prevention
+
+Add a deploy step that kills all running NanoClaw containers after a code/CLAUDE.md update. The next incoming message will spawn fresh containers with the new code.
+
+---
+
 ## Tracking
 
 | Issue | Severity | Status | Fix |
 |-------|----------|--------|-----|
 | execSync blocks event loop | Low | **DEFERRED** — monitor | Replace with async exec when blocking exceeds 3s |
 | Registration race condition | High | **FIXED** (PR #13) | Store all Discord messages, process on registration |
+| Director commands don't reach Architect | Medium | **OPEN** — needs PR | Option A: bot allowlist for main group |
+| Stale CLAUDE.md after deploy | Low | **WORKAROUND** — manual container stop | Add container kill to deploy script |
