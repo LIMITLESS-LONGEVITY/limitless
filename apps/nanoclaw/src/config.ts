@@ -81,6 +81,15 @@ export function getTriggerPattern(trigger?: string): RegExp {
 
 export const TRIGGER_PATTERN = buildTriggerPattern(DEFAULT_TRIGGER);
 
+// Notification channels that any group can post to (bypasses normal message authorization).
+// Workers write { type: 'notification', channel: '<key>', text: '...' } to their IPC dir.
+export const NOTIFICATION_CHANNELS: Record<string, string> = {
+  'main-ops': process.env.DISCORD_CHANNEL_MAIN_OPS || '',
+  'workbench-ops': process.env.DISCORD_CHANNEL_WORKBENCH_OPS || '',
+  'alerts': process.env.DISCORD_CHANNEL_ALERTS || '',
+  'workers': process.env.DISCORD_CHANNEL_WORKERS || '',
+};
+
 // Timezone for scheduled tasks, message formatting, etc.
 // Validates each candidate is a real IANA identifier before accepting.
 function resolveConfigTimezone(): string {
