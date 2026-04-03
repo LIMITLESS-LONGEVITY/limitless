@@ -3,7 +3,7 @@
 **Date:** 2026-04-05
 **Author:** Architect (Main Instance), with Director input
 **Classification:** Internal — Division Director
-**Status:** DRAFT — Pending Director Review
+**Status:** APPROVED — All 5 decisions finalized, NanoClaw fork created, all P0 patterns captured (2026-04-05)
 **Supersedes:** Sections 3.1-3.4 of `2026-04-02-agentic-division-implementation-plan.md` (agent topology, registry, operational model, division of labour)
 
 ---
@@ -213,7 +213,7 @@ SPAWNED ──[NanoClaw creates container]──> INITIALIZING
 | Spawn executor/debugger/verifier containers | Yes | Operational necessity |
 | Create and post handoffs | Yes | Already approved in current CLAUDE.md |
 | Review PRs (non-architectural) | Yes | Routine quality gate |
-| Merge PRs to main | **Director approval required** | Deploys to production |
+| Merge PRs to main | **Yes — if CI passes.** Notifies Director before merge for monitoring. | CI + verifier are the safety gate. Director monitors, doesn't approve. |
 | Retry failed workers (up to 2x) | Yes | Self-healing |
 | Escalate stuck workers to #alerts | Yes | Defined escalation path |
 | Modify NanoClaw code | **PR + Director review** | Self-modification governance (existing spec) |
@@ -229,6 +229,96 @@ SPAWNED ──[NanoClaw creates container]──> INITIALIZING
 | Architect itself crashes | NanoClaw restarts container (systemd) | Director launches local Architect as fallback |
 | All workers fail on same task | Architect posts diagnosis to #alerts, halts | Director reviews and re-scopes task |
 | Cross-app dependency conflict | Architect sequences work (dependent tasks wait) | If deadlock detected: escalate |
+
+### 4.6 Task Lifecycle State Machine
+
+Tasks have formal states tracked in the Architect's IPC directory. The Architect writes state to disk after every transition — this is the crash recovery contract.
+
+```
+PENDING ──[Architect assigns to worker]──> IN_PROGRESS
+  │                                            │
+  │                              ┌─────────────┴─────────────┐
+  │                              │                           │
+  │                     [completion signal]          [failure signal]
+  │                              │                           │
+  │                              ▼                           ▼
+  │                         COMPLETED                    FAILED
+  │                                                        │
+  │                                           ┌────────────┴────────────┐
+  │                                           │                        │
+  │                                   [retries < max]          [retries >= max]
+  │                                           │                        │
+  │                                           ▼                        ▼
+  │                                      IN_PROGRESS              ESCALATED
+  │                                      (reassigned)          (posted to #alerts)
+  └───[depends_on all COMPLETED]──> PENDING (ready for assignment)
+```
+
+**State file** (`/ipc/architect/tasks.json`):
+
+```json
+{
+  "tasks": [
+    {
+      "id": "task-001",
+      "role": "executor",
+      "scope": "apps/paths",
+      "description": "Fix lesson redirect — add basePath...",
+      "status": "in_progress",
+      "assigned_to": "worker-1",
+      "spawned_at": "2026-04-05T10:15:00Z",
+      "depends_on": [],
+      "verify_steps": ["pnpm build", "navigate lesson → complete → check URL"],
+      "pr_url": null,
+      "retries": 0,
+      "max_retries": 2
+    }
+  ]
+}
+```
+
+**Enforcement:** This is filesystem state, not CLAUDE.md. The Architect reads it on startup, the NanoClaw host process can read it for monitoring, and it survives container restarts.
+
+### 4.7 Worker Iteration Tracking
+
+Workers maintain iteration state in their IPC directory. This prevents the most common autonomous failure: retrying the same broken approach indefinitely.
+
+**State file** (`/ipc/worker-1/iteration-state.json`):
+
+```json
+{
+  "iteration": 3,
+  "max_iterations": 10,
+  "last_error_hash": "a1b2c3d4",
+  "same_error_count": 2,
+  "changed_files": ["src/routes/profile.ts", "src/plugins/auth.ts"],
+  "status": "executing"
+}
+```
+
+**Hard rules** (enforced by NanoClaw host process reading worker IPC, NOT by CLAUDE.md):
+- `iteration >= max_iterations` → NanoClaw terminates container, writes FAILED to task state
+- `same_error_count >= 3` → NanoClaw terminates container, writes ESCALATED to task state
+- Worker heartbeat absent for 10 minutes → NanoClaw terminates container, writes FAILED
+
+The worker's CLAUDE.md guides it to update the iteration file after each attempt, but even if the agent fails to update it, the NanoClaw host monitors container runtime and enforces the timeout independently.
+
+### 4.8 Crash Recovery Protocol
+
+If the Architect container crashes mid-orchestration:
+
+1. **NanoClaw detects exit** → restarts container (Docker restart policy + systemd)
+2. **Architect reads `/ipc/architect/tasks.json`** on startup
+3. **For each task:**
+   - `in_progress` + worker heartbeat alive → resume monitoring (do nothing)
+   - `in_progress` + worker heartbeat stale → worker died → terminate container, set FAILED, reassign if retries remain
+   - `pending` + depends_on all COMPLETED → spawn worker
+   - `pending` + depends_on not met → wait
+   - `completed` → skip (check if PR was merged, post summary if not already posted)
+   - `escalated` → skip (already posted to #alerts)
+4. **Post recovery notice** to #main-ops: "Architect restarted. Resuming orchestration of N tasks."
+
+**Design choice:** Simple JSON files with filesystem writes, NOT an event-sourced state machine. OMX uses event sourcing (Rust `omx-runtime-core`) because it handles 10+ concurrent workers with complex authority leasing. We have max 4 workers — JSON files with atomic writes are sufficient and dramatically simpler to debug.
 
 ---
 
@@ -396,7 +486,7 @@ Replace domain-specific agent definitions (`.claude/agents/*.md`) with capabilit
 | #handoffs | **Repurpose** | Architect-to-worker task assignment (structured, not free-form) |
 | #alerts | Keep | Escalations to Director |
 | #human | Keep | Director commands to Architect |
-| #paths-eng, #cubes-eng, etc. | **Consolidate to #workers** | Workers are capability-based, not domain-based; one channel suffices |
+| #paths-eng, #cubes-eng, etc. | **Consolidate to #workers** (Decision #4) | Workers are capability-based, not domain-based; one channel for all worker activity |
 
 ### 6.5 CLAUDE.md Changes
 
@@ -505,12 +595,12 @@ This is the same operational model that Sigrid Jin and Yeachan Heo demonstrated 
 
 ---
 
-## 10. Open Questions for Director
+## 10. Director Decisions (All Finalized — 2026-04-05)
 
-| # | Question | Options |
-|---|----------|---------|
-| 1 | **PR merge authority** — should the Architect be able to merge PRs autonomously (with CI passing), or require Director approval for every merge? | A: Architect merges autonomously if CI passes + verifier approves. B: Director merges all. C: Architect merges P2/P3, Director merges P0/P1. |
-| 2 | **Worker concurrency limit** — how many simultaneous workers on the CX33 VPS? | A: 2 (conservative, ~3GB RAM each). B: 3 (moderate). C: 4 (aggressive, may need CX42 upgrade). |
-| 3 | **NanoClaw fork timing** — create the fork now to unblock Phase B? | A: Yes, create now. B: After reviewing this spec. |
-| 4 | **Domain-specific engineer channels** — consolidate #paths-eng/#cubes-eng/etc. into #workers, or keep them? | A: Consolidate (simpler, capability-based). B: Keep (familiar, domain context in channel history). |
-| 5 | **Scope of Phase A** — rewrite all agent definitions now, or create new ones alongside existing? | A: Clean break — delete domain agents, create capability agents. B: Parallel — keep both during transition. |
+| # | Question | Decision | Rationale |
+|---|----------|----------|-----------|
+| 1 | **PR merge authority** | **Architect merges autonomously if CI passes.** Notifies Director before merge for monitoring. | Director monitors, doesn't operate. CI + verifier provide the safety gate. |
+| 2 | **Worker concurrency** | **4 simultaneous workers.** Monitor performance, scale VPS up if needed. | Aggressive but right-sized — we can always upgrade the CX33 to CX42 if RAM is tight. |
+| 3 | **NanoClaw fork** | **Created: `LIMITLESS-LONGEVITY/nanoclaw`** (forked from `qwibitai/nanoclaw`, 2026-04-05). | Critical path unblocked. Phases B-E can begin. |
+| 4 | **Discord channels** | **Consolidate to #workers.** Delete domain-specific engineer channels. | Domain channels were for domain agents. Capability-based agents don't map to domains. One channel, 4 max workers — clean enough. Split later if noisy at scale. |
+| 5 | **Transition approach** | **Clean break.** Delete domain agent definitions, create capability agents. | No parallel period. We're not going back to domain-based. |
