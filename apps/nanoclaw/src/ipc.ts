@@ -162,6 +162,79 @@ export function startIpcWatcher(deps: IpcDeps): void {
       } catch (err) {
         logger.error({ err, sourceGroup }, 'Error reading IPC tasks directory');
       }
+      // Process status from this group's IPC directory (heartbeat, completion, failure)
+      const statusDir = path.join(ipcBaseDir, sourceGroup, 'status');
+      try {
+        if (fs.existsSync(statusDir)) {
+          const statusFiles = fs
+            .readdirSync(statusDir)
+            .filter((f) => f.endsWith('.json'));
+          for (const file of statusFiles) {
+            const filePath = path.join(statusDir, file);
+            try {
+              const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+              // Relay status to main group's worker-status directory
+              const mainFolder = [...folderIsMain.entries()].find(([, v]) => v)?.[0];
+              if (mainFolder) {
+                const workerStatusDir = path.join(ipcBaseDir, mainFolder, 'worker-status');
+                fs.mkdirSync(workerStatusDir, { recursive: true });
+                fs.writeFileSync(
+                  path.join(workerStatusDir, `${sourceGroup}.json`),
+                  JSON.stringify(
+                    { ...data, workerGroup: sourceGroup, relayedAt: new Date().toISOString() },
+                    null,
+                    2,
+                  ),
+                );
+                logger.debug(
+                  { sourceGroup, type: data.type },
+                  'Worker status relayed to main group',
+                );
+              }
+              fs.unlinkSync(filePath);
+            } catch (err) {
+              logger.error(
+                { file, sourceGroup, err },
+                'Error processing IPC status',
+              );
+              const errorDir = path.join(ipcBaseDir, 'errors');
+              fs.mkdirSync(errorDir, { recursive: true });
+              fs.renameSync(
+                filePath,
+                path.join(errorDir, `${sourceGroup}-status-${file}`),
+              );
+            }
+          }
+        }
+      } catch (err) {
+        logger.error({ err, sourceGroup }, 'Error reading IPC status directory');
+      }
+    }
+
+    // Stale heartbeat detection: check all relayed worker statuses
+    const mainFolderForStale = [...folderIsMain.entries()].find(([, v]) => v)?.[0];
+    if (mainFolderForStale) {
+      const workerStatusDir = path.join(ipcBaseDir, mainFolderForStale, 'worker-status');
+      if (fs.existsSync(workerStatusDir)) {
+        for (const entry of fs.readdirSync(workerStatusDir).filter((f) => f.endsWith('.json'))) {
+          try {
+            const statusPath = path.join(workerStatusDir, entry);
+            const statusData = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
+            if (statusData.type === 'heartbeat' && statusData.timestamp && !statusData.stale) {
+              const ageMs = Date.now() - new Date(statusData.timestamp).getTime();
+              if (ageMs > 10 * 60 * 1000) {
+                statusData.stale = true;
+                statusData.staleDetectedAt = new Date().toISOString();
+                fs.writeFileSync(statusPath, JSON.stringify(statusData, null, 2));
+                logger.warn(
+                  { workerGroup: statusData.workerGroup, ageMinutes: Math.round(ageMs / 60000) },
+                  'Stale worker heartbeat detected',
+                );
+              }
+            }
+          } catch { /* skip malformed entries */ }
+        }
+      }
     }
 
     setTimeout(processIpcFiles, IPC_POLL_INTERVAL);
