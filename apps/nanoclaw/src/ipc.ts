@@ -1,9 +1,10 @@
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
 import { CronExpressionParser } from 'cron-parser';
 
-import { DATA_DIR, IPC_POLL_INTERVAL, NOTIFICATION_CHANNELS, TIMEZONE } from './config.js';
+import { DATA_DIR, IPC_POLL_INTERVAL, MONOREPO_PATH, NOTIFICATION_CHANNELS, TIMEZONE, WORKTREE_BASE } from './config.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, deleteRegisteredGroup, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -544,6 +545,29 @@ export async function processTaskIpc(
           requiresTrigger: data.requiresTrigger,
           isMain: existingGroup?.isMain,
         });
+
+        // Create git worktree for worker groups that have AGENT_SCOPE
+        const envVars = data.containerConfig?.envVars;
+        if (MONOREPO_PATH && envVars?.AGENT_SCOPE) {
+          try {
+            const worktreeDir = path.join(WORKTREE_BASE, data.folder);
+            const branchName = `work/${(envVars.AGENT_ROLE || 'worker')}-${data.folder}-${Date.now()}`;
+            fs.mkdirSync(WORKTREE_BASE, { recursive: true });
+            execSync(
+              `git worktree add "${worktreeDir}" -b "${branchName}"`,
+              { cwd: MONOREPO_PATH, stdio: 'pipe' },
+            );
+            logger.info(
+              { folder: data.folder, worktreeDir, branchName },
+              'Git worktree created for worker group',
+            );
+          } catch (err) {
+            logger.error(
+              { folder: data.folder, err },
+              'Failed to create git worktree for worker (non-fatal)',
+            );
+          }
+        }
       } else {
         logger.warn(
           { data },
@@ -590,6 +614,27 @@ export async function processTaskIpc(
             // but remove IPC dir to prevent stale message processing
           } catch (err) {
             logger.error({ err, folder: targetGroup.folder }, 'Error cleaning up deregistered group');
+          }
+          // Clean up git worktree if one was created
+          if (MONOREPO_PATH) {
+            const worktreeDir = path.join(WORKTREE_BASE, targetGroup.folder);
+            try {
+              if (fs.existsSync(worktreeDir)) {
+                execSync(
+                  `git worktree remove "${worktreeDir}" --force`,
+                  { cwd: MONOREPO_PATH, stdio: 'pipe' },
+                );
+                logger.info(
+                  { folder: targetGroup.folder, worktreeDir },
+                  'Git worktree removed for deregistered group',
+                );
+              }
+            } catch (err) {
+              logger.error(
+                { folder: targetGroup.folder, err },
+                'Failed to remove git worktree (non-fatal)',
+              );
+            }
           }
           // Refresh in-memory groups
           await deps.syncGroups(true);

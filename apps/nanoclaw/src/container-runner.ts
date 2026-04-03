@@ -15,6 +15,7 @@ import {
   IDLE_TIMEOUT,
   ONECLI_URL,
   TIMEZONE,
+  WORKTREE_BASE,
 } from './config.js';
 import { resolveGroupFolderPath, resolveGroupIpcPath } from './group-folder.js';
 import { logger } from './logger.js';
@@ -209,6 +210,18 @@ function buildVolumeMounts(
       isMain,
     );
     mounts.push(...validatedMounts);
+  }
+
+  // Mount git worktree for worker groups (created by register_group IPC handler)
+  if (!isMain && WORKTREE_BASE && group.containerConfig?.envVars?.AGENT_SCOPE) {
+    const worktreeDir = path.join(WORKTREE_BASE, group.folder);
+    if (fs.existsSync(worktreeDir)) {
+      mounts.push({
+        hostPath: worktreeDir,
+        containerPath: '/workspace/extra/monorepo',
+        readonly: false,
+      });
+    }
   }
 
   return mounts;

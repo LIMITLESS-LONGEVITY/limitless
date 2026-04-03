@@ -133,13 +133,17 @@ export class DiscordChannel implements Channel {
       const isGroup = message.guild !== null;
       this.opts.onChatMetadata(chatJid, timestamp, chatName, 'discord', isGroup);
 
-      // Only deliver full message for registered groups
+      // Store message even for unregistered channels — the message loop
+      // will skip unregistered groups, but the message is buffered in the DB.
+      // This eliminates the race condition where the Architect registers a
+      // worker group via IPC and sends a Discord task message before the IPC
+      // watcher processes the registration. Without this, the task message
+      // would be discarded and the worker would never spawn.
       if (!group) {
         logger.debug(
           { chatJid, chatName },
-          'Message from unregistered Discord channel',
+          'Message from unregistered Discord channel (stored, not processed until registered)',
         );
-        return;
       }
 
       // Deliver message — trusted bot messages stored with is_bot_message: false

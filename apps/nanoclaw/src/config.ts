@@ -81,6 +81,13 @@ export function getTriggerPattern(trigger?: string): RegExp {
 
 export const TRIGGER_PATTERN = buildTriggerPattern(DEFAULT_TRIGGER);
 
+
+// Monorepo path for git worktree creation (workers get isolated worktrees)
+export const MONOREPO_PATH = process.env.LIMITLESS_MONOREPO_PATH || '';
+
+// Worktree base directory (worktrees created here, mounted into worker containers)
+export const WORKTREE_BASE = process.env.LIMITLESS_WORKTREE_BASE || '/tmp/nanoclaw-worktrees';
+
 // Notification channels that any group can post to (bypasses normal message authorization).
 // Workers write { type: 'notification', channel: '<key>', text: '...' } to their IPC dir.
 export const NOTIFICATION_CHANNELS: Record<string, string> = {
