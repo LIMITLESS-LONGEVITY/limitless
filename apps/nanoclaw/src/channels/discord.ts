@@ -142,7 +142,8 @@ export class DiscordChannel implements Channel {
         return;
       }
 
-      // Deliver message
+      // Deliver message — trusted bot messages stored with is_bot_message: false
+      // so DB queries (AND is_bot_message = 0) include them in the message loop
       this.opts.onMessage(chatJid, {
         id: msgId,
         chat_jid: chatJid,
