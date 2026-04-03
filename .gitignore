@@ -28,6 +28,7 @@ Thumbs.db
 *.bak
 TEMP/
 
-# PDFs
+# PDFs and business docs
 *.pdf
+*.docx
 test-results/

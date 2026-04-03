@@ -9,7 +9,7 @@ function assertAccess(request: { user: { id: string } | null; service: { name: s
   // Service keys with appropriate scopes bypass user ownership check
   if (request.service) return null;
   if (!request.user) return 401 as const;
-  if (String(request.user.id) !== String(userId)) return 403 as const;
+  if (request.user.id !== userId) return 403 as const;
   return null;
 }
 

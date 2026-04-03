@@ -19,7 +19,7 @@ function assertAuth(
 
   // User JWT auth
   if (!request.user) return 401;
-  if (String(request.user.id) !== String(userId)) return 403;
+  if (request.user.id !== userId) return 403;
   return null;
 }
 

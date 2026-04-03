@@ -9,7 +9,7 @@ import { calculateLongevityScore } from '../services/longevity-score.js';
 function assertAccess(request: { user: { id: string } | null; service: { name: string; scopes: string[] } | null }, userId: string) {
   if (request.service) return null;
   if (!request.user) return 401 as const;
-  if (String(request.user.id) !== String(userId)) return 403 as const;
+  if (request.user.id !== userId) return 403 as const;
   return null;
 }
 

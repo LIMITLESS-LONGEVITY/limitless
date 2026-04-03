@@ -24,7 +24,7 @@ function assertAccess(
   if (request.service) return null;
   if (!request.user) return 401 as const;
   if (request.user.role === 'admin') return null;
-  if (String(request.user.id) !== String(userId)) return 403 as const;
+  if (request.user.id !== userId) return 403 as const;
   return null;
 }
 

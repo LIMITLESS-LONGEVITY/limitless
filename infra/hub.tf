@@ -85,12 +85,20 @@ resource "render_web_service" "hub" {
       value = var.resend_from_address
     }
 
+    # Service-to-service auth (HUB→PATHS tier-sync)
+    HUB_SERVICE_KEY = {
+      value = var.hub_service_key
+    }
+
     # URLs
     NEXT_PUBLIC_HUB_URL = {
       value = "https://hub.limitless-longevity.health"
     }
     NEXT_PUBLIC_PATHS_URL = {
       value = "https://paths.limitless-longevity.health"
+    }
+    PATHS_INTERNAL_URL = {
+      value = "https://paths-api.limitless-longevity.health"
     }
 
     # Node

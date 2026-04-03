@@ -60,6 +60,34 @@ variable "r2_secret_access_key" {
   sensitive   = true
 }
 
+# --- Service-to-Service Auth ---
+
+variable "hub_service_key" {
+  description = "Shared service key for HUB→PATHS internal API calls (tier-sync)"
+  type        = string
+  sensitive   = true
+}
+
+variable "paths_dt_service_key" {
+  description = "Service key for PATHS→Digital Twin API calls (health profile sync, ai-context)"
+  type        = string
+  sensitive   = true
+}
+
+# --- Wearable OAuth ---
+
+variable "oura_client_id" {
+  description = "Oura Ring OAuth2 client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "oura_client_secret" {
+  description = "Oura Ring OAuth2 client secret"
+  type        = string
+  sensitive   = true
+}
+
 # --- Stripe ---
 
 variable "stripe_secret_key" {

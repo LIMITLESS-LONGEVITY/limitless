@@ -1,4 +1,5 @@
 import fp from 'fastify-plugin';
+import jwt from 'jsonwebtoken';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
 export interface AuthUser {
@@ -14,43 +15,26 @@ declare module 'fastify' {
   }
 }
 
-const PATHS_API_URL = process.env.PATHS_API_URL || 'https://app.limitless-longevity.health/learn';
-
 async function authPlugin(fastify: FastifyInstance) {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    fastify.log.warn('JWT_SECRET not set — auth will reject all requests');
+  }
+
   fastify.decorateRequest('user', null);
 
   fastify.addHook('onRequest', async (request: FastifyRequest) => {
     const token = request.cookies['payload-token'];
-    if (!token) {
+
+    if (!token || !jwtSecret) {
       request.user = null;
       return;
     }
 
     try {
-      const res = await fetch(`${PATHS_API_URL}/api/users/me`, {
-        headers: {
-          Authorization: `JWT ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        request.user = null;
-        return;
-      }
-
-      const data = await res.json();
-      if (!data.user) {
-        request.user = null;
-        return;
-      }
-
-      // Convert id to string for consistent comparison with route params
-      request.user = {
-        id: String(data.user.id),
-        email: data.user.email,
-        role: data.user.role,
-        collection: data.user.collection || 'users',
-      };
+      const decoded = jwt.verify(token, jwtSecret) as AuthUser;
+      request.user = decoded;
     } catch {
       request.user = null;
     }

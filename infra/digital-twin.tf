@@ -53,7 +53,7 @@ resource "render_web_service" "digital_twin" {
     }
   }
 
-  start_command = "node dist/index.js"
+  start_command = "npx drizzle-kit push --force && node dist/index.js"
 
   env_vars = {
     DATABASE_URL = {
@@ -70,6 +70,22 @@ resource "render_web_service" "digital_twin" {
 
     NODE_ENV = {
       value = "production"
+    }
+
+    # Service-to-service auth
+    HUB_SERVICE_KEY = {
+      value = var.hub_service_key
+    }
+    PATHS_SERVICE_KEY = {
+      value = var.paths_dt_service_key
+    }
+
+    # Wearable OAuth
+    OURA_CLIENT_ID = {
+      value = var.oura_client_id
+    }
+    OURA_CLIENT_SECRET = {
+      value = var.oura_client_secret
     }
   }
 }

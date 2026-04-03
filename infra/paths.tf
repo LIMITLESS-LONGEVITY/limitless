@@ -124,6 +124,17 @@ resource "render_web_service" "paths_api" {
       value = var.stripe_webhook_secret
     }
 
+    # Service-to-service auth
+    HUB_SERVICE_KEY = {
+      value = var.hub_service_key
+    }
+    DT_SERVICE_URL = {
+      value = "https://digital-twin-api.limitless-longevity.health"
+    }
+    DT_SERVICE_KEY = {
+      value = var.paths_dt_service_key
+    }
+
     # AI Provider
     AI_PROVIDER_DEFAULT_BASE_URL = {
       value = var.ai_provider_default_base_url
