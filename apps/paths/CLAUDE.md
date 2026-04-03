@@ -121,3 +121,5 @@ pnpm build && pnpm lint
 26. **Payload Drizzle column naming** — `_verificationToken` maps to `_verificationtoken` (all lowercase)
 27. **Guide search index is auto-generated** — `prebuild` runs `scripts/build-guide-search-index.ts`
 28. **Guide sidebar must be inside container** — wrap in `container mx-auto` to align with header
+29. **Feedback table DOES NOT EXIST** — `Feedback` collection is in `payload.config.ts` but no migration was ever generated to create the `feedback` table. The `feedback_id` column in `payload_locked_documents_rels` has no FK constraint. API calls to `/api/feedback` will fail. See `docs/superpowers/specs/2026-04-05-paths-migration-state-audit.md`.
+30. **Migration state audit** — full migration chain, known gaps, and incident history documented at `docs/superpowers/specs/2026-04-05-paths-migration-state-audit.md`. Read before touching any migration.
