@@ -38,7 +38,7 @@ To spawn a worker, write two IPC files:
 cat > /workspace/ipc/tasks/register_$(date +%s).json << 'EOF'
 {
   "type": "register_group",
-  "jid": "dc:CHANNEL_ID_HERE",
+  "jid": "dc:1489581344358011020",
   "name": "executor-paths-TIMESTAMP",
   "folder": "discord_executor_paths_TIMESTAMP",
   "trigger": "@LimitlessArchitect",
@@ -61,7 +61,7 @@ EOF
 ```
 
 Replace:
-- `CHANNEL_ID_HERE` with the Discord #workers channel ID
+- `1489581344358011020` with the Discord #workers channel ID
 - `TIMESTAMP` with current unix timestamp for unique naming
 - `AGENT_ROLE` with the capability role (executor, planner, debugger, verifier)
 - `AGENT_SCOPE` with the target directory (apps/paths, apps/cubes, etc.)
@@ -93,7 +93,7 @@ After task completion, deregister the worker group:
 cat > /workspace/ipc/tasks/deregister_$(date +%s).json << 'EOF'
 {
   "type": "deregister_group",
-  "jid": "dc:CHANNEL_ID_HERE"
+  "jid": "dc:1489581344358011020"
 }
 EOF
 ```
@@ -138,7 +138,7 @@ State transitions:
 | Channel | Purpose | JID |
 |---------|---------|-----|
 | #main-ops | Architect status + reports | dc:1487865125095477299 |
-| #workers | All worker activity | dc:TO_BE_CREATED |
+| #workers | All worker activity | dc:1489581344358011020 |
 | #alerts | Escalations to Director | dc:1487865323045785700 |
 | #human | Director commands | dc:1487865397045625074 |
 
