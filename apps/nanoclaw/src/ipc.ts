@@ -5,7 +5,7 @@ import { CronExpressionParser } from 'cron-parser';
 
 import { DATA_DIR, IPC_POLL_INTERVAL, TIMEZONE } from './config.js';
 import { AvailableGroup } from './container-runner.js';
-import { createTask, deleteTask, getTaskById, updateTask } from './db.js';
+import { createTask, deleteTask, deleteRegisteredGroup, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
 import { logger } from './logger.js';
 import { RegisteredGroup } from './types.js';
@@ -462,6 +462,56 @@ export async function processTaskIpc(
       }
       break;
 
+
+    case 'deregister_group':
+      // Only main group can deregister groups
+      if (!isMain) {
+        logger.warn(
+          { sourceGroup },
+          'Unauthorized deregister_group attempt blocked',
+        );
+        break;
+      }
+      if (data.jid) {
+        const targetGroup = registeredGroups[data.jid];
+        if (!targetGroup) {
+          logger.warn(
+            { jid: data.jid },
+            'Cannot deregister: group not found',
+          );
+          break;
+        }
+        // Safety: never allow deregistering the main group
+        if (targetGroup.isMain) {
+          logger.warn(
+            { jid: data.jid },
+            'Cannot deregister main group',
+          );
+          break;
+        }
+        const deleted = deleteRegisteredGroup(data.jid);
+        if (deleted) {
+          // Clean up group folder (IPC dir, session data)
+          const groupDir = path.join(DATA_DIR, 'groups', targetGroup.folder);
+          const ipcDir = path.join(DATA_DIR, 'ipc', targetGroup.folder);
+          try {
+            if (fs.existsSync(ipcDir)) fs.rmSync(ipcDir, { recursive: true });
+            // Keep group folder for session history (logs, CLAUDE.md)
+            // but remove IPC dir to prevent stale message processing
+          } catch (err) {
+            logger.error({ err, folder: targetGroup.folder }, 'Error cleaning up deregistered group');
+          }
+          // Refresh in-memory groups
+          await deps.syncGroups(true);
+          logger.info(
+            { jid: data.jid, folder: targetGroup.folder, sourceGroup },
+            'Group deregistered via IPC',
+          );
+        }
+      } else {
+        logger.warn({ data }, 'Invalid deregister_group request - missing jid');
+      }
+      break;
     default:
       logger.warn({ type: data.type }, 'Unknown IPC task type');
   }
