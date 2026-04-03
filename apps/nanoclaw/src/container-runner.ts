@@ -15,6 +15,7 @@ import {
   IDLE_TIMEOUT,
   ONECLI_URL,
   TIMEZONE,
+  MONOREPO_PATH,
   WORKTREE_BASE,
 } from './config.js';
 import { resolveGroupFolderPath, resolveGroupIpcPath } from './group-folder.js';
