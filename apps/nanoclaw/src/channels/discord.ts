@@ -54,7 +54,10 @@ export class DiscordChannel implements Channel {
       const chatJid = `dc:${channelId}`;
 
       const group = this.opts.registeredGroups()[chatJid];
-      if (message.author.bot && group?.isMain) return;
+      if (message.author.bot && group?.isMain) {
+        const trustedBots = (process.env.TRUSTED_BOT_IDS || '').split(',').filter(Boolean);
+        if (!trustedBots.includes(message.author.id)) return;
+      }
 
       let content = message.content;
       const timestamp = message.createdAt.toISOString();

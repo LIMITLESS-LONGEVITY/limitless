@@ -158,11 +158,89 @@ Add a deploy step that kills all running NanoClaw containers after a code/CLAUDE
 
 ---
 
+---
+
+## 5. GH_TOKEN Not Reaching Subagent Shell Processes (FIXED)
+
+**Severity:** High — blocked all autonomous PR creation
+**Discovered:** 2026-04-05 (F.4 end-to-end test)
+**Root cause identified by:** VPS Architect (collaborative debugging session)
+
+### Problem
+
+Docker `-e GH_TOKEN` injects the token into the container's process environment table. The main agent process (Node.js) sees it via `process.env.GH_TOKEN`. But when the Agent SDK spawns a **subagent** that runs bash commands (`git push`, `gh pr create`), the subagent's shell is a **non-login, non-interactive shell** that:
+- Has the token in `env` output (reads from process table)
+- Does NOT have `$GH_TOKEN` as a shell variable (shell doesn't auto-export inherited env)
+
+`env | grep GH_TOKEN` → present. `echo $GH_TOKEN` → empty. This is a shell initialization behavior, not a Docker or Agent SDK bug.
+
+### Root Cause Chain
+
+```
+Docker -e GH_TOKEN=xxx     → container process environment table ✅
+  → Node.js process.env    → sees GH_TOKEN ✅
+  → Agent SDK bash tool     → spawns non-login shell
+    → process env table     → GH_TOKEN present (env shows it) ✅
+    → shell variable space  → $GH_TOKEN empty ❌ (not auto-exported by non-login shell)
+```
+
+### Fix: 3-Layer Credential Injection
+
+1. **Docker -e flag** (`container-runner.ts`): Injects `GH_TOKEN` and `GITHUB_TOKEN` into container process env
+2. **Entrypoint writes /etc/environment** (`Dockerfile`): Entrypoint script writes token to `/etc/environment` at startup
+3. **/etc/bash.bashrc sources /etc/environment** (`Dockerfile`): Every bash invocation (including non-interactive) sources `/etc/environment` with `set -a` (auto-export)
+
+```dockerfile
+# In Dockerfile:
+RUN echo 'set -a; [ -f /etc/environment ] && . /etc/environment; set +a' >> /etc/bash.bashrc
+```
+
+```bash
+# In entrypoint.sh:
+if [ -n "$GH_TOKEN" ]; then
+  echo "GH_TOKEN=$GH_TOKEN" >> /etc/environment
+  echo "GITHUB_TOKEN=$GH_TOKEN" >> /etc/environment
+  export GH_TOKEN GITHUB_TOKEN="$GH_TOKEN"
+fi
+```
+
+### What Failed (Attempted Fixes Before Root Cause Was Found)
+
+| Attempt | Why It Failed |
+|---------|--------------|
+| Docker `-e` alone | Subagent shell doesn't export inherited env |
+| `export` in entrypoint.sh | Node inherits it but Agent SDK subagent spawns fresh shell |
+| `/etc/environment` alone | Only read by PAM for login shells; subagent uses non-login shell |
+| `.agent-credentials.env` workaround | Works but requires agent to explicitly `source` it — CLAUDE.md rule, probabilistic |
+
+### VPS Deployment Requirements
+
+For this fix to work on a fresh VPS setup:
+1. `GH_TOKEN` must be in NanoClaw's `.env` file
+2. systemd service must have `EnvironmentFile=/home/limitless/nanoclaw/.env`
+3. Container image must be built with the `/etc/bash.bashrc` + `/etc/environment` + entrypoint changes
+4. `npm run build` must be clean (delete `dist/` first — TypeScript incremental compilation misses some changes)
+
+### IaC Requirements
+
+All changes are in the monorepo at `apps/nanoclaw/`:
+- `container/Dockerfile` — gh CLI install, /etc/bash.bashrc sourcing, /etc/environment permissions
+- `src/container-runner.ts` — Docker `-e GH_TOKEN` + `GITHUB_TOKEN` flags
+- `src/channels/discord.ts` — bot allowlist (TRUSTED_BOT_IDS)
+- `src/config.ts` — MONOREPO_PATH, WORKTREE_BASE, NOTIFICATION_CHANNELS
+
+VPS-specific config (not in repo):
+- `.env` — contains actual token values (gitignored)
+- `/etc/systemd/system/nanoclaw.service` — EnvironmentFile directive
+
+---
+
 ## Tracking
 
 | Issue | Severity | Status | Fix |
 |-------|----------|--------|-----|
 | execSync blocks event loop | Low | **DEFERRED** — monitor | Replace with async exec when blocking exceeds 3s |
 | Registration race condition | High | **FIXED** (PR #13) | Store all Discord messages, process on registration |
-| Director commands don't reach Architect | Medium | **OPEN** — needs PR | Option A: bot allowlist for main group |
-| Stale CLAUDE.md after deploy | Low | **WORKAROUND** — manual container stop | Add container kill to deploy script |
+| Director commands don't reach Architect | Medium | **FIXED** | Bot allowlist: TRUSTED_BOT_IDS env var (PR #19) |
+| Stale CLAUDE.md after deploy | Low | **FIXED** | Deploy script now: `rm -rf dist/ && npm run build` + container kill |
+| GH_TOKEN not reaching subagent shells | High | **FIXED** | 3-layer injection: Docker -e → /etc/environment → /etc/bash.bashrc (PR #19) |
