@@ -69,8 +69,9 @@ export default async function LessonPage({ params: paramsPromise }: Args) {
   if (currentIndex === -1) return notFound()
 
   lesson = { ...allLessons[currentIndex].lesson, _moduleIndex: allLessons[currentIndex].mi, _lessonIndex: allLessons[currentIndex].li }
-  if (currentIndex > 0) prevHref = `/courses/${slug}/lessons/${allLessons[currentIndex - 1].lesson.slug}`
-  if (currentIndex < allLessons.length - 1) nextHref = `/courses/${slug}/lessons/${allLessons[currentIndex + 1].lesson.slug}`
+  const base = process.env.NEXT_PUBLIC_BASE_PATH || ''
+  if (currentIndex > 0) prevHref = `${base}/courses/${slug}/lessons/${allLessons[currentIndex - 1].lesson.slug}`
+  if (currentIndex < allLessons.length - 1) nextHref = `${base}/courses/${slug}/lessons/${allLessons[currentIndex + 1].lesson.slug}`
 
   // Fetch lesson progress
   const progressResult = await payload.find({
