@@ -88,6 +88,26 @@ variable "oura_client_secret" {
   sensitive   = true
 }
 
+# --- Cubes+ ---
+
+variable "cubes_database_url" {
+  description = "Cubes+ PostgreSQL connection string (manually provisioned DB dpg-d75rsd63jp1c73dipvl0-a)"
+  type        = string
+  sensitive   = true
+}
+
+variable "cubes_dt_service_key" {
+  description = "Service key for Cubes+→Digital Twin API calls"
+  type        = string
+  sensitive   = true
+}
+
+variable "cubes_stripe_webhook_secret" {
+  description = "Stripe webhook signing secret for Cubes+ (different endpoint from PATHS/HUB)"
+  type        = string
+  sensitive   = true
+}
+
 # --- Stripe ---
 
 variable "stripe_secret_key" {

@@ -43,13 +43,18 @@ resource "render_web_service" "hub" {
 
   health_check_path = "/book/api/health"
 
+  root_directory = "apps/hub"
+
   runtime_source = {
     native_runtime = {
-      repo_url      = "https://github.com/LIMITLESS-LONGEVITY/limitless-hub"
+      repo_url      = "https://github.com/LIMITLESS-LONGEVITY/limitless"
       branch        = "main"
       runtime       = "node"
-      build_command = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build"
+      build_command = "cd ../.. && npm install -g pnpm && pnpm install --frozen-lockfile && cd apps/hub && pnpm run build"
       auto_deploy   = true
+      build_filter  = {
+        paths = ["apps/hub/**"]
+      }
     }
   }
 

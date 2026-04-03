@@ -54,5 +54,9 @@ add_domain "srv-d73o9j1aae7s73b45gf0" "hub.limitless-longevity.health"
 echo "--- digital-twin (srv-d73p42khg0os739msrrg) ---"
 add_domain "srv-d73p42khg0os739msrrg" "digital-twin-api.limitless-longevity.health"
 
+# Cubes+
+echo "--- cubes (srv-d75rst9r0fns73f9qt70) ---"
+add_domain "srv-d75rst9r0fns73f9qt70" "cubes.limitless-longevity.health"
+
 echo ""
 echo "=== Done ==="

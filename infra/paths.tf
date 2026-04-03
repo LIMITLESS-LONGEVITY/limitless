@@ -51,17 +51,23 @@ resource "render_web_service" "paths_api" {
 
   health_check_path = "/learn/api/health"
 
+  root_directory = "apps/paths"
+
   runtime_source = {
     native_runtime = {
-      repo_url      = "https://github.com/LIMITLESS-LONGEVITY/limitless-paths"
+      repo_url      = "https://github.com/LIMITLESS-LONGEVITY/limitless"
       branch        = "main"
       runtime       = "node"
-      build_command = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public"
+      build_command = "cd ../.. && npm install -g pnpm && pnpm install --frozen-lockfile && cd apps/paths && pnpm run build && cp -r .next/static .next/standalone/apps/paths/.next/static && cp -r public .next/standalone/apps/paths/public"
       auto_deploy   = true
+      build_filter  = {
+        paths         = ["apps/paths/**", "packages/**"]
+        ignored_paths = ["apps/paths/test-results/**"]
+      }
     }
   }
 
-  start_command = "npx payload migrate && node .next/standalone/server.js"
+  start_command = "npx payload migrate && node .next/standalone/apps/paths/server.js"
 
   env_vars = {
     # Database — wired from Render PostgreSQL

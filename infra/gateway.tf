@@ -36,16 +36,16 @@ resource "cloudflare_pages_project" "os_dashboard" {
   production_branch = "main"
 
   build_config = {
-    build_command   = "pnpm build"
+    build_command   = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm build"
     destination_dir = "out"
-    root_dir        = "/"
+    root_dir        = "apps/os-dashboard"
   }
 
   source = {
     type = "github"
     config = {
       owner                          = "LIMITLESS-LONGEVITY"
-      repo_name                      = "limitless-os-dashboard"
+      repo_name                      = "limitless"
       production_branch              = "main"
       production_deployments_enabled = true
       pr_comments_enabled            = true

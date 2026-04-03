@@ -43,13 +43,18 @@ resource "render_web_service" "digital_twin" {
 
   health_check_path = "/api/health"
 
+  root_directory = "apps/digital-twin"
+
   runtime_source = {
     native_runtime = {
-      repo_url      = "https://github.com/LIMITLESS-LONGEVITY/limitless-digital-twin"
+      repo_url      = "https://github.com/LIMITLESS-LONGEVITY/limitless"
       branch        = "main"
       runtime       = "node"
-      build_command = "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run build"
+      build_command = "cd ../.. && npm install -g pnpm && pnpm install --frozen-lockfile && cd apps/digital-twin && pnpm run build"
       auto_deploy   = true
+      build_filter  = {
+        paths = ["apps/digital-twin/**"]
+      }
     }
   }
 
@@ -78,6 +83,11 @@ resource "render_web_service" "digital_twin" {
     }
     PATHS_SERVICE_KEY = {
       value = var.paths_dt_service_key
+    }
+
+    # PATHS API URL (for auth delegation)
+    PATHS_API_URL = {
+      value = "https://paths-api.onrender.com/learn"
     }
 
     # Wearable OAuth
