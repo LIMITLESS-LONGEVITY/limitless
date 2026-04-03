@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Turbo
+.turbo/
+
+# Build outputs
+.next/
+dist/
+out/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Claude Code
+.claude/
+CLAUDE.md
+AGENTS.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.bak
+TEMP/
+
+# PDFs and business docs
+*.pdf
+*.docx
+test-results/

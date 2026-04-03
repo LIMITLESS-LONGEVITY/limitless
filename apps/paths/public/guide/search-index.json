@@ -1,0 +1,1054 @@
+[
+  {
+    "role": "admin",
+    "topic": "admin-overview",
+    "title": "admin-overview",
+    "description": "",
+    "body": "Admin Dashboard Overview\nAs an admin, you have full access to every collection, global, and configuration option in the PATHS platform. The Payload CMS admin panel is your central hub for managing users, content, billing, AI features, and platform settings.\nNavigating the Admin Panel\nAfter logging i",
+    "headings": [
+      "Admin Dashboard Overview",
+      "Navigating the Admin Panel",
+      "Key Admin Tasks",
+      "Dashboard at a Glance",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/admin-overview"
+  },
+  {
+    "role": "admin",
+    "topic": "ai-configuration",
+    "title": "ai-configuration",
+    "description": "",
+    "body": "AI Configuration\nPATHS integrates AI throughout the platform — from semantic search and content recommendations to the interactive AI tutor. All AI settings are managed through the AI Config global in the admin panel.\nAccessing AI Config\nNavigate to Globals in the sidebar and select AI Config. This ",
+    "headings": [
+      "AI Configuration",
+      "Accessing AI Config",
+      "RAG Pipeline Overview",
+      "Required Environment Variables",
+      "Configuring the AI Model",
+      "Usage Logging",
+      "Embedding Triggers",
+      "Health-Context AI",
+      "Telemedicine Escalation",
+      "AI Model Entries",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/ai-configuration"
+  },
+  {
+    "role": "admin",
+    "topic": "compliance-management",
+    "title": "compliance-management",
+    "description": "Track B2B staff compliance, certification status, and training completion across tenants.",
+    "body": "Compliance Management\nThe Compliance Dashboard provides tenant managers with real-time visibility into staff training completion, certification status, and compliance requirements. As an admin, you configure the compliance features and can view dashboards for any tenant.\nHow It Works\nThe compliance ",
+    "headings": [
+      "Compliance Management",
+      "How It Works",
+      "Tenant Certification Configuration",
+      "Dashboard Features",
+      "Access Control",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/compliance-management"
+  },
+  {
+    "role": "admin",
+    "topic": "content-pillars",
+    "title": "content-pillars",
+    "description": "",
+    "body": "Content Pillar Configuration\nContent pillars are the top-level categories that organize all educational content on PATHS. They provide structure for both the admin panel and the learner-facing frontend.\nDefault Pillars\nPATHS ships with six default pillars, created automatically by the foundation see",
+    "headings": [
+      "Content Pillar Configuration",
+      "Default Pillars",
+      "Managing Pillars",
+      "Assigning Content to Pillars",
+      "Frontend Display",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/content-pillars"
+  },
+  {
+    "role": "admin",
+    "topic": "managing-courses",
+    "title": "managing-courses",
+    "description": "",
+    "body": "Creating & Managing Courses\nCourses are the core educational product of PATHS. Each course contains a structured hierarchy of modules and lessons that guide learners through longevity topics.\nCourse Structure\nCourses follow a three-level hierarchy:\nCourse — The top-level container with a title, desc",
+    "headings": [
+      "Creating & Managing Courses",
+      "Course Structure",
+      "Creating a Course",
+      "Adding Modules",
+      "Adding Lessons",
+      "Ordering Content",
+      "Publishing Courses",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/managing-courses"
+  },
+  {
+    "role": "admin",
+    "topic": "managing-health-profiles",
+    "title": "managing-health-profiles",
+    "description": "Understand how user health data is stored, secured, and used for AI personalization on the PATHS platform.",
+    "body": "Health Profiles\nThe Health Profiles collection stores user health data — biomarkers, goals, conditions, medications, and pillar priorities. This data powers the AI personalization features: health-aware tutor responses, personalized daily protocols, and tailored action plans.\nPrivacy by Design\nHealt",
+    "headings": [
+      "Health Profiles",
+      "Privacy by Design",
+      "Collection Structure",
+      "How Health Data Feeds AI",
+      "Viewing Health Profiles in Admin",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/managing-health-profiles"
+  },
+  {
+    "role": "admin",
+    "topic": "managing-tenants",
+    "title": "managing-tenants",
+    "description": "",
+    "body": "Managing Tenants (Organizations)\nPATHS supports multi-tenancy for B2B clients. Each tenant represents an organization — such as a hospital, hotel chain, or corporate wellness program — whose members access content scoped to that organization.\nHow Multi-Tenancy Works\nMulti-tenancy is powered by the @",
+    "headings": [
+      "Managing Tenants (Organizations)",
+      "How Multi-Tenancy Works",
+      "Creating a New Tenant",
+      "Assigning Users to a Tenant",
+      "Content Scoping",
+      "Access Level Resolution",
+      "B2B Certification Configuration",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/managing-tenants"
+  },
+  {
+    "role": "admin",
+    "topic": "managing-tiers",
+    "title": "managing-tiers",
+    "description": "",
+    "body": "Managing Membership Tiers\nMembership tiers control which content users can access. Each tier represents a level of access, and tiers are linked to Stripe prices for automated billing.\nTier Hierarchy\nPATHS ships with four default tiers, seeded via the foundation seed:\n| Tier | Access Level | Descript",
+    "headings": [
+      "Managing Membership Tiers",
+      "Tier Hierarchy",
+      "Creating or Editing a Tier",
+      "Linking Tiers to Stripe",
+      "How Tier Assignment Works",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/managing-tiers"
+  },
+  {
+    "role": "admin",
+    "topic": "managing-users",
+    "title": "managing-users",
+    "description": "",
+    "body": "Managing Users & Roles\nThe Users collection is central to the PATHS platform. As an admin, you control who can access the platform, what role they hold, and which membership tier they belong to.\nRole Hierarchy\nPATHS uses five roles, each with increasing permissions:\n| Role | Permissions |\n|------|--",
+    "headings": [
+      "Managing Users & Roles",
+      "Role Hierarchy",
+      "Creating a New User",
+      "Editing User Accounts",
+      "Resetting Passwords",
+      "Managing User Tiers",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/managing-users"
+  },
+  {
+    "role": "admin",
+    "topic": "seeding-content",
+    "title": "seeding-content",
+    "description": "",
+    "body": "Seeding Content\nPATHS provides seed endpoints to quickly populate the platform with foundation data and sample content. This is essential for initial setup, testing, and demo environments.\nTwo Seed Modes\nPATHS offers two seeding operations, both accessed via authenticated POST requests:\n| Endpoint |",
+    "headings": [
+      "Seeding Content",
+      "Two Seed Modes",
+      "Running the Foundation Seed",
+      "Running the Content Seed",
+      "What Gets Created",
+      "When to Seed",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/seeding-content"
+  },
+  {
+    "role": "admin",
+    "topic": "site-settings",
+    "title": "site-settings",
+    "description": "",
+    "body": "Site Settings\nThe Site Settings global contains platform-wide configuration that affects how PATHS presents itself to users and search engines.\nAccessing Site Settings\nNavigate to Globals in the admin sidebar and select Site Settings. This global is accessible only to admins.\nAvailable Settings\n| Se",
+    "headings": [
+      "Site Settings",
+      "Accessing Site Settings",
+      "Available Settings",
+      "When to Update",
+      "Other Globals",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/site-settings"
+  },
+  {
+    "role": "admin",
+    "topic": "stays-and-telemedicine",
+    "title": "stays-and-telemedicine",
+    "description": "Configure hotel stay packages and telemedicine consultation settings in the PATHS admin.",
+    "body": "Stays & Telemedicine\nPATHS supports two clinical service features: Longevity Stay Packages (hotel stays with guided content) and Telemedicine Consultations (remote expert sessions). Both require admin configuration.\nStay Packages\nStay programs reuse the Courses collection with additional stay fields",
+    "headings": [
+      "Stays & Telemedicine",
+      "Stay Packages",
+      "Time-Gated Access",
+      "Stay-Aware AI Protocols",
+      "Telemedicine Configuration",
+      "Booking Endpoints",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/stays-and-telemedicine"
+  },
+  {
+    "role": "admin",
+    "topic": "stripe-billing",
+    "title": "stripe-billing",
+    "description": "",
+    "body": "Stripe & Billing Setup\nPATHS uses a custom Stripe SDK integration for subscription billing. When users subscribe to a paid tier, Stripe handles payment processing and notifies PATHS via webhooks to update the user's membership tier automatically.\nHow Billing Works\nThe billing flow follows this seque",
+    "headings": [
+      "Stripe & Billing Setup",
+      "How Billing Works",
+      "Stripe Dashboard Setup",
+      "Linking Prices to Tiers",
+      "Customer Portal",
+      "Next Steps"
+    ],
+    "url": "/guide/admin/stripe-billing"
+  },
+  {
+    "role": "admin",
+    "topic": "troubleshooting",
+    "title": "troubleshooting",
+    "description": "",
+    "body": "Monitoring & Troubleshooting\nThis guide covers the most common issues admins encounter and how to resolve them.\nCommon Issues\nLikely cause: TypeScript errors or missing dependencies.\nSolution: Run pnpm build locally first to catch errors before pushing. Check build logs on Render for the specific er",
+    "headings": [
+      "Monitoring & Troubleshooting",
+      "Common Issues",
+      "Monitoring Recommendations",
+      "Check Regularly",
+      "Environment Variables to Verify",
+      "When to Escalate"
+    ],
+    "url": "/guide/admin/troubleshooting"
+  },
+  {
+    "role": "contributor",
+    "topic": "contributor-overview",
+    "title": "contributor-overview",
+    "description": "",
+    "body": "Contributor Role Overview\nAs a contributor, you are responsible for creating educational content on the PATHS platform. You write articles, enrich them with multimedia and interactive elements, and submit your work for editorial review before it reaches learners.\nWhat Contributors Do\nContributors ar",
+    "headings": [
+      "Contributor Role Overview",
+      "What Contributors Do",
+      "Accessing the Admin Panel",
+      "Responsibilities",
+      "Best Practices",
+      "Next Steps"
+    ],
+    "url": "/guide/contributor/contributor-overview"
+  },
+  {
+    "role": "contributor",
+    "topic": "creating-articles",
+    "title": "creating-articles",
+    "description": "",
+    "body": "Creating a New Article\nThis guide walks you through every step of creating a new article in PATHS, from navigating to the Articles collection to saving your first draft.\nBefore You Begin\nMake sure you are logged into the Payload admin panel with your contributor account. You should see Articles list",
+    "headings": [
+      "Creating a New Article",
+      "Before You Begin",
+      "Step-by-Step: Create an Article",
+      "Required Fields",
+      "Saving and Returning",
+      "Next Steps"
+    ],
+    "url": "/guide/contributor/creating-articles"
+  },
+  {
+    "role": "contributor",
+    "topic": "editorial-workflow",
+    "title": "editorial-workflow",
+    "description": "",
+    "body": "Understanding Editorial Workflow\nEvery article in PATHS moves through a structured editorial workflow before reaching learners. Understanding this process helps you work effectively within the system and set realistic expectations for your content timeline.\nThe Five Stages\nThe editorial workflow con",
+    "headings": [
+      "Understanding Editorial Workflow",
+      "The Five Stages",
+      "Status Transitions",
+      "Your Role in the Workflow"
+    ],
+    "url": "/guide/contributor/editorial-workflow"
+  },
+  {
+    "role": "contributor",
+    "topic": "expert-profiles",
+    "title": "expert-profiles",
+    "description": "Add practitioner credentials, bio, and LinkedIn to your contributor profile so readers see who created their content.",
+    "body": "Expert Profiles\nEvery article and course on PATHS prominently features the expert who created it. As a contributor, you can set up your Expert Profile so readers see your credentials, specialization, and professional background alongside your content.\nWhy Expert Profiles Matter\nReaders on PATHS are ",
+    "headings": [
+      "Expert Profiles",
+      "Why Expert Profiles Matter",
+      "Setting Up Your Profile",
+      "How Your Profile Appears",
+      "Next Steps"
+    ],
+    "url": "/guide/contributor/expert-profiles"
+  },
+  {
+    "role": "contributor",
+    "topic": "lexical-editor",
+    "title": "lexical-editor",
+    "description": "",
+    "body": "Using the Lexical Editor\nPATHS uses the Lexical rich text editor for all article content. Lexical provides a clean, distraction-free writing experience with powerful formatting tools and custom content blocks.\nThe Editor Toolbar\nThe toolbar appears at the top of the content editing area. It contains",
+    "headings": [
+      "Using the Lexical Editor",
+      "The Editor Toolbar",
+      "Text Formatting",
+      "Headings",
+      "Lists and Links",
+      "Inserting Blocks",
+      "Writing Tips for Educational Content",
+      "Keyboard Shortcuts"
+    ],
+    "url": "/guide/contributor/lexical-editor"
+  },
+  {
+    "role": "contributor",
+    "topic": "managing-drafts",
+    "title": "managing-drafts",
+    "description": "",
+    "body": "Managing Your Draft Articles\nAs you create more content, keeping your drafts organized becomes important. The PATHS admin panel provides filtering, sorting, and management tools to help you stay on top of your work.\nViewing Your Articles\nNavigate to Articles in the left sidebar to see all articles y",
+    "headings": [
+      "Managing Your Draft Articles",
+      "Viewing Your Articles",
+      "Filtering by Status",
+      "Editing an Existing Draft",
+      "Sorting Articles",
+      "Duplicating an Article",
+      "Deleting a Draft",
+      "Staying Organized"
+    ],
+    "url": "/guide/contributor/managing-drafts"
+  },
+  {
+    "role": "contributor",
+    "topic": "media-and-blocks",
+    "title": "media-and-blocks",
+    "description": "",
+    "body": "Adding Media, Videos & Callouts\nThe Lexical editor includes six custom block types that make your articles more engaging and interactive. To insert any block, place your cursor at the desired location and click the \"+\" button in the toolbar.\nVideo Embed\nEmbed videos from YouTube or Vimeo directly in",
+    "headings": [
+      "Adding Media, Videos & Callouts",
+      "Video Embed",
+      "Quiz Question",
+      "Callout",
+      "Audio Embed",
+      "Image Gallery",
+      "PDF Viewer"
+    ],
+    "url": "/guide/contributor/media-and-blocks"
+  },
+  {
+    "role": "contributor",
+    "topic": "submitting-review",
+    "title": "submitting-review",
+    "description": "",
+    "body": "Submitting for Review\nOnce your article is complete and you are satisfied with the content, formatting, and media, it is time to submit it for editorial review. This guide covers the submission process and what to expect afterward.\nBefore You Submit\nRun through this checklist to make sure your artic",
+    "headings": [
+      "Submitting for Review",
+      "Before You Submit",
+      "How to Submit",
+      "What Happens Next",
+      "Responding to Editorial Feedback",
+      "Tracking Your Submissions"
+    ],
+    "url": "/guide/contributor/submitting-review"
+  },
+  {
+    "role": "editor",
+    "topic": "approving-content",
+    "title": "approving-content",
+    "description": "How to approve articles for publication or request changes from contributors.",
+    "body": "Approving Content\nAfter reviewing an article, you will either approve it for publication or send it back to the contributor for revisions. This guide covers both workflows.\nApproving an Article\nWhen an article meets your quality standards and is ready for a Publisher to take live:\nOpen the article y",
+    "headings": [
+      "Approving Content",
+      "Approving an Article",
+      "Requesting Changes",
+      "Approval Best Practices"
+    ],
+    "url": "/guide/editor/approving-content"
+  },
+  {
+    "role": "editor",
+    "topic": "editor-overview",
+    "title": "editor-overview",
+    "description": "Understanding your responsibilities and capabilities as an Editor on the PATHS platform.",
+    "body": "Editor Role Overview\nAs an Editor on the PATHS platform, you play a critical role in maintaining content quality. You are the gatekeeper between contributor submissions and published material that learners rely on.\nYour Responsibilities\nReview submitted content — Read through articles that contribut",
+    "headings": [
+      "Editor Role Overview",
+      "Your Responsibilities",
+      "Accessing the Admin Panel",
+      "Editorial Workflow at a Glance",
+      "Next Steps"
+    ],
+    "url": "/guide/editor/editor-overview"
+  },
+  {
+    "role": "editor",
+    "topic": "editorial-status",
+    "title": "editorial-status",
+    "description": "Understanding all editorial statuses, their meanings, and the allowed transitions in the PATHS content pipeline.",
+    "body": "Editorial Status Workflow\nEvery article in the PATHS platform moves through a defined set of statuses. Understanding this workflow helps you make the right decisions about content as it progresses through the pipeline.\nStatus Definitions\n| Status | Meaning |\n|--------|---------|\n| Draft | Content is",
+    "headings": [
+      "Editorial Status Workflow",
+      "Status Definitions",
+      "Status Transitions",
+      "Contributors",
+      "Editors",
+      "Publishers",
+      "Key Rules"
+    ],
+    "url": "/guide/editor/editorial-status"
+  },
+  {
+    "role": "editor",
+    "topic": "reviewing-content",
+    "title": "reviewing-content",
+    "description": "How to find and review articles that contributors have submitted for editorial review.",
+    "body": "Reviewing Content\nWhen a contributor finishes drafting an article, they submit it for review by changing its status to In Review. As an Editor, your job is to evaluate these submissions for quality, accuracy, and readiness.\nFinding Articles to Review\nOpen the Articles collection from the admin sideb",
+    "headings": [
+      "Reviewing Content",
+      "Finding Articles to Review",
+      "What to Look For",
+      "Reviewing the Article",
+      "After Your Review"
+    ],
+    "url": "/guide/editor/reviewing-content"
+  },
+  {
+    "role": "editor",
+    "topic": "working-with-contributors",
+    "title": "working-with-contributors",
+    "description": "Best practices for providing feedback, communicating with contributors, and building content quality over time.",
+    "body": "Working with Contributors\nYour relationship with contributors directly affects the quality and volume of content on the platform. Thoughtful, respectful feedback encourages contributors to improve their work and continue producing material.\nProviding Constructive Feedback\nWhen sending an article bac",
+    "headings": [
+      "Working with Contributors",
+      "Providing Constructive Feedback",
+      "Writing Effective Review Notes",
+      "Building Contributor Quality"
+    ],
+    "url": "/guide/editor/working-with-contributors"
+  },
+  {
+    "role": "publisher",
+    "topic": "archiving-content",
+    "title": "archiving-content",
+    "description": "How and when to archive outdated content, and what happens to archived articles on the PATHS platform.",
+    "body": "Archiving Content\nArchiving is how you remove outdated or irrelevant content from active circulation without breaking existing links. It is a graceful retirement, not a deletion.\nWhen to Archive\nConsider archiving an article when:\nThe information is outdated and no longer accurate\nThe topic has been",
+    "headings": [
+      "Archiving Content",
+      "When to Archive",
+      "How to Archive an Article",
+      "Reviving Archived Content",
+      "Best Practices"
+    ],
+    "url": "/guide/publisher/archiving-content"
+  },
+  {
+    "role": "publisher",
+    "topic": "content-analytics",
+    "title": "content-analytics",
+    "description": "Tracking content performance and engagement metrics on the PATHS platform. This feature is coming soon.",
+    "body": "Content Analytics\nContent analytics is a planned feature that is not yet available on the PATHS platform. This guide describes the capabilities that are being developed. You will be notified when analytics features become available.\nPlanned Analytics Features\nThe analytics system will give Publisher",
+    "headings": [
+      "Content Analytics",
+      "Planned Analytics Features",
+      "View Counts",
+      "Engagement Metrics",
+      "Content Performance Dashboard",
+      "Questions or Requests"
+    ],
+    "url": "/guide/publisher/content-analytics"
+  },
+  {
+    "role": "publisher",
+    "topic": "publisher-overview",
+    "title": "publisher-overview",
+    "description": "Understanding your responsibilities and capabilities as a Publisher on the PATHS platform.",
+    "body": "Publisher Role Overview\nAs a Publisher on the PATHS platform, you control what learners see. You are responsible for taking editorially approved content live, maintaining the quality of published material, and archiving content that is no longer current.\nYour Responsibilities\nPublish approved conten",
+    "headings": [
+      "Publisher Role Overview",
+      "Your Responsibilities",
+      "Accessing the Admin Panel",
+      "The Publishing Pipeline",
+      "Next Steps"
+    ],
+    "url": "/guide/publisher/publisher-overview"
+  },
+  {
+    "role": "publisher",
+    "topic": "publishing-content",
+    "title": "publishing-content",
+    "description": "How to find approved articles and publish them live on the PATHS platform frontend.",
+    "body": "Publishing Content\nPublishing is the final step in the content pipeline. When you publish an article, it becomes visible to learners on the platform frontend, appears in search results, and is accessible through content listings and recommendations.\nFinding Approved Articles\nOpen the Articles collec",
+    "headings": [
+      "Publishing Content",
+      "Finding Approved Articles",
+      "Publishing an Article",
+      "Handling Issues After Publication"
+    ],
+    "url": "/guide/publisher/publishing-content"
+  },
+  {
+    "role": "publisher",
+    "topic": "scheduling-content",
+    "title": "scheduling-content",
+    "description": "How to coordinate content publication timing, manage your editorial calendar, and keep published content current.",
+    "body": "Managing Your Publication Schedule\nEffective content management goes beyond publishing articles one at a time. As a Publisher, you should think about the overall rhythm and balance of content on the platform.\nReviewing Your Publication Queue\nOpen the Articles collection and filter by Approved status",
+    "headings": [
+      "Managing Your Publication Schedule",
+      "Reviewing Your Publication Queue",
+      "Coordinating with the Editorial Team",
+      "Updating Published Articles"
+    ],
+    "url": "/guide/publisher/scheduling-content"
+  },
+  {
+    "role": "user-free",
+    "topic": "browsing-content",
+    "title": "browsing-content",
+    "description": "Discover how to navigate the PATHS content library and find longevity topics that interest you.",
+    "body": "Browsing Courses & Articles\nPATHS organises its educational content into two main formats: courses for structured learning and articles for standalone deep dives. This guide covers how to browse and filter both.\nBrowsing Articles\nTo access the full article listing:\n  \n    Click Articles in the main ",
+    "headings": [
+      "Browsing Courses & Articles",
+      "Browsing Articles",
+      "Browsing Courses",
+      "Filtering by Pillar",
+      "Pagination",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/browsing-content"
+  },
+  {
+    "role": "user-free",
+    "topic": "content-discovery",
+    "title": "content-discovery",
+    "description": "Use AI-powered discovery to find personalized learning paths based on your health goals.",
+    "body": "AI Content Discovery\nThe Discover page at /discover uses AI to recommend personalized learning paths based on your health goals. Instead of browsing a catalog, describe what you want to improve and let PATHS build a structured path for you.\nHow It Works\n  Navigate to Discover in the main navigation ",
+    "headings": [
+      "AI Content Discovery",
+      "How It Works",
+      "Suggested Goals",
+      "Who Can Use Discovery",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/content-discovery"
+  },
+  {
+    "role": "user-free",
+    "topic": "content-pillars",
+    "title": "content-pillars",
+    "description": "Learn about the six longevity pillars that organise all educational content on PATHS.",
+    "body": "The Six Content Pillars\nAll content on PATHS is organised around six evidence-based pillars of longevity. Each pillar represents a fundamental domain of health optimisation, and every article and course is tagged to one or more pillars so you can focus your learning.\nNutrition & Metabolic Health\nCov",
+    "headings": [
+      "The Six Content Pillars",
+      "Nutrition & Metabolic Health",
+      "Exercise & Physical Performance",
+      "Sleep & Recovery",
+      "Mental Health & Cognitive Function",
+      "Preventive Medicine & Diagnostics",
+      "Longevity Science & Anti-Aging",
+      "How Pillars Appear on the Platform",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/content-pillars"
+  },
+  {
+    "role": "user-free",
+    "topic": "course-previews",
+    "title": "course-previews",
+    "description": "See what course information is available to free users, including descriptions, module outlines, and lesson titles.",
+    "body": "Course Previews\nCourses on PATHS provide structured, multi-module learning paths through longevity topics. As a free user, you cannot enrol in courses, but you can preview their full structure to understand what each course offers.\nWhat You Can See\nWhen you open a course detail page, the following i",
+    "headings": [
+      "Course Previews",
+      "What You Can See",
+      "What Is Locked",
+      "Navigating a Course Detail Page",
+      "Choosing a Course",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/course-previews"
+  },
+  {
+    "role": "user-free",
+    "topic": "getting-started",
+    "title": "getting-started",
+    "description": "Create your account and verify your email to start using PATHS.",
+    "body": "Getting Started with PATHS\nWelcome to PATHS by LIMITLESS — your gateway to evidence-based longevity education. This guide will walk you through creating your account and getting set up on the platform.\nCreating Your Account\n  \n    Navigate to the PATHS platform and click Sign Up in the top-right cor",
+    "headings": [
+      "Getting Started with PATHS",
+      "Creating Your Account",
+      "Exploring the Platform",
+      "Welcome Tour",
+      "Understanding the Homepage",
+      "Your Account Dashboard",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/getting-started"
+  },
+  {
+    "role": "user-free",
+    "topic": "managing-profile",
+    "title": "managing-profile",
+    "description": "Update your account details, change your password, and manage your profile settings.",
+    "body": "Managing Your Profile\nYour PATHS profile stores your account information and preferences. This guide covers how to access and update your account settings.\nAccessing Account Settings\n  \n    Click your avatar or initials in the top-right corner of the navigation bar.\n  \n  \n    Select Account Settings",
+    "headings": [
+      "Managing Your Profile",
+      "Accessing Account Settings",
+      "Updating Your Name",
+      "Updating Your Email Address",
+      "Changing Your Password",
+      "Your Profile Page",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/managing-profile"
+  },
+  {
+    "role": "user-free",
+    "topic": "reading-articles",
+    "title": "reading-articles",
+    "description": "Understand the article reading experience, including layout, navigation, and tier-restricted content.",
+    "body": "Reading Articles\nArticles on PATHS are standalone, in-depth pieces covering specific longevity topics. This guide explains the article reading experience and what to expect as a free-tier user.\nArticle Layout\nWhen you open an article, you will see:\nBreadcrumb navigation — At the top: Articles > Pill",
+    "headings": [
+      "Reading Articles",
+      "Article Layout",
+      "Navigating Within an Article",
+      "Reading Progress",
+      "Tier-Restricted Content",
+      "Interactive Elements",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/reading-articles"
+  },
+  {
+    "role": "user-free",
+    "topic": "upgrading-plan",
+    "title": "upgrading-plan",
+    "description": "Compare subscription tiers and upgrade your free account to unlock the full PATHS experience.",
+    "body": "Upgrading Your Plan\nYour free account gives you a taste of what PATHS offers. To unlock the full content library, course enrolment, and AI-powered features, you can upgrade to a paid subscription at any time.\nAvailable Tiers\nRegular\nFull access to the article library across all six longevity pillars",
+    "headings": [
+      "Upgrading Your Plan",
+      "Available Tiers",
+      "Regular",
+      "Premium",
+      "Enterprise",
+      "How to Upgrade",
+      "Billing & Payment",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/upgrading-plan"
+  },
+  {
+    "role": "user-free",
+    "topic": "using-search",
+    "title": "using-search",
+    "description": "Find longevity content quickly with the AI-powered semantic search on PATHS.",
+    "body": "Using Search\nPATHS includes an AI-powered semantic search that goes beyond simple keyword matching. Instead of requiring exact terms, you can describe what you are looking for in natural language, and the search engine will find the most relevant results.\nThe search page features an AI-Powered badge",
+    "headings": [
+      "Using Search",
+      "How Semantic Search Works",
+      "Performing a Search",
+      "Tips for Effective Searches",
+      "Filtering Results",
+      "Next Steps"
+    ],
+    "url": "/guide/user-free/using-search"
+  },
+  {
+    "role": "user-organization",
+    "topic": "assigned-content",
+    "title": "assigned-content",
+    "description": "Find and access the articles and courses your organization has enabled for your team.",
+    "body": "Accessing Assigned Content\nYour organization administrator selects which content is available to your team. This includes articles, courses, and learning paths that align with your organization's training goals. This guide explains how to find and access that content.\nHow Org Access Levels Work\nEver",
+    "headings": [
+      "Accessing Assigned Content",
+      "How Org Access Levels Work",
+      "Finding Your Organization's Content",
+      "Enrolling in Org Courses",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/assigned-content"
+  },
+  {
+    "role": "user-organization",
+    "topic": "compliance-dashboard",
+    "title": "compliance-dashboard",
+    "description": "View your team's compliance status, certification progress, and training completion rates.",
+    "body": "Compliance Dashboard\nIf your organization uses PATHS for staff training, the Compliance Dashboard at /account/team gives managers a real-time view of team completion rates, certifications, and training status.\n  The Compliance Dashboard is only visible to team managers (publishers with tenant access",
+    "headings": [
+      "Compliance Dashboard",
+      "Dashboard Overview",
+      "Staff Table",
+      "Certificate Expiry Warnings",
+      "Exporting Data",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/compliance-dashboard"
+  },
+  {
+    "role": "user-organization",
+    "topic": "contacting-admin",
+    "title": "contacting-admin",
+    "description": "How to reach your organization administrator for access requests, issues, or questions.",
+    "body": "Contacting Your Organization Administrator\nYour organization administrator manages your team's access to PATHS. If you have questions about your access level, need help with content, or encounter an issue, your admin is your first point of contact.\nWhen to Contact Your Admin\nReach out to your organi",
+    "headings": [
+      "Contacting Your Organization Administrator",
+      "When to Contact Your Admin",
+      "How to Find Your Admin",
+      "What to Include in Your Request",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/contacting-admin"
+  },
+  {
+    "role": "user-organization",
+    "topic": "org-overview",
+    "title": "org-overview",
+    "description": "Understand how organization accounts work on PATHS and what access they provide.",
+    "body": "How Organization Accounts Work\nWhen your employer or organization subscribes to PATHS, they create a dedicated workspace — called a tenant — for their team. Your organization administrator sets up this workspace, invites members, and assigns content access levels to the group.\nWhat Is Multi-Tenancy?",
+    "headings": [
+      "How Organization Accounts Work",
+      "What Is Multi-Tenancy?",
+      "How Access Is Determined",
+      "Compliance & Certifications",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/org-overview"
+  },
+  {
+    "role": "user-organization",
+    "topic": "progress-dashboard",
+    "title": "progress-dashboard",
+    "description": "Track your learning progress including course completion, lesson history, and enrollment status.",
+    "body": "Progress Dashboard\nPATHS tracks your learning activity automatically. As you complete lessons, finish quizzes, and work through courses, your progress is recorded and available for you to review at any time.\nViewing Your Progress\nYour learning progress is accessible from your account page. Here you ",
+    "headings": [
+      "Progress Dashboard",
+      "Viewing Your Progress",
+      "Understanding Completion Tracking",
+      "Resuming a Course",
+      "Learning Streaks",
+      "Certificates",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/progress-dashboard"
+  },
+  {
+    "role": "user-organization",
+    "topic": "switching-content",
+    "title": "switching-content",
+    "description": "Navigate between your personal subscription content and organization-assigned content on PATHS.",
+    "body": "Navigating Personal and Organization Content\nIf you have both a personal PATHS subscription and an organization membership, you have access to content from both sources. PATHS combines these automatically so you always see the broadest possible set of content.\nHow Access Union Works\nPATHS uses a \"hi",
+    "headings": [
+      "Navigating Personal and Organization Content",
+      "How Access Union Works",
+      "What This Means in Practice",
+      "If Your Access Changes",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/switching-content"
+  },
+  {
+    "role": "user-organization",
+    "topic": "team-certificates",
+    "title": "team-certificates",
+    "description": "Understand how certificates work within your organization and how they support professional development.",
+    "body": "Team Certificates\nWhen you complete a course as part of an organization on PATHS, your certificate is automatically linked to your organization's compliance tracking. This means your team manager can see your certifications alongside those of your colleagues.\nEarning Certificates as an Org Member\nTh",
+    "headings": [
+      "Team Certificates",
+      "Earning Certificates as an Org Member",
+      "Certificate Expiry",
+      "Sharing Certificates",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/team-certificates"
+  },
+  {
+    "role": "user-organization",
+    "topic": "team-learning-paths",
+    "title": "team-learning-paths",
+    "description": "Follow structured learning paths set up by your organization administrator.",
+    "body": "Team Learning Paths\nYour organization administrator can set up structured learning paths — curated sequences of courses designed to build knowledge progressively. These paths ensure your team develops a consistent foundation in longevity science relevant to your industry.\nWhat Are Learning Paths?\nA ",
+    "headings": [
+      "Team Learning Paths",
+      "What Are Learning Paths?",
+      "Following a Learning Path",
+      "Why Order Matters",
+      "Completing a Learning Path",
+      "Next Steps"
+    ],
+    "url": "/guide/user-organization/team-learning-paths"
+  },
+  {
+    "role": "user-paid",
+    "topic": "account-settings",
+    "title": "account-settings",
+    "description": "How to manage your profile, update your password, and configure account settings.",
+    "body": "Account Settings\nYour account settings let you manage your profile information, update your password, and control your account preferences. This guide covers the key settings available to you.\nAccessing Account Settings\n  Click your avatar in the top-right corner of the navigation bar.\n  Select Acco",
+    "headings": [
+      "Account Settings",
+      "Accessing Account Settings",
+      "Updating Your Display Name",
+      "Changing Your Email Address",
+      "Changing Your Password",
+      "Email Verification",
+      "Account Navigation",
+      "Logging Out"
+    ],
+    "url": "/guide/user-paid/account-settings"
+  },
+  {
+    "role": "user-paid",
+    "topic": "action-plans",
+    "title": "action-plans",
+    "description": "Get personalized 30-day action plans generated by AI after completing courses.",
+    "body": "AI Action Plans\nWhen you complete a course on PATHS, the AI can generate a personalized 30-day action plan that translates what you learned into concrete daily actions — tailored to your Health Profile.\nHow Action Plans Work\nAction plans are structured as a 4-week program with specific daily actions",
+    "headings": [
+      "AI Action Plans",
+      "How Action Plans Work",
+      "Generating an Action Plan",
+      "Viewing Your Action Plans",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/action-plans"
+  },
+  {
+    "role": "user-paid",
+    "topic": "ai-tutor",
+    "title": "ai-tutor",
+    "description": "Get AI-powered help grounded in PATHS content, personalized to your health profile, with smart clinical escalation.",
+    "body": "Using the AI Tutor\nThe AI tutor is an intelligent assistant built into PATHS. It answers your questions using content from the platform's knowledge base and — if you have a Health Profile — personalizes responses based on your biomarkers, goals, and conditions.\nHow It Works\nThe AI tutor uses retriev",
+    "headings": [
+      "Using the AI Tutor",
+      "How It Works",
+      "Accessing the AI Tutor",
+      "Starter Questions",
+      "Rich Responses",
+      "Health-Aware Personalization",
+      "Telemedicine Escalation",
+      "Asking Effective Questions",
+      "Conversation Context",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/ai-tutor"
+  },
+  {
+    "role": "user-paid",
+    "topic": "biomarker-tracking",
+    "title": "biomarker-tracking",
+    "description": "Visualize biomarker trends over time with interactive charts, normal range shading, and trend indicators.",
+    "body": "Biomarker Tracking\nWhen you add two or more readings for the same biomarker in your Health Profile, PATHS generates interactive trend charts so you can visualize how your health markers change over time.\nViewing Your Trends\nThe Biomarker Trends section appears at the bottom of your Health Profile pa",
+    "headings": [
+      "Biomarker Tracking",
+      "Viewing Your Trends",
+      "Understanding Trend Indicators",
+      "How Trends Feed AI Context",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/biomarker-tracking"
+  },
+  {
+    "role": "user-paid",
+    "topic": "certificates",
+    "title": "certificates",
+    "description": "Earn verifiable certificates when you complete courses, and share them with employers or on professional profiles.",
+    "body": "Course Certificates\nWhen you complete all lessons in a course, PATHS automatically generates a completion certificate — a branded, verifiable credential you can share with employers, on LinkedIn, or for continuing education records.\nHow Certificates Work\nCertificates are generated automatically when",
+    "headings": [
+      "Course Certificates",
+      "How Certificates Work",
+      "Viewing Your Certificates",
+      "Sharing & Printing",
+      "Organization Certificates",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/certificates"
+  },
+  {
+    "role": "user-paid",
+    "topic": "completing-lessons",
+    "title": "completing-lessons",
+    "description": "How to work through lessons, track your progress, and resume where you left off.",
+    "body": "Completing Lessons\nCourses on PATHS are organized into modules, each containing a sequence of lessons. This guide covers how the lesson viewer works and how your progress is tracked.\nLesson Viewer Layout\nWhen you open a lesson, you will see two main areas:\nContent area — the main panel displaying th",
+    "headings": [
+      "Completing Lessons",
+      "Lesson Viewer Layout",
+      "Marking Lessons Complete",
+      "Tracking Your Progress",
+      "Resuming Where You Left Off",
+      "Learning Streaks"
+    ],
+    "url": "/guide/user-paid/completing-lessons"
+  },
+  {
+    "role": "user-paid",
+    "topic": "dashboard",
+    "title": "dashboard",
+    "description": "Navigate your personalized learning dashboard with stats, daily protocols, course progress, and recommendations.",
+    "body": "Your Dashboard\nYour dashboard at /account is your home base on PATHS. It gives you an at-a-glance view of your learning progress, daily protocols, enrolled courses, and recent activity.\nDashboard Overview\nWhen you log in, your dashboard displays:\nWelcome message with your name and tier badge (e.g., ",
+    "headings": [
+      "Your Dashboard",
+      "Dashboard Overview",
+      "Stats Cards",
+      "Today's Protocol",
+      "Continue Learning",
+      "Onboarding Tour",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/dashboard"
+  },
+  {
+    "role": "user-paid",
+    "topic": "diagnostics",
+    "title": "diagnostics",
+    "description": "Browse and book diagnostic packages at partner clinics through the PATHS platform.",
+    "body": "Booking Diagnostics\nPATHS connects your learning with real-world diagnostics. After completing courses on biomarkers, nutrition, or longevity science, you can book diagnostic packages at partner clinics to measure what you've learned about.\nBrowsing Diagnostic Packages\nNavigate to /diagnostics (link",
+    "headings": [
+      "Booking Diagnostics",
+      "Browsing Diagnostic Packages",
+      "Contextual Suggestions",
+      "Premium Discount",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/diagnostics"
+  },
+  {
+    "role": "user-paid",
+    "topic": "enrolling-courses",
+    "title": "enrolling-courses",
+    "description": "How to browse, enroll in, and access courses on the PATHS platform.",
+    "body": "Enrolling in Courses\nAs a paid subscriber, you have access to enroll in courses that match your subscription tier. This guide walks you through finding and enrolling in courses.\n  Course enrollment is available to users on a Regular, Premium, or Enterprise plan. Free-tier users can browse course des",
+    "headings": [
+      "Enrolling in Courses",
+      "Browsing Available Courses",
+      "How to Enroll",
+      "Accessing Your Enrolled Courses",
+      "Enrollment and Access Levels"
+    ],
+    "url": "/guide/user-paid/enrolling-courses"
+  },
+  {
+    "role": "user-paid",
+    "topic": "health-profile",
+    "title": "health-profile",
+    "description": "Set up your health profile with biomarkers, goals, conditions, and medications to unlock personalized AI recommendations.",
+    "body": "Health Profile\nYour Health Profile is the foundation of personalized learning on PATHS. By entering your biomarkers, health goals, conditions, and medications, you enable the AI tutor, daily protocols, and action plans to tailor recommendations specifically to your body.\n  Health profile data is use",
+    "headings": [
+      "Health Profile",
+      "Accessing Your Health Profile",
+      "Health Goals",
+      "Biomarkers",
+      "Health Conditions & Medications",
+      "Pillar Priorities",
+      "Saving Your Profile",
+      "How Health Data Is Used",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/health-profile"
+  },
+  {
+    "role": "user-paid",
+    "topic": "learning-streaks",
+    "title": "learning-streaks",
+    "description": "Build and maintain daily learning streaks to stay consistent with your longevity education.",
+    "body": "Learning Streaks\nPATHS tracks your learning consistency with a streak system. Every day you complete at least one lesson, your streak increases. The dashboard shows both your current streak and your all-time longest streak.\nHow Streaks Work\nCurrent Streak — The number of consecutive days you've comp",
+    "headings": [
+      "Learning Streaks",
+      "How Streaks Work",
+      "Viewing Your Streak",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/learning-streaks"
+  },
+  {
+    "role": "user-paid",
+    "topic": "managing-subscription",
+    "title": "managing-subscription",
+    "description": "How to view, upgrade, downgrade, or cancel your subscription and manage billing through Stripe.",
+    "body": "Managing Your Subscription\nYour PATHS subscription is managed through Stripe, a secure payment platform. This guide covers how to view your plan, make changes, and access billing history.\nViewing Your Current Plan\n  Click your avatar in the top-right corner of the navigation bar.\n  Select Account fr",
+    "headings": [
+      "Managing Your Subscription",
+      "Viewing Your Current Plan",
+      "Upgrading Your Plan",
+      "Downgrading Your Plan",
+      "Cancelling Your Subscription",
+      "Payment History",
+      "Billing Security"
+    ],
+    "url": "/guide/user-paid/managing-subscription"
+  },
+  {
+    "role": "user-paid",
+    "topic": "premium-content",
+    "title": "premium-content",
+    "description": "How content access levels work and how your subscription tier determines what you can access.",
+    "body": "Understanding Tiered Content Access\nContent on the PATHS platform is organized into access tiers. Your subscription level determines which articles, courses, and resources you can view. This guide explains how the tiered system works.\nAccess Tiers\nThe platform has four content access levels, ordered",
+    "headings": [
+      "Understanding Tiered Content Access",
+      "Access Tiers",
+      "How Locked and Unlocked Content Appears",
+      "Organization Access",
+      "Discovering Content",
+      "Upgrading for More Content",
+      "AI Tutor and Access Levels"
+    ],
+    "url": "/guide/user-paid/premium-content"
+  },
+  {
+    "role": "user-paid",
+    "topic": "stay-packages",
+    "title": "stay-packages",
+    "description": "Book immersive hotel stays with guided longevity content, diagnostics, and personalized daily protocols.",
+    "body": "Longevity Stay Packages\nPATHS offers immersive Longevity Stay Packages at El Fuerte Marbella, combining luxury hospitality with hospital-grade diagnostics at Recoletas Salud. Your stay is enhanced with PATHS content — pre-arrival preparation, daily protocols during your stay, and long-term follow-up",
+    "headings": [
+      "Longevity Stay Packages",
+      "Available Packages",
+      "What's Included",
+      "Booking a Stay",
+      "Time-Gated Content During Your Stay",
+      "Stay-Aware AI Protocols",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/stay-packages"
+  },
+  {
+    "role": "user-paid",
+    "topic": "taking-quizzes",
+    "title": "taking-quizzes",
+    "description": "How to take interactive quizzes embedded in articles to reinforce your learning.",
+    "body": "Taking Quizzes\nQuizzes on the PATHS platform are embedded directly within articles as interactive blocks. They are designed to reinforce key concepts and help you retain what you have learned.\nWhere to Find Quizzes\nQuizzes appear inline within article content. As you read through an article, you may",
+    "headings": [
+      "Taking Quizzes",
+      "Where to Find Quizzes",
+      "How Quizzes Work",
+      "AI-Generated Quizzes",
+      "Quiz Results",
+      "Quizzes in Courses vs. Articles"
+    ],
+    "url": "/guide/user-paid/taking-quizzes"
+  },
+  {
+    "role": "user-paid",
+    "topic": "telemedicine",
+    "title": "telemedicine",
+    "description": "Book expert longevity consultations for biomarker review, health planning, and clinical guidance.",
+    "body": "Telemedicine Consultations\nPATHS connects you with the clinical team for expert health guidance via telemedicine. From biomarker interpretation to intervention protocols — get personalized advice without leaving home.\nAvailable Services\nNavigate to /telemedicine to browse four consultation types:\n| ",
+    "headings": [
+      "Telemedicine Consultations",
+      "Available Services",
+      "Pricing",
+      "Booking a Consultation",
+      "AI Tutor Escalation",
+      "Next Steps"
+    ],
+    "url": "/guide/user-paid/telemedicine"
+  }
+]

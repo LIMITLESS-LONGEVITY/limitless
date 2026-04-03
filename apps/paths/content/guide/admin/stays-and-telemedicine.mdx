@@ -1,0 +1,71 @@
+---
+title: Stays & Telemedicine
+description: Configure hotel stay packages and telemedicine consultation settings in the PATHS admin.
+---
+
+# Stays & Telemedicine
+
+<RoleTag role="admin" />
+
+PATHS supports two clinical service features: **Longevity Stay Packages** (hotel stays with guided content) and **Telemedicine Consultations** (remote expert sessions). Both require admin configuration.
+
+## Stay Packages
+
+Stay programs reuse the **Courses** collection with additional stay fields. To create a stay program:
+
+<StepList>
+  <Step number={1}>Create a new course in the **Courses** collection.</Step>
+  <Step number={2}>Set the **stayType** field to 3-day, 5-day, or 7-day.</Step>
+  <Step number={3}>Fill in stay-specific fields:
+    - `stayLocation` — Hotel name and location
+    - `stayPrice` — Standard price for non-members
+    - `stayMemberPrice` — Discounted price for PATHS members
+    - `stayIncludes` — Array of included features (accommodation, diagnostics, coaching, etc.)
+    - `followUpMonths` — Duration of post-stay follow-up program
+  </Step>
+  <Step number={4}>Create **Modules** as days (Day 1, Day 2, etc.) and **Lessons** as activity blocks (Morning Session, Afternoon Workshop, etc.).</Step>
+  <Step number={5}>The course appears on the `/stays` page automatically when `stayType` is set.</Step>
+</StepList>
+
+<Callout type="info" title="Reuses existing infrastructure">
+  Stay programs use the standard Courses → Modules → Lessons structure. All enrollment tracking, progress, certificates, and AI features work automatically for stay content.
+</Callout>
+
+## Time-Gated Access
+
+When a user enrolls in a stay program with `stayStartDate` and `stayEndDate` set on their enrollment, content is time-gated:
+
+- **Pre-arrival:** Only preparation content is accessible
+- **During stay:** Each day's module unlocks on the corresponding day
+- **Post-stay:** All content remains accessible during the follow-up period
+- **After follow-up:** Content access may expire based on follow-up duration
+
+The `StayDayGate` component shows "Available on Day X" for locked content.
+
+## Stay-Aware AI Protocols
+
+The daily protocol AI endpoint detects active stay enrollments and injects stay context (current day number, location, scheduled activities) into the protocol prompt. This generates protocols that complement the in-person program.
+
+## Telemedicine Configuration
+
+Telemedicine booking requires one environment variable:
+
+| Variable | Description |
+|----------|-------------|
+| `TELEMEDICINE_EMAIL` | Email address that receives booking notifications |
+
+When a user submits a consultation request (from `/telemedicine` or from an AI tutor escalation), the endpoint sends a notification to this email with the user's details, topic, and preferred date.
+
+## Booking Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /api/stay-booking` | Stay package booking requests |
+| `POST /api/telemedicine-booking` | Telemedicine consultation requests |
+
+Both endpoints send email notifications and log whether the booking came from the public form or from an AI tutor escalation.
+
+## Next Steps
+
+- [Configure AI settings](/guide/admin/ai-configuration) for stay-aware protocols
+- [Manage courses](/guide/admin/managing-courses) to create stay program content

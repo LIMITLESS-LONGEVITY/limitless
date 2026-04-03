@@ -1,0 +1,84 @@
+---
+title: Health Profile
+description: Set up your health profile with biomarkers, goals, conditions, and medications to unlock personalized AI recommendations.
+---
+
+# Health Profile
+
+<RoleTag role="user-paid" />
+
+Your Health Profile is the foundation of personalized learning on PATHS. By entering your biomarkers, health goals, conditions, and medications, you enable the AI tutor, daily protocols, and action plans to tailor recommendations specifically to your body.
+
+<Callout type="important" title="Your data is private">
+  Health profile data is used exclusively for personalization within PATHS. It is never shared with third parties, never indexed in search, and is only accessible by you. Even the AI tutor only references your health data during your own conversations.
+</Callout>
+
+## Accessing Your Health Profile
+
+Navigate to **Account** → **Health Profile** in the sidebar, or visit `/account/health` directly.
+
+<Screenshot src="user-paid/health-profile-form.png" alt="Health Profile page showing goals, biomarkers, conditions, medications, and pillar priorities" caption="The Health Profile page with all sections for personalizing your experience." />
+
+## Health Goals
+
+Select the goals most important to you from 10 options:
+
+- Improve Sleep, Lose Weight, Increase Energy, Reduce Inflammation, Build Muscle
+- Improve Cognition, Cardiovascular Health, Hormone Balance, Longevity Optimization, Stress Management
+
+Click a goal button to toggle it on or off. Selected goals influence your daily protocols and content recommendations.
+
+## Biomarkers
+
+Track your key health biomarkers over time. PATHS supports 16 preset biomarkers with auto-filled units and normal ranges:
+
+<StepList>
+  <Step number={1}>Click **+ Add Biomarker** to add a new entry.</Step>
+  <Step number={2}>Select a biomarker from the dropdown (e.g., Vitamin D, HbA1c, ApoB).</Step>
+  <Step number={3}>Enter your value — the unit and normal range auto-fill based on the selected biomarker.</Step>
+  <Step number={4}>Set the date of measurement (defaults to today).</Step>
+  <Step number={5}>The system calculates your status (normal, low, high) based on the reference range.</Step>
+</StepList>
+
+<Callout type="tip">
+  Enter biomarker results from your blood panels over time to build a trend history. With two or more readings, PATHS generates trend charts — see [Biomarker Tracking](/guide/user-paid/biomarker-tracking).
+</Callout>
+
+## Health Conditions & Medications
+
+These are optional fields that help the AI avoid conflicting recommendations:
+
+- **Health Conditions** — List any relevant conditions (e.g., "Type 2 diabetes," "Hashimoto's thyroiditis")
+- **Current Medications** — List supplements and medications (e.g., "Metformin 500mg," "Vitamin D3 4000 IU")
+
+## Pillar Priorities
+
+Rank the six longevity pillars by importance to you. Your pillar priorities influence the order and emphasis of daily protocol recommendations.
+
+Use the **up/down arrows** to reorder. The pillars are:
+
+1. Nutrition
+2. Movement
+3. Sleep
+4. Mental Health
+5. Diagnostics
+6. Longevity Science
+
+## Saving Your Profile
+
+Click **Save Health Profile** at the bottom of the page. Changes take effect immediately — your next AI tutor conversation, daily protocol, and action plan will incorporate the updated data.
+
+## How Health Data Is Used
+
+| Feature | How It Uses Your Health Profile |
+|---------|-------------------------------|
+| [AI Tutor](/guide/user-paid/ai-tutor) | References biomarkers, goals, and conditions in responses |
+| [Daily Protocols](/guide/user-paid/dashboard) | Generates morning/afternoon/evening routines based on your priorities and health data |
+| [Action Plans](/guide/user-paid/action-plans) | Creates 30-day plans incorporating your conditions and goals |
+| [Content Discovery](/guide/user-free/content-discovery) | Personalizes recommendations based on your goals |
+
+## Next Steps
+
+- [Track biomarker trends over time](/guide/user-paid/biomarker-tracking)
+- [Use the AI Tutor](/guide/user-paid/ai-tutor) with health-aware personalization
+- [View your daily protocols](/guide/user-paid/dashboard) on the dashboard

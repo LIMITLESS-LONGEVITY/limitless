@@ -1,0 +1,34 @@
+{
+  "app": "paths",
+  "provides": [
+    {
+      "endpoint": "/api/users/me",
+      "method": "GET",
+      "description": "Returns authenticated user from JWT token. Used by all apps for auth delegation.",
+      "consumers": ["cubes", "hub", "digital-twin"],
+      "breaking_fields": ["id", "email", "role", "collection"]
+    },
+    {
+      "endpoint": "/api/health",
+      "method": "GET",
+      "description": "Health check endpoint",
+      "consumers": ["gateway", "monitoring"],
+      "breaking_fields": ["status"]
+    },
+    {
+      "endpoint": "/api/courses",
+      "method": "GET",
+      "description": "List courses. Consumed by OS Dashboard for enrollment display.",
+      "consumers": ["os-dashboard"],
+      "breaking_fields": ["docs", "id", "slug", "title"]
+    },
+    {
+      "endpoint": "/api/ai/tutor",
+      "method": "POST",
+      "description": "AI tutor streaming endpoint. Frontend-only consumer.",
+      "consumers": [],
+      "breaking_fields": []
+    }
+  ],
+  "consumes": []
+}

@@ -1,0 +1,61 @@
+name: Platform Health Check
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all services
+        id: check
+        run: |
+          FAILED=""
+          REPORT=""
+          SERVICES=(
+            "PATHS|https://app.limitless-longevity.health/learn/api/health|200"
+            "HUB|https://app.limitless-longevity.health/book/api/health|200"
+            "DT|https://limitless-digital-twin.onrender.com/api/health|200"
+            "Cubes+|https://app.limitless-longevity.health/train/api/v1/domains|401"
+            "OS Dashboard|https://app.limitless-longevity.health/|200"
+          )
+          for svc in "${SERVICES[@]}"; do
+            IFS='|' read -r NAME URL EXPECTED <<< "$svc"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$URL" 2>/dev/null || echo "000")
+            if [ "$STATUS" = "$EXPECTED" ]; then
+              REPORT="$REPORT\n✅ $NAME: $STATUS"
+            else
+              REPORT="$REPORT\n❌ $NAME: $STATUS (expected $EXPECTED)"
+              FAILED="$FAILED $NAME"
+            fi
+          done
+
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$REPORT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -n "$FAILED" ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+            echo "failed_services=$FAILED" >> $GITHUB_OUTPUT
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Alert Discord on failure
+        if: steps.check.outputs.failed == 'true'
+        run: |
+          WEBHOOK_URL="${{ secrets.DISCORD_ALERTS_WEBHOOK }}"
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "::warning::DISCORD_ALERTS_WEBHOOK secret not set — cannot alert Discord"
+            exit 0
+          fi
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"content\":\"🚨 **HEALTH CHECK FAILED** ($(date -u +%Y-%m-%dT%H:%M:%SZ))\\n\\nUnhealthy:${{ steps.check.outputs.failed_services }}\\n\\n${{ steps.check.outputs.report }}\"}" \
+            "$WEBHOOK_URL"
+
+      - name: Fail workflow if services unhealthy
+        if: steps.check.outputs.failed == 'true'
+        run: |
+          echo "::error::Services unhealthy:${{ steps.check.outputs.failed_services }}"
+          exit 1

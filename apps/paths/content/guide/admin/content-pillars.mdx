@@ -1,0 +1,62 @@
+---
+title: "Content Pillar Configuration"
+description: "Set up and manage the content pillars that organize educational content on PATHS."
+role: admin
+order: 6
+---
+
+# Content Pillar Configuration
+
+<RoleTag role="admin" />
+
+Content pillars are the top-level categories that organize all educational content on PATHS. They provide structure for both the admin panel and the learner-facing frontend.
+
+## Default Pillars
+
+PATHS ships with six default pillars, created automatically by the foundation seed:
+
+| Pillar | Focus Area |
+|--------|-----------|
+| **Nutrition** | Diet, supplementation, metabolic health |
+| **Exercise** | Physical activity, training, movement science |
+| **Sleep** | Sleep quality, circadian rhythms, recovery |
+| **Mental Health** | Stress management, cognitive wellness, mindfulness |
+| **Preventive Medicine** | Screening, diagnostics, early intervention |
+| **Longevity Science** | Aging research, biomarkers, emerging therapies |
+
+## Managing Pillars
+
+<Screenshot src="admin/pillars-list.png" alt="Content Pillars collection showing six default pillars" caption="The six default content pillars covering core areas of longevity science." />
+
+<StepList>
+<Step number={1}>Navigate to **Content Pillars** in the sidebar.</Step>
+<Step number={2}>Click an existing pillar to edit its name, slug, or description.</Step>
+<Step number={3}>To add a new pillar, click **Create New** and fill in the name, slug, and description.</Step>
+<Step number={4}>Click **Save**.</Step>
+</StepList>
+
+<Callout type="tip" title="Pillar consistency">
+Keep the number of pillars manageable. Too many dilute the organizational structure. The six defaults cover the core areas of longevity science comprehensively.
+</Callout>
+
+## Assigning Content to Pillars
+
+<Screenshot src="admin/pillar-dropdown-on-article.png" alt="Content pillar dropdown on an article edit form" caption="Select a pillar when creating or editing articles and courses." />
+
+Every article and course has a **content pillar** field. When creating or editing content, select the appropriate pillar from the dropdown. This determines:
+
+- Where the content appears in pillar-based navigation on the frontend.
+- How content is grouped in search results and recommendations.
+- Which pillar icon and color scheme are applied to the content card.
+
+## Frontend Display
+
+On the public-facing site, pillars appear as filterable categories. Learners can browse all content within a specific pillar or view a mixed feed across all pillars. The pillar assignment also feeds into the AI recommendation engine, helping suggest related content to learners.
+
+<Callout type="info" title="RAG and pillars">
+The RAG pipeline uses pillar metadata as part of its retrieval context. Well-categorized content produces better AI tutor responses and more relevant recommendations.
+</Callout>
+
+## Next Steps
+
+Configure the AI features that power search and recommendations in [AI Configuration](/guide/admin/ai-configuration).

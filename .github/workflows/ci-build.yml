@@ -1,0 +1,97 @@
+name: CI Build & Validate
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      paths: ${{ steps.filter.outputs.paths }}
+      cubes: ${{ steps.filter.outputs.cubes }}
+      hub: ${{ steps.filter.outputs.hub }}
+      dt: ${{ steps.filter.outputs.dt }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD)
+          echo "paths=$(echo "$CHANGED" | grep -c '^apps/paths/' || true)" >> $GITHUB_OUTPUT
+          echo "cubes=$(echo "$CHANGED" | grep -c '^apps/cubes/' || true)" >> $GITHUB_OUTPUT
+          echo "hub=$(echo "$CHANGED" | grep -c '^apps/hub/' || true)" >> $GITHUB_OUTPUT
+          echo "dt=$(echo "$CHANGED" | grep -c '^apps/digital-twin/' || true)" >> $GITHUB_OUTPUT
+          echo "dashboard=$(echo "$CHANGED" | grep -c '^apps/os-dashboard/' || true)" >> $GITHUB_OUTPUT
+
+  build-paths:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.paths != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Validate Payload schema
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD)
+          SCHEMA_CHANGED=$(echo "$CHANGED" | grep -cE 'apps/paths/src/(collections|globals)/|apps/paths/payload.config.ts' || true)
+          MIGRATION_ADDED=$(echo "$CHANGED" | grep -c 'apps/paths/src/migrations/' || true)
+          if [ "$SCHEMA_CHANGED" -gt 0 ] && [ "$MIGRATION_ADDED" -eq 0 ]; then
+            echo "::error::Payload schema changed but no migration file found in apps/paths/src/migrations/"
+            exit 1
+          fi
+      - run: cd apps/paths && pnpm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /learn
+          NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+          # Build will skip static gen without DATABASE_URI — compilation still validates
+
+  build-cubes:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cubes != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: cd apps/cubes && npx prisma generate && pnpm run build
+
+  build-hub:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.hub != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: cd apps/hub && pnpm run build
+
+  build-dt:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.dt != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: cd apps/digital-twin && pnpm run build

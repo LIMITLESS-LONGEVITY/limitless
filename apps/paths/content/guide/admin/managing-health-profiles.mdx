@@ -1,0 +1,54 @@
+---
+title: Health Profiles
+description: Understand how user health data is stored, secured, and used for AI personalization on the PATHS platform.
+---
+
+# Health Profiles
+
+<RoleTag role="admin" />
+
+The **Health Profiles** collection stores user health data — biomarkers, goals, conditions, medications, and pillar priorities. This data powers the AI personalization features: health-aware tutor responses, personalized daily protocols, and tailored action plans.
+
+## Privacy by Design
+
+Health data is handled with strict privacy controls:
+
+- **Owner-only access** — Users can only read and write their own health profile
+- **NOT indexed in RAG** — Health data is never added to the ContentChunks collection, so it never appears in search results or AI retrieval for other users
+- **No afterChange hook for RAG** — This is enforced by omission. Unlike articles and lessons, the HealthProfiles collection has no embedding/indexing hook
+- **AI context is session-scoped** — Health data is injected into the AI prompt only for the authenticated user's own tutor session
+
+<Callout type="warning">
+  Health data privacy is enforced by architectural design, not just access control. Do not add RAG indexing hooks to the HealthProfiles collection without a thorough privacy review.
+</Callout>
+
+## Collection Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `user` | Relationship | Owner (one-to-one with Users) |
+| `healthGoals` | Array | Selected goals from preset list |
+| `biomarkers` | Array | Entries with name, value, unit, date, normalRange |
+| `conditions` | Array | Free-text health conditions |
+| `medications` | Array | Free-text current medications |
+| `pillarPriorities` | Array | Ordered list of 6 content pillars |
+
+## How Health Data Feeds AI
+
+The shared utility `buildHealthContextSection` formats a user's health profile into a structured text block that gets injected into AI system prompts. This context includes:
+
+- Health goals
+- Biomarker values with status and trends (for multi-entry biomarkers)
+- Conditions and medications
+- Pillar priority order
+
+Three AI endpoints consume this context: the tutor (`/api/ai/tutor`), daily protocols (`/api/ai/daily-protocol`), and action plans (`/api/ai/action-plan`).
+
+## Viewing Health Profiles in Admin
+
+Navigate to **Health Profiles** in the admin sidebar to browse user health data. You can view but should rarely need to edit user health profiles — users manage their own data through the frontend at `/account/health`.
+
+## Next Steps
+
+- [Configure AI models and settings](/guide/admin/ai-configuration) that consume health data
+- [Understand the AI tutor's health-aware behavior](/guide/user-paid/ai-tutor)

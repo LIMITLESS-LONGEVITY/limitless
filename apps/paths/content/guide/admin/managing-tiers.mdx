@@ -1,0 +1,72 @@
+---
+title: "Managing Membership Tiers"
+description: "Configure access tiers and link Stripe pricing to membership levels."
+role: admin
+order: 3
+---
+
+# Managing Membership Tiers
+
+<RoleTag role="admin" />
+
+Membership tiers control which content users can access. Each tier represents a level of access, and tiers are linked to Stripe prices for automated billing.
+
+## Tier Hierarchy
+
+PATHS ships with four default tiers, seeded via the foundation seed:
+
+| Tier | Access Level | Description |
+|------|-------------|-------------|
+| **Free** | 1 | Basic access to free articles and course previews. |
+| **Regular** | 2 | Access to standard courses and articles. |
+| **Premium** | 3 | Full access to all content including premium courses. |
+| **Enterprise** | 4 | Organization-level access with all premium features. |
+
+<Callout type="info" title="Access level numbers">
+Content is gated by numeric access level. A user with tier level 3 (Premium) can access all content with access level 3 or below. Higher numbers mean more access.
+</Callout>
+
+## Creating or Editing a Tier
+
+<Screenshot src="admin/tiers-collection.png" alt="Membership Tiers collection showing Free, Regular, Premium, and Enterprise tiers" caption="The Membership Tiers collection with all four default tiers." />
+
+<StepList>
+<Step number={1}>Navigate to **Membership Tiers** in the sidebar.</Step>
+<Step number={2}>Click an existing tier to edit, or **Create New** for a new tier.</Step>
+<Step number={3}>Set the **name**, **slug**, and **access level** (numeric).</Step>
+<Step number={4}>Enter the **Stripe Monthly Price ID** (e.g., `price_1abc...`) from your Stripe dashboard.</Step>
+<Step number={5}>Enter the **Stripe Yearly Price ID** for annual billing.</Step>
+<Step number={6}>Click **Save**.</Step>
+</StepList>
+
+<Callout type="warning" title="Price IDs are required for billing">
+Without valid `stripeMonthlyPriceId` and `stripeYearlyPriceId` values, the checkout endpoint will return a 400 error when users try to subscribe to that tier. Always configure these after creating a tier.
+</Callout>
+
+## Linking Tiers to Stripe
+
+<Screenshot src="admin/tier-edit-stripe-fields.png" alt="Tier edit form showing Stripe Monthly and Yearly Price ID fields" caption="Each tier requires Stripe price IDs for both monthly and yearly billing." />
+
+Each tier needs corresponding products and prices in your Stripe dashboard:
+
+1. Create a **Product** in Stripe for each tier (e.g., "PATHS Regular Plan").
+2. Add two **Prices** to each product: one monthly recurring, one yearly recurring.
+3. Copy each price's ID (`price_...`) and paste it into the corresponding tier fields in PATHS.
+
+## How Tier Assignment Works
+
+<Accordion>
+<AccordionItem title="Manual assignment">
+Admins can assign tiers directly on a user's record via the Users collection. Open the user, select the desired tier from the dropdown, and save.
+</AccordionItem>
+<AccordionItem title="Automatic via Stripe">
+When a user subscribes via Stripe checkout, the webhook updates their tier automatically based on the price ID. No admin action is needed.
+</AccordionItem>
+<AccordionItem title="Automatic downgrade">
+When a subscription is canceled or expires, the webhook reverts the user to the Free tier automatically. No admin action is needed.
+</AccordionItem>
+</Accordion>
+
+## Next Steps
+
+Learn how to set up organizations in [Managing Tenants](/guide/admin/managing-tenants).

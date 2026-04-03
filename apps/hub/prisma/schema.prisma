@@ -1,0 +1,315 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Identity (read from JWT, cached locally) ───
+
+model User {
+  id                String   @id @default(cuid())
+  pathsUserId       String   @unique
+  email             String   @unique
+  firstName         String?
+  lastName          String?
+  phone             String?
+  dateOfBirth       DateTime?
+  tier              String   @default("free")
+
+  membership        Membership?
+  stayBookings      StayBooking[]
+  teleBookings      TelemedicineBooking[]
+  diagBookings      DiagnosticBooking[]
+  appointments      Appointment[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Center Memberships ───
+
+model Membership {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+
+  plan              MembershipPlan
+  status            MembershipStatus @default(ACTIVE)
+  stripeSubId       String?  @unique
+  stripeCustId      String?
+
+  startDate         DateTime @default(now())
+  renewalDate       DateTime
+  cancelledAt       DateTime?
+
+  coachSessionsRemaining  Int @default(0)
+  diagnosticDiscount      Float @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum MembershipPlan {
+  OPTIMUS
+  IMMORTALITAS
+  TRANSCENDENTIA
+  VIP
+}
+
+enum MembershipStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  PAST_DUE
+}
+
+// ─── Diagnostic Packages ───
+
+model DiagnosticPackage {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  description       String
+  price             Float
+  currency          String   @default("EUR")
+  durationMinutes   Int
+
+  tests             Json
+
+  available         Boolean  @default(true)
+  requiresMembership Boolean @default(false)
+
+  bookings          DiagnosticBooking[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model DiagnosticBooking {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  packageId         String
+  package           DiagnosticPackage @relation(fields: [packageId], references: [id])
+
+  status            BookingStatus @default(PENDING)
+  scheduledAt       DateTime?
+  completedAt       DateTime?
+
+  stripePaymentId   String?
+  amountPaid        Float?
+  discountApplied   Float?   @default(0)
+
+  notes             String?
+  resultsSentToTwin Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Hotel Stay Packages ───
+
+model StayPackage {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  description       String
+  durationDays      Int
+  price             Float
+  currency          String   @default("EUR")
+
+  inclusions        Json
+  hotelPartner      String
+
+  available         Boolean  @default(true)
+
+  bookings          StayBooking[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model StayBooking {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  packageId         String
+  package           StayPackage @relation(fields: [packageId], references: [id])
+
+  status            BookingStatus @default(PENDING)
+  checkIn           DateTime?
+  checkOut          DateTime?
+
+  guests            Int      @default(1)
+  specialRequests   String?
+
+  stripePaymentId   String?
+  amountPaid        Float?
+
+  wearableAssigned  Boolean  @default(false)
+  wearableDeviceId  String?
+
+  transferToTwin    Boolean  @default(false)
+  followUpPeriodEnd DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Telemedicine / E-Clinic ───
+
+model TelemedicineBooking {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  type              ConsultType
+  status            BookingStatus @default(PENDING)
+  scheduledAt       DateTime?
+  durationMinutes   Int      @default(30)
+
+  clinicianId       String?
+  clinician         Clinician? @relation(fields: [clinicianId], references: [id])
+
+  meetingUrl        String?
+  notes             String?
+  clinicianNotes    String?
+
+  stripePaymentId   String?
+  amountPaid        Float?
+  coveredByPlan     Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum ConsultType {
+  INITIAL
+  FOLLOW_UP
+  SPECIALIST
+  EMERGENCY
+}
+
+// ─── Appointments ───
+
+model Appointment {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  type              AppointmentType
+  title             String
+  description       String?
+  scheduledAt       DateTime
+  durationMinutes   Int      @default(60)
+  location          String?
+
+  clinicianId       String?
+  clinician         Clinician? @relation(fields: [clinicianId], references: [id])
+
+  status            BookingStatus @default(CONFIRMED)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum AppointmentType {
+  COACH_SESSION
+  SPECIALIST_CONSULT
+  GROUP_CLASS
+  DIAGNOSTIC
+  FOLLOW_UP
+  ORIENTATION
+}
+
+// ─── Clinicians ───
+
+model Clinician {
+  id                String   @id @default(cuid())
+  pathsUserId       String?  @unique
+  email             String   @unique
+  firstName         String
+  lastName          String
+  title             String?
+  specialty         String?
+  bio               String?
+  photoUrl          String?
+
+  available         Boolean  @default(true)
+
+  teleBookings      TelemedicineBooking[]
+  appointments      Appointment[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Contact Inquiries ───
+
+model ContactInquiry {
+  id                String   @id @default(cuid())
+
+  type              InquiryType
+  name              String
+  email             String
+  phone             String?
+  company           String?
+  message           String
+
+  employeeCount     Int?
+
+  status            InquiryStatus @default(NEW)
+  assignedTo        String?
+  notes             String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum InquiryType {
+  GENERAL
+  MEMBERSHIP
+  CORPORATE_WELLNESS
+  HOTEL_PARTNERSHIP
+  MEDIA
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  CONVERTED
+  CLOSED
+}
+
+// ─── Hotel Partners ───
+
+model HotelPartner {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  contactEmail      String
+  contactName       String
+
+  referralFeePercent Float   @default(0.10)
+
+  totalReferrals    Int      @default(0)
+  totalRevenue      Float    @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Shared Enums ───
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}

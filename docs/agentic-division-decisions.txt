@@ -1,0 +1,36 @@
+# LIMITLESS Agentic Division — Director Decisions
+Exported: 2026-04-02
+
+[APPROVED] Decision #1: Agent Identity Mechanism
+  Recommendation: AGENT_ROLE environment variable
+  Status: approved
+
+[APPROVED] Decision #2: Discord Channel Strategy
+  Recommendation: All specialists share #workbench-ops (Option A)
+  Status: approved
+
+[APPROVED] Decision #3: CI Agent Model Selection
+  Recommendation: Sonnet (claude-sonnet-4-6)
+  Status: approved
+
+[MODIFIED] Decision #4: Health Check Mechanism
+  Recommendation: GitHub Actions cron (free)
+  Status: modified
+
+[MODIFIED] Decision #5: Structured Handoff Enforcement
+  Recommendation: Warn-only initially (not blocking)
+  Status: modified
+
+[MODIFIED] Decision #6: Monorepo Migration Timing
+  Recommendation: Defer to Q3 2026
+  Status: modified
+
+[APPROVED] Decision #7: Issue Tracking Tool
+  Recommendation: Skip initially; evaluate after Phase 5 running
+  Status: approved
+
+[APPROVED] Decision #8: Post-Deploy Browser Smoke Tests
+  Recommendation: Playwright suite in umbrella repo
+  Status: approved
+
+--- All decisions resolved. Ready for Phase 0. ---

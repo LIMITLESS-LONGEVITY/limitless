@@ -1,0 +1,43 @@
+name: Issue State Machine
+on:
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  update-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract issue number from PR body
+        id: issue
+        run: |
+          BODY=$(cat <<'PREOF'
+          ${{ github.event.pull_request.body }}
+          PREOF
+          )
+          ISSUE=$(echo "$BODY" | grep -oP '(?:Fixes|Closes|Resolves)\s+#\K\d+' | head -1 || true)
+          echo "number=$ISSUE" >> $GITHUB_OUTPUT
+
+      - name: PR opened → status:pr-open
+        if: github.event.action == 'opened' && steps.issue.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit ${{ steps.issue.outputs.number }} --repo ${{ github.repository }} --remove-label "status:in-progress" --add-label "status:pr-open" 2>/dev/null || true
+
+      - name: PR merged → status:awaiting-qa
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true && steps.issue.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit ${{ steps.issue.outputs.number }} --repo ${{ github.repository }} --remove-label "status:pr-open" --add-label "status:awaiting-qa" 2>/dev/null || true
+
+      - name: Notify Telegram on merge
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
+            -d text="PR #${{ github.event.pull_request.number }} merged on ${{ github.repository }}: ${{ github.event.pull_request.title }}" \
+            -d parse_mode="Markdown" || true

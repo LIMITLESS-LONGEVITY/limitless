@@ -1,0 +1,124 @@
+---
+title: "AI Configuration"
+description: "Configure OpenAI models, Jina AI embeddings, and RAG pipeline settings for the PATHS platform."
+role: admin
+order: 7
+---
+
+# AI Configuration
+
+<RoleTag role="admin" />
+
+PATHS integrates AI throughout the platform — from semantic search and content recommendations to the interactive AI tutor. All AI settings are managed through the **AI Config** global in the admin panel.
+
+## Accessing AI Config
+
+<Screenshot src="admin/ai-config-global.png" alt="AI Config global settings showing model selection and RAG parameters" caption="The AI Config global — configure model selection, RAG settings, and rate limits." />
+
+Navigate to **Globals** in the sidebar and select **AI Config**. This global controls:
+
+- **OpenAI model selection** — Choose which GPT model powers the AI tutor and quiz generation.
+- **RAG settings** — Configure retrieval-augmented generation parameters for semantic search.
+- **Rate limiting** — Set limits on AI usage per user to control costs.
+
+## RAG Pipeline Overview
+
+PATHS uses a two-stage retrieval-augmented generation (RAG) pipeline:
+
+1. **Embedding** — When content is created or updated, Jina AI generates vector embeddings stored in PostgreSQL via pgvector.
+2. **Retrieval** — When a user queries the AI tutor or searches, the query is embedded and compared against stored vectors to find relevant content.
+3. **Reranking** — Jina AI reranks the initial results for higher relevance before passing them to the language model.
+4. **Generation** — OpenAI generates a response using the retrieved content as context.
+
+<Callout type="info" title="Access-controlled retrieval">
+RAG retrieval respects access control. A free-tier user will only receive results from content they are authorized to view. Premium content is excluded from their retrieval results.
+</Callout>
+
+## Required Environment Variables
+
+AI features require two API keys configured as environment variables on the server:
+
+<Accordion>
+<AccordionItem title="OPENAI_API_KEY">
+Powers the AI tutor, quiz generation, and content recommendations. Obtain this from [platform.openai.com](https://platform.openai.com) under API Keys. Use a project-scoped key for better security.
+</AccordionItem>
+<AccordionItem title="JINA_API_KEY">
+Powers vector embeddings and reranking for semantic search. Obtain this from [jina.ai](https://jina.ai) after creating an account. The key is used for both the embedding and reranker APIs.
+</AccordionItem>
+</Accordion>
+
+<Callout type="warning" title="No API key = no AI features">
+If these environment variables are not set, AI features will fail silently or return errors. Verify they are configured in your deployment environment (Render environment variables).
+</Callout>
+
+## Configuring the AI Model
+
+<Screenshot src="admin/ai-config-model-selection.png" alt="Model selection dropdown in AI Config global" caption="Select the OpenAI model that balances quality and cost for your use case." />
+
+In the AI Config global, select your preferred OpenAI model. Consider the trade-offs:
+
+<Accordion>
+<AccordionItem title="GPT-4o — Best quality">
+Best quality responses with the most capable model. Higher cost per request. Recommended for production environments where response quality is critical.
+</AccordionItem>
+<AccordionItem title="GPT-4o-mini — Cost-efficient">
+Good quality at lower cost, suitable for most educational use cases. Recommended for development, testing, and cost-conscious deployments.
+</AccordionItem>
+</Accordion>
+
+## Usage Logging
+
+All AI interactions are logged in the **AI Usage Logs** collection. Monitor this collection to:
+
+- Track usage patterns and costs.
+- Identify users who may be hitting rate limits.
+- Debug issues with AI responses.
+
+## Embedding Triggers
+
+Content embeddings are generated automatically via an `afterChange` hook when article or lesson content is modified. Note that title-only changes do not trigger re-indexing — the hook compares the content body to detect meaningful changes.
+
+<Callout type="tip" title="Force re-indexing">
+To force re-indexing of an article, make a small edit to the content body (e.g., add and remove a space) and save. This triggers the embedding hook.
+</Callout>
+
+## Health-Context AI
+
+The AI tutor, daily protocols, and action plan endpoints incorporate user health data when available. The shared `buildHealthContextSection` utility formats a user's health profile into structured context that is injected into the AI system prompt. This includes:
+
+- Health goals and pillar priorities
+- Biomarker values with status (normal/low/high) and trends
+- Conditions and medications
+
+This context enables personalized responses like *"Based on your Vitamin D level of 22 ng/mL..."*. The health context is session-scoped — only the authenticated user's data is injected. See [Health Profiles](/guide/admin/managing-health-profiles) for privacy details.
+
+## Telemedicine Escalation
+
+The AI tutor includes a clinical escalation system. When users ask questions about medication decisions, symptoms, or clinical judgment, the model appends a `[SUGGEST_CONSULTATION]` marker. The endpoint:
+
+1. Strips the marker from the visible response
+2. Emits a separate `{ escalation: true }` event via SSE
+3. The frontend displays a gold consultation CTA card with an auto-prefilled booking form
+
+This escalation is configured in the tutor's system prompt. The booking form submits to `/api/telemedicine-booking`, which sends notifications to the `TELEMEDICINE_EMAIL` environment variable.
+
+## AI Model Entries
+
+The AI Config global includes model entries for multiple AI features:
+
+| Feature | Endpoint | Description |
+|---------|----------|-------------|
+| Tutor | `/api/ai/tutor` | Interactive Q&A with health context |
+| Quiz Generation | `/api/ai/quiz/generate` | Auto-generate quiz questions from content |
+| Search | `/api/ai/search` | Semantic search with reranking |
+| Action Plans | `/api/ai/action-plan` | 30-day personalized plans |
+| Discovery | `/api/ai/discover` | Conversational content recommendations |
+| Daily Protocols | `/api/ai/daily-protocol` | Morning/afternoon/evening routines |
+
+Each has configurable model selection and token limits in the AI Config global.
+
+## Next Steps
+
+- [Manage health profile data and privacy](/guide/admin/managing-health-profiles)
+- [Configure stays and telemedicine](/guide/admin/stays-and-telemedicine)
+- [Set up Stripe & Billing](/guide/admin/stripe-billing)

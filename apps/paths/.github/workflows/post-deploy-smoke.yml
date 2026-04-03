@@ -1,0 +1,54 @@
+name: Post-Deploy Smoke Test
+
+on:
+  deployment_status:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+jobs:
+  smoke-test:
+    name: Production Smoke Test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
+    steps:
+      - name: Test health endpoint
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://app.limitless-longevity.health/learn/api/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Health endpoint returned $STATUS"
+            exit 1
+          fi
+          echo "✅ Health endpoint: 200"
+
+      - name: Test collection endpoints
+        run: |
+          FAILED=0
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://app.limitless-longevity.health/learn/api/courses?limit=1&depth=0")
+          if [ "$STATUS" = "500" ]; then
+            echo "::error::Courses endpoint returned 500 — possible schema/migration issue"
+            FAILED=1
+          else
+            echo "✅ Courses endpoint: $STATUS"
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://app.limitless-longevity.health/learn/api/articles?limit=1&depth=0")
+          if [ "$STATUS" = "500" ]; then
+            echo "::error::Articles endpoint returned 500 — possible schema/migration issue"
+            FAILED=1
+          else
+            echo "✅ Articles endpoint: $STATUS"
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://app.limitless-longevity.health/learn/login")
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Login page returned $STATUS"
+            FAILED=1
+          else
+            echo "✅ Login page: 200"
+          fi
+
+          if [ "$FAILED" -eq 1 ]; then
+            exit 1
+          fi

@@ -1,0 +1,36 @@
+name: Cross-Repo Dispatch
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  dispatch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for cross-repo labels
+        id: check
+        run: |
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          echo "affects_paths=$(echo $LABELS | jq 'map(select(. == "affects:paths")) | length')" >> $GITHUB_OUTPUT
+          echo "affects_dt=$(echo $LABELS | jq 'map(select(. == "affects:dt")) | length')" >> $GITHUB_OUTPUT
+
+      - name: Create PATHS follow-up issue
+        if: steps.check.outputs.affects_paths != '0'
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          gh issue create --repo LIMITLESS-LONGEVITY/limitless-paths \
+            --title "Follow-up: ${{ github.repository }} PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}" \
+            --body "Merged PR may affect this repo: ${{ github.event.pull_request.html_url }}" \
+            --label "cross-repo"
+
+      - name: Create Digital Twin follow-up issue
+        if: steps.check.outputs.affects_dt != '0'
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          gh issue create --repo LIMITLESS-LONGEVITY/limitless-digital-twin \
+            --title "Follow-up: ${{ github.repository }} PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}" \
+            --body "Merged PR may affect this repo: ${{ github.event.pull_request.html_url }}" \
+            --label "cross-repo"

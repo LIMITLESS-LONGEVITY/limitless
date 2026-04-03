@@ -1,0 +1,13 @@
+# terraform.tfvars.example — copy variable names to TF Cloud workspace settings
+# DO NOT put real values here. All values go in TF Cloud as sensitive variables.
+
+render_api_key        = "rnd_..."
+vercel_api_token      = "vcp_..."
+cloudflare_api_token  = "..."
+cloudflare_account_id = "..."
+sentry_token          = "..."
+github_token          = "ghp_..."
+paths_jwt_secret      = "..."
+paths_resend_api_key  = "re_..."
+r2_access_key_id      = "..."
+r2_secret_access_key  = "..."

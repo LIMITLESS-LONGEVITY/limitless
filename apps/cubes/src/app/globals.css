@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Warm Athletic Design Tokens
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* Phase colors */
+  --phase-warmup: #fbbf24;
+  --phase-main: #e11d48;
+  --phase-cooldown: #06b6d4;
+  --phase-custom: #a855f7;
+  --phase-warmup-bg: #3b2506;
+  --phase-main-bg: #4c0519;
+  --phase-cooldown-bg: #0e4a4c;
+  --phase-custom-bg: #2e1065;
+
+  /* Accent (rose) */
+  --accent: #e11d48;
+  --accent-hover: #f43f5e;
+  --accent-light: #fb7185;
+  --accent-subtle: #1c0a14;
+
+  /* Status */
+  --status-draft: #525252;
+  --status-published: #06b6d4;
+  --status-review: #fbbf24;
+  --status-archived: #6b7280;
+
+  /* Difficulty */
+  --diff-beginner: #06b6d4;
+  --diff-intermediate: #fbbf24;
+  --diff-advanced: #e11d48;
+  --diff-elite: #dc2626;
+
+  /* Surfaces */
+  --surface-app: #0a0a0a;
+  --surface-canvas: #0d0d0d;
+  --surface-card: #111111;
+  --surface-elevated: #161616;
+}
+
+body {
+  background: #0a0a0a;
+  color: #ededed;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Input fields — shared styles for the builder */
+.input-field {
+  width: 100%;
+  background: #171717;
+  border: 1px solid #333;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  color: #e5e5e5;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+}
+
+.input-field::placeholder {
+  color: #666;
+}
+
+/* Dropdown items */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #a3a3a3;
+  transition: background-color 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #262626;
+  color: #e5e5e5;
+}
+
+/* Safari backdrop-filter */
+.-webkit-backdrop-filter-blur-md {
+  -webkit-backdrop-filter: blur(12px);
+}
