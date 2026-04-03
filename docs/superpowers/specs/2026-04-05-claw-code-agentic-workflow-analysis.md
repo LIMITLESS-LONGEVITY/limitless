@@ -154,7 +154,7 @@ OMX defines 33 specialized agent roles organized into lanes:
 
 Each role has attributes: `reasoningEffort` (low/medium/high), `posture` (frontier-orchestrator/deep-worker/fast-lane), `modelClass` (frontier/standard/fast), `routingRole` (leader/specialist/executor).
 
-**LIMITLESS comparison:** We have 8 agent roles (Architect, 5 engineers, QA, CI). OMX has 4x more granularity. The question is whether we need it — our apps are domain-specific, not generic coding tasks.
+**LIMITLESS comparison:** We have 8 agent roles (Architect, 5 engineers, QA, CI) organized by **domain** (which app you work on). OMX has 33 roles organized by **capability** (what type of work you do). This is a fundamental architectural difference — OMX models the software development *process* as a set of general capabilities (explore, plan, execute, debug, verify, review) that can be directed at any codebase. Our domain-specific roles conflate "what you work on" with "how you work." The capability-based approach is more powerful because the process of writing software is the same regardless of domain — domain context comes from the codebase itself (CLAUDE.md files), not the agent's identity. See Section 6, Lesson 8 for the full analysis.
 
 #### Team Mode — How Parallel Agents Work
 
@@ -401,6 +401,45 @@ AGENT_ROLE=paths-engineer claude --model opus --dangerously-skip-permissions
 
 **Implementation:** Add a self-review step to the specialist agent protocol: after implementation, run a focused review of `git diff` against the handoff's Tasks section. If the diff touches files not listed in "Files to Modify," flag them.
 
+### Lesson 8: Capability-Based Roles, Not Domain-Based
+
+**What OMX does:** 33 agent roles organized by *capability* — what type of work you do (explore, plan, execute, debug, verify, review, test, secure). Domain context comes from the codebase, not the agent's identity.
+
+**What we currently do:** 8 roles organized by *domain* — which app you work on (PATHS Engineer, HUB Engineer, etc.). Each engineer does everything (explores, plans, executes, debugs, verifies) but only for one app.
+
+**Why capability-based is superior:** We are building an **agentic software development division** — a general-purpose capability, not a team that maintains specific apps. The process of writing software is the same regardless of domain. An executor needs a clear task, access to code, a build command, and a verification gate. Whether that code is a Payload CMS migration or a Fastify route is just context — provided by `apps/*/CLAUDE.md`, not by the agent's identity.
+
+Capability-based roles enable:
+- **Composable teams:** The Architect spawns "2 executors + 1 verifier scoped to apps/paths/" instead of "the PATHS Engineer"
+- **Cross-domain debugging:** A debugger can diagnose any app, not just the one it was named for
+- **Parallelism within a single app:** An executor and a test-engineer work on the same app simultaneously
+- **Zero-cost scaling to new apps:** No new agent definition needed — just point a generic executor at the new directory
+- **Separation of concerns:** Boundary enforcement (what files you can edit) stays in hooks; capability (what type of work you do) lives in the role definition
+
+**Implementation:** Restructure from domain-based to capability-based agent definitions:
+
+| Current (Domain) | New (Capability) | Domain Scoping |
+|---|---|---|
+| PATHS Engineer | Executor | `AGENT_SCOPE=apps/paths` (env var) |
+| HUB Engineer | Executor | `AGENT_SCOPE=apps/hub` |
+| DT Engineer | Executor | `AGENT_SCOPE=apps/digital-twin` |
+| Cubes+ Engineer | Executor | `AGENT_SCOPE=apps/cubes` |
+| Infra Engineer | Executor | `AGENT_SCOPE=infra` |
+| QA Agent | Verifier | `AGENT_SCOPE=*` (cross-cutting) |
+| CI Agent | Code Reviewer | `AGENT_SCOPE=*` (automated) |
+| Architect | Architect | `AGENT_SCOPE=*` (read-only) |
+
+New roles to add (not present today):
+- **Explorer** — fast, read-only codebase analysis (Sonnet, low cost)
+- **Debugger** — diagnosis-first, surgical fixes (Opus, high reasoning)
+- **Test Engineer** — writes tests, not features (Sonnet)
+- **Security Reviewer** — OWASP, auth, data exposure (Opus)
+- **Planner** — task decomposition, dependency ordering (Opus)
+
+The `enforce-repo-boundary.sh` hook continues to enforce file access — it reads `AGENT_SCOPE` instead of `AGENT_ROLE` to determine what files the agent can edit. A Debugger scoped to `apps/paths` can only edit files under `apps/paths/`.
+
+**This is not incremental — it's foundational.** The division we're building should be portable to any codebase. Capability-based roles make that possible.
+
 ---
 
 ## 7. Implementation Recommendations
@@ -409,21 +448,20 @@ AGENT_ROLE=paths-engineer claude --model opus --dangerously-skip-permissions
 
 | # | Recommendation | Effort | Impact | Priority |
 |---|---------------|--------|--------|----------|
-| 1 | Git worktree isolation for parallel agents | Low | High | **P1 — Do Now** |
-| 2 | Handoff specificity gate in validate-handoff.sh | Low | Medium | **P1 — Do Now** |
-| 3 | Model routing (Sonnet for routine, Opus for complex) | Low | Medium | **P2 — Next Sprint** |
-| 4 | Formal iteration tracking + escalation counter | Medium | Medium | **P2 — Next Sprint** |
-| 5 | Self-review deslop gate before PR creation | Low | Medium | **P2 — Next Sprint** |
-| 6 | Out-of-band notification daemon | High | Low | **P3 — Later** |
+| 1 | **Capability-based agent roles** (Lesson 8) — restructure from domain to capability | Medium | **Critical** | **P0 — Foundational** |
+| 2 | Git worktree isolation for parallel agents | Low | High | **P1 — Do Now** |
+| 3 | Handoff specificity gate in validate-handoff.sh | Low | Medium | **P1 — Do Now** |
+| 4 | Model routing (Sonnet for routine, Opus for complex) | Low | Medium | **P1 — Do Now** |
+| 5 | Formal iteration tracking + escalation counter | Medium | Medium | **P2 — Next Sprint** |
+| 6 | Self-review deslop gate before PR creation | Low | Medium | **P2 — Next Sprint** |
 | 7 | Automated planning gate (ralplan equivalent) | High | Medium | **P3 — Later** |
-| 8 | Expanded agent role catalog (33 roles) | Low value | Low | **Skip** |
+| 8 | Out-of-band notification daemon | High | Low | **P3 — Later** |
 
 ### What NOT to Adopt
 
 1. **OMX's keyword detection system** — overengineered for our use case. Our Architect is the routing layer; we don't need regex-based keyword gating.
 2. **Filesystem mailboxes for inter-agent comms** — Discord is better for our async, cross-session communication pattern. Filesystem mailboxes require shared mounts.
-3. **33 agent roles** — diminishing returns at our scale (5 apps, 1 human). 8 roles is sufficient; add granularity only if bottlenecks appear.
-4. **The Python metadata scaffold approach** — cute for viral marketing, not useful for production.
+3. **The Python metadata scaffold approach** — cute for viral marketing, not useful for production.
 
 ---
 
@@ -465,6 +503,8 @@ AGENT_ROLE=paths-engineer claude --model opus --dangerously-skip-permissions
 
 Jin and Heo demonstrated that a **single human director** can operate **10+ autonomous AI agents** to produce a complex software system (a 6,000+ line Rust agent harness) in hours, without ever opening a terminal. Their stack — oh-my-codex for orchestration, clawhip for notifications, Discord for human interface — is architecturally similar to what we're building with LIMITLESS (NanoClaw for runtime, Discord for communication, hooks for governance).
 
-The gap between their system and ours is not architectural — it's **automation maturity**. They have automated planning gates, iteration tracking, model routing, and out-of-band notifications. We have stronger governance (hooks, structured handoffs, Terraform IaC) and production deployment (Render auto-deploy, health monitoring).
+The gap between their system and ours is not architectural — it's **abstraction level**. OMX models the software development *process* as a set of general capabilities (explore, plan, execute, debug, verify, review) that can be directed at any codebase. Our current agent catalog models *our specific apps* — PATHS Engineer, HUB Engineer, etc. This conflates domain with capability and limits portability.
 
-The path forward is clear: **adopt their automation patterns within our governance framework**. Git worktree isolation, specificity gates on handoffs, model routing, and formal iteration tracking are all low-effort, high-impact improvements that would bring us to the same level of autonomous execution they demonstrated.
+The most important takeaway is not any single feature — it's the realization that **we are building a software development division, not a LIMITLESS maintenance team**. The division's capabilities should be general-purpose: explore, plan, execute, debug, verify, review, test, secure. Domain context comes from the codebase (`CLAUDE.md` files), not from agent identity. This makes the division portable to any project.
+
+The path forward: **restructure around capability-based roles**, then adopt OMX's automation patterns (worktree isolation, planning gates, iteration tracking, model routing) within our existing governance framework (hooks, structured handoffs, Terraform IaC, production deployment).
