@@ -31,6 +31,7 @@ export interface ContainerConfig {
   envVars?: Record<string, string>;
   additionalMounts?: AdditionalMount[];
   timeout?: number; // Default: 300000 (5 minutes)
+  teamId?: string; // Shared team workspace for worker peer communication
 }
 
 export interface RegisteredGroup {

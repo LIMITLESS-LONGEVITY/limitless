@@ -90,6 +90,17 @@ function buildVolumeMounts(
       });
     }
 
+    // Mount the monorepo read-only for codebase investigation
+    // The Architect needs to read app code, CLAUDE.md files, and docs
+    // to independently analyze issues and produce implementation plans.
+    if (MONOREPO_PATH && fs.existsSync(MONOREPO_PATH)) {
+      mounts.push({
+        hostPath: MONOREPO_PATH,
+        containerPath: '/workspace/monorepo',
+        readonly: true,
+      });
+    }
+
     // Main also gets its group folder as the working directory
     mounts.push({
       hostPath: groupDir,
@@ -224,6 +235,19 @@ function buildVolumeMounts(
         readonly: false,
       });
     }
+  }
+
+  // Mount shared team workspace for peer communication between workers
+  const teamId = group.containerConfig?.teamId;
+  if (!isMain && teamId) {
+    const teamDir = path.join(DATA_DIR, 'teams', teamId);
+    fs.mkdirSync(path.join(teamDir, 'coordination', 'locks'), { recursive: true });
+    fs.mkdirSync(path.join(teamDir, 'messages'), { recursive: true });
+    mounts.push({
+      hostPath: teamDir,
+      containerPath: '/workspace/team',
+      readonly: false,
+    });
   }
 
   return mounts;
