@@ -27,37 +27,89 @@ For each OMX pattern, three questions:
 
 **NanoClaw implementation:**
 
-The Architect's CLAUDE.md gets a hard rule:
+**CRITICAL DESIGN PRINCIPLE:** This gate MUST be enforced by hooks and host-process validation, NOT by CLAUDE.md rules. Agents are probabilistic — CLAUDE.md rules get ignored. We learned this the hard way: CLAUDE.md rules alone failed to prevent 4 production outages in 7 days. If a rule matters, it must be enforced by code, not prose.
 
+**Two hard gates, both outside the agent's control:**
+
+**Gate 1: `validate-handoff.sh` (existing hook, extended)**
+
+Already registered as a PreToolUse hook on Discord reply. Currently validates required fields (From, To, Priority, etc.). Extension:
+
+```bash
+# In validate-handoff.sh — add after existing field validation
+
+# Specificity gate: Tasks section must contain concrete signals
+TASKS_SECTION=$(echo "$BODY" | sed -n '/\*\*Tasks:\*\*/,/\*\*[A-Z]/p')
+
+SPECIFICITY_SCORE=0
+
+# File paths with extensions (e.g., src/routes/profile.ts)
+echo "$TASKS_SECTION" | grep -qE '[a-zA-Z0-9_/]+\.[a-z]{1,4}' && SPECIFICITY_SCORE=$((SPECIFICITY_SCORE + 1))
+
+# Function/component names (camelCase, PascalCase, snake_case)
+echo "$TASKS_SECTION" | grep -qE '[a-z]+[A-Z][a-zA-Z]+|[A-Z][a-z]+[A-Z]|[a-z]+_[a-z]+' && SPECIFICITY_SCORE=$((SPECIFICITY_SCORE + 1))
+
+# Code blocks or inline code
+echo "$TASKS_SECTION" | grep -qE '```|`[^`]+`' && SPECIFICITY_SCORE=$((SPECIFICITY_SCORE + 1))
+
+# Error messages or stack traces
+echo "$TASKS_SECTION" | grep -qiE 'error|exception|failed|404|500|cannot find|undefined' && SPECIFICITY_SCORE=$((SPECIFICITY_SCORE + 1))
+
+# Line numbers
+echo "$TASKS_SECTION" | grep -qE '[Ll]ine [0-9]+|:[0-9]+' && SPECIFICITY_SCORE=$((SPECIFICITY_SCORE + 1))
+
+if [ "$SPECIFICITY_SCORE" -lt 2 ]; then
+  echo "BLOCKED: Handoff tasks are under-specified (score: $SPECIFICITY_SCORE/5, minimum: 2)."
+  echo "Tasks must contain at least 2 of: file paths, function names, code blocks, error messages, line numbers."
+  echo "Spawn a Planner first to enrich the task before dispatching an Executor."
+  exit 2
+fi
 ```
-## Pre-Execution Gate (MANDATORY)
 
-Before spawning any executor, the Architect MUST verify task specificity.
+This blocks the Architect from posting vague handoffs to Discord. The agent physically cannot dispatch "fix the auth" — the hook rejects it before the message sends.
 
-A task is WELL-SPECIFIED if it contains at least 3 of:
-- Specific file path(s) to modify
-- Function/component names (camelCase, PascalCase, or snake_case identifiers)
-- Expected behavior (input → output, endpoint → response)
-- Error to fix (with error text or stack trace)
-- Verification steps (how to confirm the fix works)
+**Gate 2: NanoClaw spawn validation (host process)**
 
-A task is UNDER-SPECIFIED if it has fewer than 3 of the above.
+When the Architect writes a spawn request to IPC, the NanoClaw host process validates the task payload before creating the container:
 
-For UNDER-SPECIFIED tasks:
-1. Spawn a Planner (not an Executor)
-2. Planner produces: file paths, change description, verification steps
-3. Architect reviews the plan — if insufficient, iterate (max 3 rounds)
-4. Only after plan is approved: spawn Executor with the enriched task
-
-NEVER spawn an Executor with a task like "fix the auth" or "improve the UI."
-ALWAYS spawn an Executor with a task like "In src/routes/profile.ts line 45,
-change req.user.id comparison from == to === because string/number mismatch
-causes 403. Verify: GET /api/profile with valid JWT returns 200."
+```typescript
+// In NanoClaw host process — spawn request handler
+function validateSpawnRequest(request: SpawnRequest): ValidationResult {
+  const { task } = request;
+  
+  const signals = {
+    filePaths: /[a-zA-Z0-9_\/]+\.[a-z]{1,4}/.test(task),
+    identifiers: /[a-z]+[A-Z][a-zA-Z]+|[A-Z][a-z]+[A-Z]|[a-z]+_[a-z]+/.test(task),
+    codeBlocks: /```|`[^`]+`/.test(task),
+    errors: /error|exception|failed|404|500|cannot find/i.test(task),
+    lineNumbers: /[Ll]ine [0-9]+|:[0-9]+/.test(task),
+  };
+  
+  const score = Object.values(signals).filter(Boolean).length;
+  
+  // Planners and Explorers are exempt (they produce specificity, they don't consume it)
+  if (request.role === 'planner' || request.role === 'explorer') {
+    return { valid: true };
+  }
+  
+  if (score < 2) {
+    return {
+      valid: false,
+      error: `Task under-specified (score: ${score}/5, minimum: 2). ` +
+             `Spawn a planner first to enrich the task.`,
+      signals,
+    };
+  }
+  
+  return { valid: true };
+}
 ```
 
-This is enforced by prompt, not code — but it could also be added to `validate-handoff.sh` as a hard-block if tasks don't contain file paths.
+This blocks the Architect from spawning executors/debuggers/verifiers with vague tasks even via IPC. The NanoClaw host process rejects the spawn request and returns an error to the Architect's IPC inbox.
 
-**What we're NOT copying from OMX:** The regex keyword detection system. Our Architect is the routing layer — it doesn't need pattern matching on user input. The specificity check is an Architect behavior rule, not a parser.
+**Exemptions:** Planners and Explorers are exempt from the specificity gate — their job is to PRODUCE specificity, not consume it. A Planner can be spawned with "analyze the auth flow in apps/paths" and return file paths, function names, and concrete steps.
+
+**What we're NOT copying from OMX:** The regex keyword detection system. Our gates are simpler and harder — they don't parse user intent, they validate output specificity. OMX intercepts vague input; we block vague output. Same result, different enforcement point.
 
 ---
 

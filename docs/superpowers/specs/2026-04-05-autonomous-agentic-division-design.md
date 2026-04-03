@@ -31,6 +31,23 @@ Steps 4 and 6 are the bottleneck. No agent can spawn another agent. The Architec
 
 ## 2. Design Principles
 
+### 2.0 Enforce by Code, Never by Prose
+
+**Every guardrail in this system MUST be enforced by code (hooks, host-process validation, CI gates) — NEVER by CLAUDE.md rules alone.**
+
+Agents are probabilistic. A CLAUDE.md instruction is a suggestion that may be followed 95% of the time. A hook is a gate that blocks execution 100% of the time. The 5% failure rate on prompt-based rules caused 4 production outages in 7 days before we learned this lesson.
+
+**The enforcement hierarchy:**
+
+| Layer | Mechanism | Reliability | Use For |
+|-------|-----------|-------------|---------|
+| **Hook** (PreToolUse) | Shell script, exit code 2 = block | 100% — physically cannot be bypassed | File access boundaries, handoff validation, migration enforcement, task specificity |
+| **Host process validation** | NanoClaw validates IPC requests before acting | 100% — runs outside agent context | Spawn request validation, task specificity gate |
+| **CI gate** (GitHub Actions) | Automated check on PR | 100% — PR cannot merge if check fails | Build verification, schema validation, code review |
+| **CLAUDE.md rule** | System prompt instruction | ~95% — probabilistic, may be ignored | Behavioral guidance, workflow preferences, style conventions |
+
+**Design rule:** If ignoring a rule causes a production incident, data loss, or wasted resources → it MUST be a hook/gate, not a CLAUDE.md instruction. CLAUDE.md is for "how to work well." Hooks are for "what you cannot do."
+
 ### 2.1 Capability Over Domain
 
 Agents are defined by **what type of work they do** (explore, plan, execute, debug, verify, review), not **which app they work on** (PATHS, HUB, Cubes+). Domain context comes from the codebase (`apps/*/CLAUDE.md`), injected at spawn time based on the task's scope.
@@ -119,11 +136,15 @@ ARCHITECT (persistent on VPS, wakes on Discord message)
   ├─ 2. Decompose into subtasks (if medium/complex)
   │     - Each subtask: { role, scope, task_description, depends_on, verify_steps }
   │     - Post plan to #main-ops for Director visibility (NOT approval — monitoring only)
+  │     - HARD GATE: validate-handoff.sh blocks vague tasks (specificity score < 2/5)
+  │     - HARD GATE: NanoClaw host rejects spawn requests with vague task descriptions
+  │     - If gates reject: Architect MUST spawn a Planner first to enrich the task
   │
   ├─ 3. Spawn workers via NanoClaw
   │     - Independent subtasks: spawn in parallel
   │     - Dependent subtasks: spawn sequentially (wait for dependency to complete)
   │     - Each worker: ephemeral container with role + scope + task
+  │     - Planners/Explorers exempt from specificity gate (they produce specificity)
   │
   ├─ 4. Monitor workers
   │     - NanoClaw IPC: heartbeat, status, completion signals
