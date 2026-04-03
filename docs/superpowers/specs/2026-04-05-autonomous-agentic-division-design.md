@@ -211,14 +211,121 @@ SPAWNED ──[NanoClaw creates container]──> INITIALIZING
 
 ---
 
-## 5. Implementation: What Needs to Change
+## 5. Notification Architecture: Out-of-Band Communication
 
-### 5.1 NanoClaw Changes Required
+### 5.1 The Problem: Discord Pollutes Agent Context
+
+Every Discord MCP call (reply, fetch_messages, react) consumes context tokens inside the agent's session. An executor that posts 5 progress updates to #workbench-ops burns context on communication overhead instead of coding. Over a long task, this compounds — the agent's effective working memory shrinks because it's full of Discord API receipts.
+
+This is the same problem clawhip solves in the OMX stack: agent sessions should not carry the weight of notification logic.
+
+### 5.2 The Solution: Workers Never Touch Discord
+
+**Principle:** Workers communicate exclusively through NanoClaw IPC. The NanoClaw host process — which already runs a Discord bot connection — handles all Discord posting on workers' behalf. Workers never see Discord; their context stays 100% focused on code.
+
+**Architecture:**
+
+```
+┌─────────────────┐     IPC filesystem      ┌─────────────────────────┐
+│  EXECUTOR        │ ──── writes events ───> │  NanoClaw Host Process  │
+│  (container)     │                         │                         │
+│  No Discord MCP  │                         │  - Reads IPC events     │
+│  Context = code  │                         │  - Formats messages     │
+│                  │ <─── reads inbox ────── │  - Posts to Discord     │
+└─────────────────┘                          │  - Routes responses     │
+                                             │    back to IPC inbox    │
+                                             └────────────┬────────────┘
+                                                          │
+                                                     Discord API
+                                                          │
+                                              ┌───────────▼──────────┐
+                                              │  #workbench-ops      │
+                                              │  #main-ops           │
+                                              │  #alerts             │
+                                              └──────────────────────┘
+```
+
+**Worker event format** (written to IPC):
+
+```json
+{
+  "type": "notification",
+  "channel": "workbench-ops",
+  "message": "[EXECUTOR] PR #80 created — lesson redirect fix. Build passing.",
+  "priority": "normal"
+}
+```
+
+```json
+{
+  "type": "notification",
+  "channel": "alerts",
+  "message": "[EXECUTOR] Build failed after 2 attempts. Error: missing dependency @payload-config. Escalating.",
+  "priority": "urgent"
+}
+```
+
+```json
+{
+  "type": "completion",
+  "status": "success",
+  "pr_url": "https://github.com/LIMITLESS-LONGEVITY/limitless/pull/80",
+  "summary": "Fixed lesson redirect: added basePath to window.location.href in 2 files"
+}
+```
+
+NanoClaw host reads these from the worker's IPC directory, formats them, and posts to the specified Discord channel. The worker's context window never sees a Discord tool call.
+
+### 5.3 The Architect Keeps Discord MCP
+
+The Architect is the exception. It needs bidirectional Discord communication:
+
+- **Read** #human for Director commands
+- **Read** #handoffs for pending work
+- **Read** #workbench-ops for worker status (though IPC is primary)
+- **Write** to #main-ops for briefings and reports
+- **Write** to #alerts for escalations
+
+This context cost is acceptable because **orchestration IS the Architect's job**. Those tokens aren't wasted — they're the Architect's primary function. The Architect is also a persistent, long-running process that benefits from full Discord awareness.
+
+### 5.4 What This Means for Context Budgets
+
+| Agent | Discord MCP | Context Overhead | Effective Working Memory |
+|-------|-------------|-----------------|------------------------|
+| Architect | Yes (bidirectional) | ~10-15% on Discord | 85-90% for orchestration |
+| Executor | **No** (IPC only) | ~0% on Discord | **~100% for coding** |
+| Debugger | **No** (IPC only) | ~0% on Discord | **~100% for diagnosis** |
+| Verifier | **No** (IPC only) | ~0% on Discord | **~100% for verification** |
+| Planner | **No** (IPC only) | ~0% on Discord | **~100% for planning** |
+| Explorer | **No** (IPC only) | ~0% on Discord | **~100% for analysis** |
+
+Workers that previously lost 15-20% of their context to Discord communication now have that budget available for actual work. On a 200K context window, that's 30-40K tokens recovered — equivalent to reading several more source files or maintaining longer chain-of-thought reasoning.
+
+### 5.5 NanoClaw Implementation
+
+This requires a new IPC event type in NanoClaw:
+
+| IPC Message Type | Direction | Purpose |
+|-----------------|-----------|---------|
+| `notification` | Worker → Host | Post a message to a Discord channel |
+| `completion` | Worker → Host → Architect | Signal task done, with results |
+| `heartbeat` | Worker → Host | Liveness signal |
+| `spawn` | Architect → Host | Request new container (Section 6.1) |
+| `inbox` | Host → Worker | Task assignment, Architect messages |
+
+The host process polls each container's IPC directory for new event files, processes them, and deletes after delivery. This is the same pattern NanoClaw already uses for IPC — we're adding new message types, not a new mechanism.
+
+---
+
+## 6. Implementation: What Needs to Change
+
+### 6.1 NanoClaw Changes Required
 
 | Change | Tier | Description |
 |--------|------|-------------|
 | **Bot-message routing** | 3 (PR + review) | Allow Architect bot to trigger engineer containers (existing spec, Section 5) |
 | **Programmatic container spawn** | 3 (PR + review) | Architect container can request NanoClaw to spawn a new container with specified role/scope/task via IPC |
+| **Notification relay** | 2 (PR) | Host process reads `notification` events from worker IPC dirs, posts to Discord on their behalf (Section 5) |
 | **Worker mailbox** | 2 (PR) | Completion/failure signal from worker back to Architect via IPC filesystem |
 | **Heartbeat monitoring** | 2 (PR) | Workers write heartbeat file every 5 min; Architect reads to detect stale workers |
 | **Role + scope injection** | 1 (autonomous) | Pass `AGENT_ROLE` and `AGENT_SCOPE` as env vars to spawned containers |
@@ -231,7 +338,7 @@ NanoClaw host process reads IPC, creates container for group "executor-1"
 Container starts with AGENT_ROLE=executor, AGENT_SCOPE=apps/paths, task injected via inbox
 ```
 
-### 5.2 Agent Definition Changes
+### 6.2 Agent Definition Changes
 
 Replace domain-specific agent definitions (`.claude/agents/*.md`) with capability-based definitions:
 
@@ -251,7 +358,7 @@ Replace domain-specific agent definitions (`.claude/agents/*.md`) with capabilit
 | (new) | `code-reviewer.md` | Quality review agent |
 | `architect.md` | `architect.md` | Update: add orchestration, spawning, monitoring capabilities |
 
-### 5.3 Hook Changes
+### 6.3 Hook Changes
 
 | Hook | Change |
 |------|--------|
@@ -259,7 +366,7 @@ Replace domain-specific agent definitions (`.claude/agents/*.md`) with capabilit
 | `enforce-division-of-labour.sh` | Update: Architect still can't write app code; executors can't write docs/specs |
 | `validate-handoff.sh` | Add: check that Tasks section contains specific file paths or code references (specificity gate) |
 
-### 5.4 Discord Channel Changes
+### 6.4 Discord Channel Changes
 
 | Current | Change | Rationale |
 |---------|--------|-----------|
@@ -270,7 +377,7 @@ Replace domain-specific agent definitions (`.claude/agents/*.md`) with capabilit
 | #human | Keep | Director commands to Architect |
 | #paths-eng, #cubes-eng, etc. | **Consolidate to #workers** | Workers are capability-based, not domain-based; one channel suffices |
 
-### 5.5 CLAUDE.md Changes
+### 6.5 CLAUDE.md Changes
 
 Add to main CLAUDE.md:
 
@@ -294,7 +401,7 @@ The Director does NOT need to:
 
 ---
 
-## 6. How a Task Flows (End-to-End Example)
+## 7. How a Task Flows (End-to-End Example)
 
 **Director posts to #human:**
 > Fix the lesson completion 404 redirect and the Discover page slug links. Both are in PATHS.
@@ -333,28 +440,31 @@ The Director does NOT need to:
 
 ---
 
-## 7. Implementation Phases
+## 8. Implementation Phases
 
 | Phase | What | Depends On | Duration |
 |-------|------|-----------|----------|
 | **A** | Capability-based agent definitions (executor.md, planner.md, etc.) | Nothing | 1 session |
 | **B** | NanoClaw bot-message fix (existing spec, Section 5) | Fork created | 1 session |
 | **C** | NanoClaw programmatic spawn via IPC | Phase B | 1-2 sessions |
-| **D** | Worker mailbox + heartbeat monitoring | Phase C | 1 session |
-| **E** | Architect orchestration loop (plan → spawn → monitor → verify → report) | Phase C + D | 2 sessions |
-| **F** | Hook updates (AGENT_SCOPE, specificity gate) | Phase A | 1 session |
-| **G** | Git worktree isolation for parallel workers | Phase C | 1 session |
-| **H** | End-to-end test: Director posts task → autonomous execution → completion | All above | 1 session |
+| **D** | NanoClaw notification relay (worker IPC → Discord) | Phase B | 1 session |
+| **E** | Worker mailbox + heartbeat monitoring | Phase C | 1 session |
+| **F** | Architect orchestration loop (plan → spawn → monitor → verify → report) | Phase C + E | 2 sessions |
+| **G** | Hook updates (AGENT_SCOPE, specificity gate) | Phase A | 1 session |
+| **H** | Git worktree isolation for parallel workers | Phase C | 1 session |
+| **I** | End-to-end test: Director posts task → autonomous execution → completion | All above | 1 session |
 
-**Phases A and F can run in parallel with B-D** (agent definitions + hooks don't require NanoClaw changes).
+**Phases A and G can run in parallel with B-E** (agent definitions + hooks don't require NanoClaw changes).
 
-**Critical path:** B → C → D → E → H (NanoClaw must support programmatic spawn before the orchestration loop can work).
+**Phase D (notification relay) can run in parallel with C** (both extend NanoClaw IPC, independent features).
+
+**Critical path:** B → C → E → F → I (NanoClaw must support programmatic spawn + mailbox before the orchestration loop can work).
 
 **Blocker:** Phase B requires the Director to create `LIMITLESS-LONGEVITY/nanoclaw` fork on GitHub (Step 1 from governance spec).
 
 ---
 
-## 8. What This Enables
+## 9. What This Enables
 
 Once implemented, the LIMITLESS agentic division becomes:
 
@@ -374,7 +484,7 @@ This is the same operational model that Sigrid Jin and Yeachan Heo demonstrated 
 
 ---
 
-## 9. Open Questions for Director
+## 10. Open Questions for Director
 
 | # | Question | Options |
 |---|----------|---------|

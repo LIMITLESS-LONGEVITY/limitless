@@ -361,7 +361,7 @@ cd /tmp/limitless-paths-work && AGENT_ROLE=paths-engineer claude --dangerously-s
 
 **What we should do:** Consider moving Discord notifications out of agent sessions. Instead of agents calling the Discord MCP plugin directly, agents could write structured events to a file or local HTTP endpoint, and a separate process handles Discord delivery.
 
-**Implementation:** This could be a lightweight clawhip-style daemon on the VPS, or simply a cron job that reads event files and posts to Discord. However, this is a medium-priority optimization — our current approach works, it just wastes some context tokens.
+**Implementation:** Solved in the autonomous division design spec (Section 5): workers communicate exclusively through NanoClaw IPC. The NanoClaw host process — which already runs a Discord bot connection — reads worker event files and posts to Discord on their behalf. Workers never load the Discord MCP plugin. Only the Architect keeps Discord MCP for bidirectional orchestration. This recovers ~15-20% of worker context budgets (30-40K tokens on a 200K window). See `2026-04-05-autonomous-agentic-division-design.md` Section 5 for full architecture.
 
 ### Lesson 4: Formal Iteration Tracking
 
