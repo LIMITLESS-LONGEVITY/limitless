@@ -3,7 +3,7 @@ import path from 'path';
 
 import { CronExpressionParser } from 'cron-parser';
 
-import { DATA_DIR, IPC_POLL_INTERVAL, TIMEZONE } from './config.js';
+import { DATA_DIR, IPC_POLL_INTERVAL, NOTIFICATION_CHANNELS, TIMEZONE } from './config.js';
 import { AvailableGroup } from './container-runner.js';
 import { createTask, deleteTask, deleteRegisteredGroup, getTaskById, updateTask } from './db.js';
 import { isValidGroupFolder } from './group-folder.js';
@@ -90,6 +90,23 @@ export function startIpcWatcher(deps: IpcDeps): void {
                   logger.warn(
                     { chatJid: data.chatJid, sourceGroup },
                     'Unauthorized IPC message attempt blocked',
+                  );
+                }
+              } else if (data.type === 'notification' && data.channel && data.text) {
+                // Notifications bypass normal message authorization.
+                // Any group can post notifications to predefined channels.
+                const channelJid = NOTIFICATION_CHANNELS[data.channel];
+                if (channelJid) {
+                  const prefix = data.priority === 'urgent' ? '\u{1f6a8} ' : '';
+                  await deps.sendMessage(channelJid, `${prefix}${data.text}`);
+                  logger.info(
+                    { channel: data.channel, sourceGroup, priority: data.priority },
+                    'IPC notification sent',
+                  );
+                } else {
+                  logger.warn(
+                    { channel: data.channel, sourceGroup },
+                    'Unknown notification channel',
                   );
                 }
               }
