@@ -166,7 +166,7 @@ CREATE INDEX idx_fred_date ON fred_series(observation_date);
 
 #### 3.1.3 PLTA-FinBERT Processing
 
-**Model**: Custom TTA implementation on base FinBERT (~200 lines PyTorch). No pre-built PLTA-FinBERT available as drop-in.
+**Model**: PLTA-FinBERT — a production-ready, pre-trained model for financial sentiment with built-in temporal adaptation, published in *Big Data and Cognitive Computing* (MDPI, 2025): https://www.mdpi.com/2504-2289/10/2/59. Daily TTA is applied on top of the base PLTA-FinBERT to adapt to the current market regime — this continuous recalibration is a key differentiator.
 
 **Input Format**:
 - Batch of text strings: GDELT event descriptions, headlines, and aggregated daily narrative
@@ -721,7 +721,7 @@ Signal Generated (Perception + Synthesis)
 | Database | PostgreSQL 16 + TimescaleDB | Time-series optimized with hypertables; continuous aggregates; mature ecosystem |
 | Message Queue | Redis 7 (Streams) | Sub-millisecond pub/sub between Python sidecar and Node.js engine |
 | LLM Runtime | llama.cpp (via llama-cpp-python) | Efficient local inference of quantized FinMA model |
-| NLP Model | Base FinBERT + custom TTA (HuggingFace + PyTorch) | Domain-specific financial sentiment with custom TTA implementation (~200 lines) |
+| NLP Model | PLTA-FinBERT (production, MDPI 2025) + daily TTA | Production PLTA-FinBERT model with daily Test-Time Adaptation for regime recalibration |
 | Sequence Model | Bi-LSTM (PyTorch) | Lightweight temporal prediction; trainable on CPU |
 | Containerization | Docker Compose | Reproducible multi-service deployment |
 | Monitoring | Prometheus + Grafana | Metrics collection and visualization |
@@ -942,7 +942,7 @@ See Section 3.4.2 for full gate specifications. Summary:
 ### Phase 2: Perception (Weeks 5-10)
 
 **Deliverables**:
-- Custom TTA implementation on base FinBERT: load model, process GDELT events, output sentiment scores and regime classification
+- PLTA-FinBERT integration: load production PLTA-FinBERT model (MDPI 2025), process GDELT events, output sentiment scores and regime classification
 - Daily TTA pipeline: post-market adaptation cycle with validation
 - Bi-LSTM model: architecture implementation, training pipeline, walk-forward validation (confirmed as Phase 2 sequence model; Transformer evaluation deferred to Phase 3)
 - Inference API: `/inference/perception` endpoint serving p-scores at < 100ms
@@ -1009,7 +1009,7 @@ All architectural questions have been resolved by CEO decision (2026-04-04):
 |---|----------|----------|
 | Q1 | FinMA model variant | **FinMA-7B, 4-bit quantized (~4GB VRAM)**. Upgrade path to 13B documented but deferred. |
 | Q2 | Sequence model architecture | **Bi-LSTM for Phase 2. Transformer evaluation in Phase 3** — adopt if benchmarks show superiority. |
-| Q3 | PLTA-FinBERT availability | **Implement TTA on base FinBERT** (~200 lines PyTorch). No pre-built PLTA-FinBERT available as drop-in. |
+| Q3 | PLTA-FinBERT availability | **Production PLTA-FinBERT IS available** (MDPI 2025: https://www.mdpi.com/2504-2289/10/2/59). Integrate directly; implementation effort reduced (integration vs. build-from-scratch). Daily TTA still applied on top for regime adaptation. |
 | Q4 | GDELT event-to-symbol mapping | **Sector aggregation first**. Phase 1-2: CAMEO actor codes to sector buckets, aggregate sentiment per sector. NER-to-ticker mapping deferred to Phase 3. |
 | Q5 | Tick data for entropy/FFT | **Deferred to Phase 4**. Shannon entropy / FFT spectral analysis listed as Phase 4 enhancement. |
 | Q6 | Model retrain cadence | **Weekly batch retrain** on rolling window. Online learning deferred — instability risk during drawdown. |
