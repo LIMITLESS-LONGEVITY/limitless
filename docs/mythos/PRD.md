@@ -166,7 +166,19 @@ CREATE INDEX idx_fred_date ON fred_series(observation_date);
 
 #### 3.1.3 PLTA-FinBERT Processing
 
-**Model**: PLTA-FinBERT — a production-ready, pre-trained model for financial sentiment with built-in temporal adaptation, published in *Big Data and Cognitive Computing* (MDPI, 2025): https://www.mdpi.com/2504-2289/10/2/59. Daily TTA is applied on top of the base PLTA-FinBERT to adapt to the current market regime — this continuous recalibration is a key differentiator.
+**Base Model**: `yiyanghkust/finbert-tone` (HuggingFace, production-grade, 905k+ downloads) — a battle-tested financial sentiment model used as the foundation for all NLP inference.
+
+**TTA Layer**: Custom in-house implementation of the PLTA (Prompt-Learning Test-Time Adaptation) methodology, based on the peer-reviewed MDPI 2025 paper: *Big Data and Cognitive Computing* (https://www.mdpi.com/2504-2289/10/2/59). The TTA layer (~300-400 lines of production Python) implements entropy regularisation, pseudo-label generation, and discriminative fine-tuning with learning-rate decay on top of the finbert-tone base model.
+
+**Why not use the reference repo directly?** The `galaxywwww/PLTA-FinBERT` GitHub repository was evaluated and rejected for direct production use:
+- No LICENSE file (legal blocker for production deployment)
+- No pre-trained weights published (nothing to deploy)
+- Research-only code quality (no error handling, no tests, no logging, 3 commits, 1 star, 0 forks, single author)
+- Repository is 2.5 months old with no community adoption
+
+**Approved approach**: Implement the PLTA-TTA methodology in-house on the finbert-tone base, giving us the PLTA differentiator (daily regime adaptation) on a solid, production-grade foundation. Contact the PLTA paper author for licensing acknowledgement.
+
+Daily TTA is applied on top of the finbert-tone base to adapt to the current market regime — this continuous recalibration is a key differentiator.
 
 **Input Format**:
 - Batch of text strings: GDELT event descriptions, headlines, and aggregated daily narrative
@@ -721,7 +733,7 @@ Signal Generated (Perception + Synthesis)
 | Database | PostgreSQL 16 + TimescaleDB | Time-series optimized with hypertables; continuous aggregates; mature ecosystem |
 | Message Queue | Redis 7 (Streams) | Sub-millisecond pub/sub between Python sidecar and Node.js engine |
 | LLM Runtime | llama.cpp (via llama-cpp-python) | Efficient local inference of quantized FinMA model |
-| NLP Model | PLTA-FinBERT (production, MDPI 2025) + daily TTA | Production PLTA-FinBERT model with daily Test-Time Adaptation for regime recalibration |
+| NLP Model | Base: `yiyanghkust/finbert-tone` (HuggingFace). TTA layer: in-house PLTA implementation per MDPI 2025 paper. | Production finbert-tone base (905k downloads) + custom PLTA-TTA for daily regime recalibration. Reference repo (`galaxywwww/PLTA-FinBERT`) not used directly — no license, research-only. |
 | Sequence Model | Bi-LSTM (PyTorch) | Lightweight temporal prediction; trainable on CPU |
 | Containerization | Docker Compose | Reproducible multi-service deployment |
 | Monitoring | Prometheus + Grafana | Metrics collection and visualization |
@@ -831,7 +843,20 @@ See Section 3.4.2 for full gate specifications. Summary:
 | Model confidence collapse | Bi-LSTM Brier > 0.30 for 1 week | Deterministic-only mode | Model retrained and validated |
 | Infrastructure failure | Any critical service down > 5 min | Flatten positions if market open | Service restored + operator restart |
 
-### 6.3 Regulatory Considerations
+### 6.3 Third-Party Model Evaluation: PLTA-FinBERT
+
+| Attribute | Detail |
+|-----------|--------|
+| **Evaluated** | `galaxywwww/PLTA-FinBERT` (GitHub) |
+| **Paper** | MDPI 2025, *Big Data and Cognitive Computing*: https://www.mdpi.com/2504-2289/10/2/59 |
+| **Decision** | **Not used directly** |
+| **Blocker: No LICENSE file** | Legal risk — cannot deploy code with no explicit license in production |
+| **Blocker: No pre-trained weights** | Repository contains only training code; no model weights to download or deploy |
+| **Blocker: Research-only code quality** | No error handling, no tests, no logging; 3 commits, 1 star, 0 forks, single author; 2.5 months old |
+| **Approved approach** | In-house PLTA-TTA implementation (~300-400 lines production Python) on `yiyanghkust/finbert-tone` base (HuggingFace, 905k downloads, battle-tested). Implements entropy regularisation, pseudo-label generation, discriminative fine-tuning with LR decay per the MDPI paper methodology. |
+| **Action item** | Contact paper author for licensing acknowledgement |
+
+### 6.4 Regulatory Considerations
 
 **Jurisdiction**: Ireland (EU MiFID II framework). PDT rule does NOT apply — no minimum equity requirement for day trading.
 
@@ -942,7 +967,10 @@ See Section 3.4.2 for full gate specifications. Summary:
 ### Phase 2: Perception (Weeks 5-10)
 
 **Deliverables**:
-- PLTA-FinBERT integration: load production PLTA-FinBERT model (MDPI 2025), process GDELT events, output sentiment scores and regime classification
+- Integrate `yiyanghkust/finbert-tone` as base sentiment model (HuggingFace, production-grade)
+- Implement production PLTA-TTA layer in-house (~300-400 lines, tested, with error handling and logging) based on MDPI 2025 paper methodology. Do NOT clone/use `galaxywwww/PLTA-FinBERT` code directly.
+- Unit tests for TTA adaptation cycle (entropy regularisation, pseudo-label generation, discriminative fine-tuning)
+- Process GDELT events through finbert-tone + PLTA-TTA, output sentiment scores and regime classification
 - Daily TTA pipeline: post-market adaptation cycle with validation
 - Bi-LSTM model: architecture implementation, training pipeline, walk-forward validation (confirmed as Phase 2 sequence model; Transformer evaluation deferred to Phase 3)
 - Inference API: `/inference/perception` endpoint serving p-scores at < 100ms
@@ -950,7 +978,7 @@ See Section 3.4.2 for full gate specifications. Summary:
 - Backtesting framework: replay historical bars through Ingest + Perception layers
 
 **Success Criteria Before Advancing**:
-- [ ] TTA-FinBERT produces sentiment scores for the target instrument daily
+- [ ] finbert-tone + PLTA-TTA produces sentiment scores for the target instrument daily
 - [ ] TTA completes within 30 minutes post-market for 5 consecutive days
 - [ ] Bi-LSTM achieves Brier score < 0.22 on walk-forward validation (5 folds)
 - [ ] Inference latency < 100ms (p95)
@@ -1009,7 +1037,7 @@ All architectural questions have been resolved by CEO decision (2026-04-04):
 |---|----------|----------|
 | Q1 | FinMA model variant | **FinMA-7B, 4-bit quantized (~4GB VRAM)**. Upgrade path to 13B documented but deferred. |
 | Q2 | Sequence model architecture | **Bi-LSTM for Phase 2. Transformer evaluation in Phase 3** — adopt if benchmarks show superiority. |
-| Q3 | PLTA-FinBERT availability | **Production PLTA-FinBERT IS available** (MDPI 2025: https://www.mdpi.com/2504-2289/10/2/59). Integrate directly; implementation effort reduced (integration vs. build-from-scratch). Daily TTA still applied on top for regime adaptation. |
+| Q3 | PLTA-FinBERT availability | **Decision:** Use `yiyanghkust/finbert-tone` (HuggingFace, production-grade, 905k downloads) as base. Implement PLTA TTA methodology in-house based on MDPI 2025 paper (https://www.mdpi.com/2504-2289/10/2/59) — reference GitHub repo (`galaxywwww/PLTA-FinBERT`) NOT used directly: no license, no pre-trained weights, research-only code quality. Implementation effort: ~300-400 lines production Python. Contact author for licensing acknowledgement. |
 | Q4 | GDELT event-to-symbol mapping | **Sector aggregation first**. Phase 1-2: CAMEO actor codes to sector buckets, aggregate sentiment per sector. NER-to-ticker mapping deferred to Phase 3. |
 | Q5 | Tick data for entropy/FFT | **Deferred to Phase 4**. Shannon entropy / FFT spectral analysis listed as Phase 4 enhancement. |
 | Q6 | Model retrain cadence | **Weekly batch retrain** on rolling window. Online learning deferred — instability risk during drawdown. |

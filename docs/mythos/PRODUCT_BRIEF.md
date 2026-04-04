@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-MYTHOS is an AI-native quantitative trading platform that fuses real-time NLP sentiment analysis, temporal sequence prediction, and large-language-model reasoning into a unified four-layer architecture (Ingest, Perception, Synthesis, Execution) to generate and execute equity trade signals. It inherits the deterministic safety-gate philosophy proven in the NEO Sovereign Trading Terminal while replacing NEO's static similarity-based intelligence with causal-predictive models (PLTA-FinBERT, Bi-LSTM, FinMA). The result is a system that does not merely react to price patterns but reasons about market context, forecasts momentum trajectories, and validates every trade thesis before capital is deployed.
+MYTHOS is an AI-native quantitative trading platform that fuses real-time NLP sentiment analysis, temporal sequence prediction, and large-language-model reasoning into a unified four-layer architecture (Ingest, Perception, Synthesis, Execution) to generate and execute equity trade signals. It inherits the deterministic safety-gate philosophy proven in the NEO Sovereign Trading Terminal while replacing NEO's static similarity-based intelligence with causal-predictive models (finbert-tone + in-house PLTA-TTA, Bi-LSTM, FinMA). The PLTA methodology (MDPI 2025, peer-reviewed) is implemented in-house on top of `yiyanghkust/finbert-tone` (HuggingFace, 905k downloads, production-grade) rather than using the reference research repo directly. The result is a system that does not merely react to price patterns but reasons about market context, forecasts momentum trajectories, and validates every trade thesis before capital is deployed.
 
 ---
 
@@ -109,7 +109,7 @@ MYTHOS processes market intelligence through four sequential layers. Each layer 
   -------------------------          -------------------------
 ```
 
-**Layer 1 -- Ingest**: Consumes global event data (GDELT v2) and macroeconomic indicators (FRED API). PLTA-FinBERT processes this into a regime-aware sentiment score that adapts daily via Test-Time Adaptation (TTA). This layer answers: "What is the world telling us right now, calibrated to today's market regime?"
+**Layer 1 -- Ingest**: Consumes global event data (GDELT v2) and macroeconomic indicators (FRED API). The finbert-tone base model with in-house PLTA-TTA layer processes this into a regime-aware sentiment score that adapts daily via Test-Time Adaptation. The PLTA methodology (MDPI 2025 paper) is implemented in-house (~300-400 lines production Python) on top of the battle-tested `yiyanghkust/finbert-tone` model. This layer answers: "What is the world telling us right now, calibrated to today's market regime?"
 
 **Layer 2 -- Perception**: A Bi-LSTM neural network processes real-time OHLCV price bars (1-minute and 5-minute) concatenated with the sentiment score from Layer 1. It outputs a probability score (0.0 to 1.0) representing the likelihood that the current price sequence will continue its trajectory over the next 15-30 minutes. This layer answers: "What is the momentum physics of this price move?"
 
@@ -126,7 +126,7 @@ MYTHOS processes market intelligence through four sequential layers. Each layer 
 | Dimension | Retail | MYTHOS |
 |---|---|---|
 | Intelligence | Technical indicators (lagging) | 3-model AI stack (leading + lagging) |
-| Sentiment | None | PLTA-FinBERT with daily TTA |
+| Sentiment | None | finbert-tone + in-house PLTA-TTA with daily adaptation |
 | Risk management | Stop-loss orders | 6-gate deterministic chain + circuit breakers |
 | Adaptability | Manual parameter tuning | Automated model adaptation to regime shifts |
 
@@ -179,7 +179,7 @@ MYTHOS processes market intelligence through four sequential layers. Each layer 
 | **Bi-LSTM inference latency** | < 100ms on 1-minute bars | FastAPI sidecar metrics |
 | **System uptime** (during market hours) | 99.9% (< 23 min downtime/month) | Health check monitoring |
 | **Gate audit completeness** | 100% of trades have full 6-gate audit log | Nightly integrity check |
-| **PLTA-FinBERT TTA cycle** | Completes daily before market open | Automated schedule |
+| **PLTA-TTA cycle** (finbert-tone base) | Completes daily before market open | Automated schedule |
 | **FinMA synthesis latency** | < 2 seconds per trade evaluation | Pre-trade, not on hot path |
 
 ---
@@ -209,7 +209,7 @@ NEO is a locally-sovereign Electron/Node.js trading terminal with:
 
 | Capability | NEO | MYTHOS |
 |---|---|---|
-| Sentiment | Static 128-dim embeddings | Regime-aware PLTA-FinBERT with daily TTA |
+| Sentiment | Static 128-dim embeddings | Regime-aware finbert-tone + in-house PLTA-TTA with daily adaptation |
 | Prediction | KNN snapshot lookup | Bi-LSTM sequence probability forecasting |
 | Reasoning | Numeric threshold gates | FinMA chain-of-thought synthesis |
 | Adaptability | Fixed model weights | Daily model adaptation to market regime |
@@ -223,7 +223,7 @@ NEO is a locally-sovereign Electron/Node.js trading terminal with:
 | Risk | Severity | Likelihood | Mitigation |
 |---|---|---|---|
 | **Bi-LSTM overfitting** to training data regime | High | Medium | Walk-forward validation with regime-stratified holdout sets; automatic performance decay detection triggers retraining |
-| **PLTA-FinBERT TTA drift** -- daily adaptation drifts model away from base performance | Medium | Medium | Anchor regularization: TTA updates are bounded to max 5% weight delta from base model per day; weekly full evaluation against held-out benchmark |
+| **PLTA-TTA drift** -- daily adaptation drifts finbert-tone away from base performance | Medium | Medium | Anchor regularization: TTA updates are bounded to max 5% weight delta from base finbert-tone model per day; weekly full evaluation against held-out benchmark |
 | **FinMA hallucination** -- LLM produces plausible but incorrect reasoning | High | Medium | FinMA is advisory only; LOGIC_PASS/FAIL is validated against structured rules before reaching execution; deterministic gates cannot be bypassed |
 | **GDELT/FRED data latency** -- delayed or missing data feeds | Medium | Low | Graceful degradation: Perception layer operates on price data alone if sentiment is stale >4 hours; alert raised for operator |
 | **IBKR Gateway disconnection** during trading hours | High | Low | Automatic reconnection with exponential backoff; kill switch flattens all positions if disconnected >60 seconds |
