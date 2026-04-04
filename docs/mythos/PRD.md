@@ -1,8 +1,8 @@
 # MYTHOS Product Requirements Document (PRD)
 
-**Version**: 1.0
+**Version**: 1.1
 **Date**: 2026-04-04
-**Status**: Draft
+**Status**: Draft — Architectural Decisions Resolved
 **Author**: Architect
 
 ---
@@ -23,7 +23,7 @@
 ### 1.2 Non-Goals (Explicit)
 
 - **Not HFT**: MYTHOS does not compete on microsecond latency. Sub-500ms is the target, not sub-microsecond.
-- **Not multi-asset at launch**: Phase 1-3 targets US equities only. Futures and FX are Phase 4+.
+- **Not multi-asset at launch**: Phases 1-3 target a single instrument (SPY or ES futures). Multi-asset expansion in Phase 4 only.
 - **Not a brokerage**: MYTHOS routes orders through IBKR. It does not custody funds.
 - **Not a social/copy-trading platform**: Single-operator system. No multi-tenant features.
 - **Not cloud-dependent for execution**: All live trading inference runs locally. Cloud is used only for development, backtesting compute, and optional model training.
@@ -89,10 +89,11 @@ The system is considered successful when:
 **Preprocessing Steps**:
 1. Decompress PKZip archive in memory
 2. Parse tab-delimited rows; discard rows with < 58 columns
-3. Filter to events relevant to monitored symbols (country codes, actor names matching watchlist)
+3. Filter to events relevant to monitored instruments (country codes, actor names matching watchlist)
 4. Deduplicate by `event_id`
-5. Compute daily aggregate metrics per symbol: event count, mean Goldstein scale, mean avg_tone, max quad_class
-6. Store raw events in `gdelt_raw` table; store aggregates in `gdelt_daily` table
+5. Phase 1-2: CAMEO actor codes mapped to sector buckets; aggregate sentiment per sector. NER-to-ticker mapping deferred to Phase 3.
+6. Compute daily aggregate metrics per sector/instrument: event count, mean Goldstein scale, mean avg_tone, max quad_class
+7. Store raw events in `gdelt_raw` table; store aggregates in `gdelt_daily` table
 
 **Storage Schema** (`gdelt_raw`):
 ```sql
@@ -165,7 +166,7 @@ CREATE INDEX idx_fred_date ON fred_series(observation_date);
 
 #### 3.1.3 PLTA-FinBERT Processing
 
-**Model**: PLTA-FinBERT (Pseudo-Label Test-Time Adaptation FinBERT)
+**Model**: Custom TTA implementation on base FinBERT (~200 lines PyTorch). No pre-built PLTA-FinBERT available as drop-in.
 
 **Input Format**:
 - Batch of text strings: GDELT event descriptions, headlines, and aggregated daily narrative
@@ -274,7 +275,7 @@ Output:          p_score (0.0 - 1.0)
 
 Where `forward_window` = 15 bars (75 minutes for 5m bars) and `min_threshold` = 0.3%.
 
-**Training Cadence**: Weekly retrain (every Sunday) on expanding window. Online fine-tuning after each trading day using that day's outcomes (learning rate 1e-6, 1 epoch, frozen base layers).
+**Training Cadence**: Weekly batch retrain (every Sunday) on rolling window. Online learning deferred — instability risk during drawdown. No daily fine-tuning in Phases 1-3.
 
 **Validation**: Walk-forward cross-validation with 5 folds. Each fold uses the most recent 20% of data as test set. Model deployed only if Brier score < 0.22 on all folds.
 
@@ -329,7 +330,7 @@ Where `forward_window` = 15 bars (75 minutes for 5m bars) and `min_threshold` = 
 
 #### 3.3.1 FinMA Integration
 
-**Model**: FinMA (financially-tuned LLM, LLaMA-based backbone). Quantized to 4-bit (GGUF format) for local inference via llama.cpp.
+**Model**: FinMA-7B (financially-tuned LLM, LLaMA-based backbone), 4-bit quantized (~4GB VRAM) in GGUF format for local inference via llama.cpp. Upgrade path to FinMA-13B documented but deferred.
 
 **Hardware Requirement**: 16GB RAM minimum. GPU optional but recommended (RTX 3060+ for sub-1s inference).
 
@@ -448,7 +449,7 @@ If the FinMA sidecar is unreachable or inference exceeds 5 seconds:
 | Stop-Limit | Controlled stop-loss (avoid slippage in fast markets) |
 | Bracket | Entry + take-profit + stop-loss as atomic unit |
 
-**Supported Instruments** (Phase 1): US equities and ETFs traded on NYSE, NASDAQ, ARCA.
+**Supported Instruments** (Phases 1-3): Single instrument — SPY or ES futures. Multi-asset expansion in Phase 4 only.
 
 #### 3.4.2 Six-Gate Deterministic Safety Chain
 
@@ -500,6 +501,7 @@ Every trade signal that passes the Synthesis Layer must pass all 6 gates sequent
 **Gate 6: Time-of-Day Gate**
 | Parameter | Threshold |
 |-----------|-----------|
+| Primary trading window | EU/US market hours overlap: 14:30-16:30 UTC. Extended to full US session (14:30-21:00 UTC) where applicable. |
 | No entries in first 5 minutes | 09:30-09:35 ET blocked (opening auction noise) |
 | No entries in last 10 minutes | 15:50-16:00 ET blocked (closing auction distortion) |
 | Reduced size in first 30 minutes | 09:30-10:00 ET: max 50% position size |
@@ -719,7 +721,7 @@ Signal Generated (Perception + Synthesis)
 | Database | PostgreSQL 16 + TimescaleDB | Time-series optimized with hypertables; continuous aggregates; mature ecosystem |
 | Message Queue | Redis 7 (Streams) | Sub-millisecond pub/sub between Python sidecar and Node.js engine |
 | LLM Runtime | llama.cpp (via llama-cpp-python) | Efficient local inference of quantized FinMA model |
-| NLP Model | PLTA-FinBERT (HuggingFace + PyTorch) | Domain-specific financial sentiment with TTA capability |
+| NLP Model | Base FinBERT + custom TTA (HuggingFace + PyTorch) | Domain-specific financial sentiment with custom TTA implementation (~200 lines) |
 | Sequence Model | Bi-LSTM (PyTorch) | Lightweight temporal prediction; trainable on CPU |
 | Containerization | Docker Compose | Reproducible multi-service deployment |
 | Monitoring | Prometheus + Grafana | Metrics collection and visualization |
@@ -785,6 +787,12 @@ Signal Generated (Perception + Synthesis)
 - WAL (Write-Ahead Logging) enabled on PostgreSQL for crash recovery
 - Redis persistence: AOF with `fsync` every second (acceptable 1-second data loss window for cache/queue)
 
+### 5.5 Audit Log Retention
+
+- Trade logs, model decisions, and gate audit trails retained for **7 years** per MiFID II Article 25 recordkeeping requirements
+- TimescaleDB compression enabled for cost efficiency on historical audit data
+- Retention policy enforced at database level; no manual purging permitted
+
 ### 5.4 Security
 
 - All API keys stored in environment variables, never in code or configuration files committed to VCS
@@ -825,20 +833,22 @@ See Section 3.4.2 for full gate specifications. Summary:
 
 ### 6.3 Regulatory Considerations
 
-**Pattern Day Trader (PDT) Rule**:
-- System tracks round-trip day trades in rolling 5-business-day window
-- If account equity < $25,000: hard limit of 3 day trades per 5 business days
-- Gate 2 (Drawdown) incorporates PDT check
+**Jurisdiction**: Ireland (EU MiFID II framework). PDT rule does NOT apply — no minimum equity requirement for day trading.
 
-**Wash Sale Rule**:
-- System maintains a 30-day lookback of closed positions with losses
-- If a loss was realized on symbol X within 30 days, new entry on symbol X is flagged
-- Wash sale flag does not block the trade but adjusts cost basis in trade log and alerts operator
+**Account Structure**: Individual retail account (IBKR). Initial capital from founder's personal account for platform validation.
+
+**Applicable Regulations**:
+- **MiFID II best execution**: Orders must achieve best execution per MiFID II requirements. Logged and auditable.
+- **EMIR reporting**: Derivatives (ES futures) subject to EMIR trade reporting obligations.
+- **Central Bank of Ireland oversight**: Compliance with local regulatory framework for retail trading activity.
+- **MiFID II Article 25 recordkeeping**: Trade logs, model decisions, and gate audit trails retained for 7 years (see Section 5 NFR). TimescaleDB compression for cost efficiency.
+
+**Wash Sale Rule**: Not applicable under Irish/EU tax law. No equivalent 30-day repurchase restriction.
 
 **Reporting**:
-- All trades logged with sufficient detail for Schedule D / Form 8949 generation
+- All trades logged with sufficient detail for Irish Revenue Commissioners reporting (CGT obligations)
 - Daily P&L summary exportable in CSV format
-- Year-end tax lot report generation (FIFO and specific identification methods)
+- Year-end tax lot report generation (FIFO method)
 
 ---
 
@@ -932,49 +942,52 @@ See Section 3.4.2 for full gate specifications. Summary:
 ### Phase 2: Perception (Weeks 5-10)
 
 **Deliverables**:
-- PLTA-FinBERT integration: load model, process GDELT events, output sentiment scores and regime classification
+- Custom TTA implementation on base FinBERT: load model, process GDELT events, output sentiment scores and regime classification
 - Daily TTA pipeline: post-market adaptation cycle with validation
-- Bi-LSTM model: architecture implementation, training pipeline, walk-forward validation
+- Bi-LSTM model: architecture implementation, training pipeline, walk-forward validation (confirmed as Phase 2 sequence model; Transformer evaluation deferred to Phase 3)
 - Inference API: `/inference/perception` endpoint serving p-scores at < 100ms
 - Historical backfill: 6 months of training data prepared and labeled
 - Backtesting framework: replay historical bars through Ingest + Perception layers
 
 **Success Criteria Before Advancing**:
-- [ ] PLTA-FinBERT produces sentiment scores for all monitored symbols daily
+- [ ] TTA-FinBERT produces sentiment scores for the target instrument daily
 - [ ] TTA completes within 30 minutes post-market for 5 consecutive days
 - [ ] Bi-LSTM achieves Brier score < 0.22 on walk-forward validation (5 folds)
-- [ ] Inference latency < 100ms (p95) for batch of 20 symbols
+- [ ] Inference latency < 100ms (p95)
 - [ ] Backtest on 3 months of held-out data shows positive expectancy
 
 ### Phase 3: Synthesis & Safety (Weeks 11-16)
 
 **Deliverables**:
-- FinMA integration: model download, quantization, llama.cpp serving, prompt engineering
+- FinMA-7B integration: model download, 4-bit quantization (~4GB VRAM), llama.cpp serving, prompt engineering
 - Synthesis API: `/synthesis/evaluate` endpoint with structured LOGIC_PASS/FAIL output
 - Full 6-gate safety chain implementation with audit logging
 - Kill switch (manual and all automatic triggers)
 - End-to-end pipeline: bar close to paper order via all 4 layers
 - Performance dashboard (basic): live P&L, positions, gate status, system health
-- Full paper trading for 30 days
+- Transformer-based time-series model evaluation (benchmark against Bi-LSTM; adopt if superior)
+- Minimum 3 months paper trading
 
-**Success Criteria Before Advancing**:
-- [ ] FinMA returns structured JSON for 95%+ of evaluation requests
+**Go/No-Go Criteria for Phase 4** (CEO approval required):
+- [ ] FinMA-7B returns structured JSON for 95%+ of evaluation requests
 - [ ] FinMA synthesis latency < 2 seconds (p95)
 - [ ] All 6 gates implemented and tested with unit tests covering edge cases
 - [ ] Kill switch activates within 1 second of trigger condition in testing
-- [ ] 30-day paper trading completed with full audit trail for every trade
-- [ ] Paper trading Sharpe > 1.0 and max drawdown < 8%
+- [ ] Minimum 3 months paper trading completed with full audit trail for every trade
+- [ ] Paper trading Sharpe > 1.5 AND max drawdown < 8% over the paper trading window
 - [ ] Zero instances of missing gate audit logs
+- [ ] CEO approval required before proceeding to Phase 4
 
 ### Phase 4: Production (Weeks 17-24)
 
 **Deliverables**:
-- Transition from paper to live trading (small capital allocation: $10K initial)
+- Transition from paper to live trading (individual retail IBKR account, founder's personal capital for platform validation)
 - Production monitoring: Prometheus + Grafana dashboards
-- Automated model evaluation and alerting (Bi-LSTM Brier monitoring, PLTA-FinBERT accuracy tracking)
-- Full performance dashboard with strategy breakdown and tax reporting
-- Learning loop: weekly model evaluation, automated retrain triggers
-- Multi-strategy support: ability to run multiple Bi-LSTM models with different configurations
+- Automated model evaluation and alerting (Bi-LSTM Brier monitoring, TTA-FinBERT accuracy tracking)
+- Full performance dashboard with strategy breakdown and Irish tax reporting
+- Learning loop: weekly batch model evaluation, automated retrain triggers
+- Shannon entropy / FFT spectral analysis on tick data (enhancement — tick data integration)
+- Multi-asset expansion planning (beyond SPY/ES)
 - Operational runbook: startup, shutdown, incident response, model update procedures
 
 **Success Criteria**:
@@ -988,39 +1001,29 @@ See Section 3.4.2 for full gate specifications. Summary:
 
 ---
 
-## 9. Open Questions
+## 9. Resolved Decisions
 
-These require decisions before or during implementation:
+All architectural questions have been resolved by CEO decision (2026-04-04):
 
-### Architecture
+| # | Question | Decision |
+|---|----------|----------|
+| Q1 | FinMA model variant | **FinMA-7B, 4-bit quantized (~4GB VRAM)**. Upgrade path to 13B documented but deferred. |
+| Q2 | Sequence model architecture | **Bi-LSTM for Phase 2. Transformer evaluation in Phase 3** — adopt if benchmarks show superiority. |
+| Q3 | PLTA-FinBERT availability | **Implement TTA on base FinBERT** (~200 lines PyTorch). No pre-built PLTA-FinBERT available as drop-in. |
+| Q4 | GDELT event-to-symbol mapping | **Sector aggregation first**. Phase 1-2: CAMEO actor codes to sector buckets, aggregate sentiment per sector. NER-to-ticker mapping deferred to Phase 3. |
+| Q5 | Tick data for entropy/FFT | **Deferred to Phase 4**. Shannon entropy / FFT spectral analysis listed as Phase 4 enhancement. |
+| Q6 | Model retrain cadence | **Weekly batch retrain** on rolling window. Online learning deferred — instability risk during drawdown. |
+| Q7 | Instrument scope | **Single instrument (SPY or ES futures), Phases 1-3**. Multi-asset expansion in Phase 4 only. |
+| Q8 | Paper trading go/no-go | **Minimum 3 months paper trading**. Go/no-go: Sharpe >1.5 AND max drawdown <8% over the window. CEO approval required before Phase 4. |
+| Q9 | Account structure | **Individual retail account (IBKR)**. Initial capital from founder's personal account for platform validation. |
+| Q10 | Jurisdiction | **Ireland (EU MiFID II framework)**. PDT rule does not apply. Relevant: MiFID II best execution, EMIR reporting for derivatives, Central Bank of Ireland oversight. |
+| Q11 | Audit log retention | **7 years** per MiFID II Article 25 recordkeeping. TimescaleDB compression for cost efficiency. |
 
-1. **FinMA model selection**: Which specific FinMA variant (7B, 13B) provides the best quality-to-latency tradeoff for local inference? Requires benchmarking with financial reasoning tasks on target hardware.
+---
 
-2. **Redis vs. direct HTTP**: Is Redis Streams necessary for sidecar-engine communication, or would direct HTTP calls between FastAPI and Node.js be simpler with acceptable latency? Redis adds operational complexity but provides buffering and replay.
+## 10. Remaining Open Questions
 
-3. **Node.js vs. Python for execution engine**: The PRD assumes Node.js for execution (inheriting from NEO's architecture). Should the entire system be Python-only, simplifying deployment at the cost of losing Node.js async I/O advantages for IBKR socket management?
-
-### Models
-
-4. **Bi-LSTM vs. Transformer-based time-series models**: By 2026, temporal Transformers (e.g., PatchTST, TimesFM) may outperform Bi-LSTM on financial sequence prediction. Should MYTHOS start with Bi-LSTM and plan a migration path, or evaluate Transformer alternatives in Phase 2?
-
-5. **Multi-resolution input strategy**: The PRD specifies a dual-head approach (5m primary + 1h context). Should we add a third head (daily bars) for structural trend detection, or does this add complexity without sufficient alpha?
-
-6. **PLTA-FinBERT availability**: Is a production-ready PLTA-FinBERT model available as of 2026, or does the team need to implement the TTA mechanism on top of base FinBERT? This significantly affects Phase 2 timeline.
-
-### Data
-
-7. **GDELT event-to-symbol mapping**: How do we reliably map GDELT events to specific equity symbols? Actor name matching is noisy. Should we maintain a manual mapping table, use NER, or rely on sector-level aggregation?
-
-8. **Tick data for entropy analysis**: The Gemini conversation identified Shannon entropy / FFT as a valuable signal. IBKR does not provide tick-level data in the standard API. Should MYTHOS pursue tick data (via IBKR's market depth subscription or alternative providers) for spectral analysis, or defer this to a future phase?
-
-### Operations
-
-9. **Capital allocation ramp**: What is the appropriate capital ramp schedule for transitioning from paper to live? $10K initial is conservative. What are the criteria for increasing allocation (e.g., every 30 days at Sharpe > 1.2, double allocation)?
-
-10. **Multi-symbol scalability**: Phase 1 targets a watchlist of ~20-50 symbols. At what point does Bi-LSTM inference latency become a bottleneck, and should we plan for model parallelism or symbol sharding from the start?
-
-11. **Regulatory entity structure**: For a small prop desk (secondary persona), should MYTHOS documentation include guidance on LLC/fund structure, or is this out of scope?
+All architectural questions resolved. No open items.
 
 ---
 
