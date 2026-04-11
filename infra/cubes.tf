@@ -66,6 +66,13 @@ resource "render_web_service" "cubes" {
     NODE_ENV = {
       value = "production"
     }
+    # Bind to all interfaces — Next.js 16 standalone server.js reads HOSTNAME and binds
+    # to it; Render/Kubernetes injects HOSTNAME as the pod name, so without this override
+    # the service listens on the pod hostname rather than 0.0.0.0 and Render's port
+    # scanner never detects port 10000, causing a 14-minute timeout and rollback.
+    HOSTNAME = {
+      value = "0.0.0.0"
+    }
 
     # Gateway basePath
     NEXT_PUBLIC_BASE_PATH = {
