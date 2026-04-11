@@ -29,6 +29,12 @@ import {
 import { OneCLI } from '@onecli-sh/sdk';
 import { validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
+import {
+  ExclusiveWorkspaceConfig,
+  cloneExternalRepo,
+  isExclusive,
+  loadWorkspaceConfig,
+} from './workspace-config.js';
 
 const onecli = new OneCLI({ url: ONECLI_URL });
 
@@ -60,9 +66,23 @@ interface VolumeMount {
   readonly: boolean;
 }
 
+/**
+ * Redact a sensitive value from a string (e.g. a token embedded in CLI args).
+ * Used to sanitise log output — never call with an empty string.
+ */
+function redactValue(text: string, sensitiveValue: string): string {
+  if (!sensitiveValue) return text;
+  return text.replace(
+    new RegExp(sensitiveValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+    '***',
+  );
+}
+
 function buildVolumeMounts(
   group: RegisteredGroup,
   isMain: boolean,
+  extRepoPath: string | null,
+  exclusiveToken: string | null,
 ): VolumeMount[] {
   const mounts: VolumeMount[] = [];
   const projectRoot = process.cwd();
@@ -138,12 +158,16 @@ function buildVolumeMounts(
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
   const settingsFile = path.join(groupSessionsDir, 'settings.json');
+  // Exclusive workspace mode uses the per-repo token; monorepo mode uses the host GH_TOKEN.
+  // The settings.json is written to the per-group sessions directory which is bind-mounted
+  // into the container, so this is the authoritative source for the container's GH_TOKEN.
+  const ghTokenForContainer = exclusiveToken ?? process.env.GH_TOKEN ?? '';
   const defaultEnv: Record<string, string> = {
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1',
     CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
-    GH_TOKEN: process.env.GH_TOKEN || '',
-    GITHUB_TOKEN: process.env.GH_TOKEN || '',
+    GH_TOKEN: ghTokenForContainer,
+    GITHUB_TOKEN: ghTokenForContainer,
   };
   // Merge containerConfig.envVars (e.g., AGENT_ROLE, AGENT_SCOPE)
   const groupEnvVars = group.containerConfig?.envVars || {};
@@ -226,8 +250,17 @@ function buildVolumeMounts(
     mounts.push(...validatedMounts);
   }
 
-  // Mount git worktree for worker groups (created by register_group IPC handler)
-  if (!isMain && WORKTREE_BASE && group.containerConfig?.envVars?.AGENT_SCOPE) {
+  if (!isMain && extRepoPath) {
+    // Exclusive workspace mode: mount the freshly-cloned external repo at a
+    // distinct path so the Architect always knows it's not the monorepo.
+    // The limitless monorepo is deliberately NOT mounted (IP isolation).
+    mounts.push({
+      hostPath: extRepoPath,
+      containerPath: '/workspace/extra/repo',
+      readonly: false,
+    });
+  } else if (!isMain && WORKTREE_BASE && group.containerConfig?.envVars?.AGENT_SCOPE) {
+    // Monorepo mode: mount the git worktree created by the register_group IPC handler.
     const worktreeDir = path.join(WORKTREE_BASE, group.folder);
     if (fs.existsSync(worktreeDir)) {
       mounts.push({
@@ -258,14 +291,21 @@ async function buildContainerArgs(
   mounts: VolumeMount[],
   containerName: string,
   agentIdentifier?: string,
+  exclusiveToken?: string | null,
 ): Promise<string[]> {
   const args: string[] = ['run', '-i', '--rm', '--name', containerName];
 
   // Pass host timezone so container's local time matches the user's
   args.push('-e', `TZ=${TIMEZONE}`);
 
-  // Pass GitHub token for git push + PR creation in worker containers
-  if (process.env.GH_TOKEN) {
+  // Inject GitHub token for git operations inside the container.
+  // Exclusive workspace mode: inject the per-repo token from the configured
+  // env var — do NOT also inject the host GH_TOKEN (one token per container).
+  // Monorepo mode: inject the host GH_TOKEN as before.
+  if (exclusiveToken) {
+    args.push('-e', `GH_TOKEN=${exclusiveToken}`);
+    args.push('-e', `GITHUB_TOKEN=${exclusiveToken}`);
+  } else if (process.env.GH_TOKEN) {
     args.push('-e', `GH_TOKEN=${process.env.GH_TOKEN}`);
     args.push('-e', `GITHUB_TOKEN=${process.env.GH_TOKEN}`);
   }
@@ -318,13 +358,57 @@ export async function runContainerAgent(
   onOutput?: (output: ContainerOutput) => Promise<void>,
 ): Promise<ContainerOutput> {
   const startTime = Date.now();
+  const runId = String(startTime);
 
   const groupDir = resolveGroupFolderPath(group.folder);
   fs.mkdirSync(groupDir, { recursive: true });
 
-  const mounts = buildVolumeMounts(group, input.isMain);
+  // ── Workspace config: determine repo source (monorepo or exclusive) ──────
+  let workspaceConfig: ReturnType<typeof loadWorkspaceConfig> = null;
+  let extRepoPath: string | null = null;
+  let exclusiveToken: string | null = null;
+
+  if (!input.isMain) {
+    try {
+      workspaceConfig = loadWorkspaceConfig(group.folder);
+    } catch (err) {
+      return {
+        status: 'error',
+        result: null,
+        error: `Invalid workspace.json for group "${group.folder}": ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+
+    if (isExclusive(workspaceConfig)) {
+      const cfg = workspaceConfig as ExclusiveWorkspaceConfig;
+      exclusiveToken = process.env[cfg.tokenEnvVar] ?? null;
+      if (!exclusiveToken) {
+        return {
+          status: 'error',
+          result: null,
+          error: `Exclusive workspace requires env var "${cfg.tokenEnvVar}" but it is not set on the host`,
+        };
+      }
+      try {
+        extRepoPath = await cloneExternalRepo(
+          cfg.repo,
+          cfg.branch,
+          exclusiveToken,
+          runId,
+        );
+      } catch (err) {
+        return {
+          status: 'error',
+          result: null,
+          error: `Failed to clone external repo "${cfg.repo}": ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
+    }
+  }
+
+  const mounts = buildVolumeMounts(group, input.isMain, extRepoPath, exclusiveToken);
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');
-  const containerName = `nanoclaw-${safeName}-${Date.now()}`;
+  const containerName = `nanoclaw-${safeName}-${runId}`;
   // Main group uses the default OneCLI agent; others use their own agent.
   const agentIdentifier = input.isMain
     ? undefined
@@ -333,17 +417,24 @@ export async function runContainerAgent(
     mounts,
     containerName,
     agentIdentifier,
+    exclusiveToken,
   );
+
+  // Redact the exclusive token from any log output that includes container args.
+  const safeArgsLog = exclusiveToken
+    ? redactValue(containerArgs.join(' '), exclusiveToken)
+    : containerArgs.join(' ');
 
   logger.debug(
     {
       group: group.name,
       containerName,
+      workspaceMode: workspaceConfig?.mode ?? 'monorepo',
       mounts: mounts.map(
         (m) =>
           `${m.hostPath} -> ${m.containerPath}${m.readonly ? ' (ro)' : ''}`,
       ),
-      containerArgs: containerArgs.join(' '),
+      containerArgs: safeArgsLog,
     },
     'Container mount configuration',
   );
@@ -490,6 +581,18 @@ export async function runContainerAgent(
     container.on('close', (code) => {
       clearTimeout(timeout);
       const duration = Date.now() - startTime;
+
+      // Clean up the external repo clone for exclusive workspace runs.
+      // This is intentionally fire-and-forget — a cleanup failure must not
+      // affect the result returned to the caller.
+      if (extRepoPath) {
+        try {
+          fs.rmSync(extRepoPath, { recursive: true, force: true });
+          logger.debug({ extRepoPath }, 'External repo clone cleaned up');
+        } catch (err) {
+          logger.warn({ extRepoPath, err }, 'Failed to clean up external repo clone');
+        }
+      }
 
       if (timedOut) {
         const ts = new Date().toISOString().replace(/[:.]/g, '-');

@@ -88,6 +88,9 @@ export const MONOREPO_PATH = process.env.LIMITLESS_MONOREPO_PATH || '';
 // Worktree base directory (worktrees created here, mounted into worker containers)
 export const WORKTREE_BASE = process.env.LIMITLESS_WORKTREE_BASE || '/tmp/nanoclaw-worktrees';
 
+// Base directory for on-the-fly external repo clones (exclusive workspace mode)
+export const EXT_REPOS_BASE = process.env.NANOCLAW_EXT_REPOS_BASE || '/tmp/nanoclaw-ext-repos';
+
 // Notification channels that any group can post to (bypasses normal message authorization).
 // Workers write { type: 'notification', channel: '<key>', text: '...' } to their IPC dir.
 export const NOTIFICATION_CHANNELS: Record<string, string> = {

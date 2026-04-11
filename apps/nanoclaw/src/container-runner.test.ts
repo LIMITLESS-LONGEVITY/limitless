@@ -16,6 +16,16 @@ vi.mock('./config.js', () => ({
   IDLE_TIMEOUT: 1800000, // 30min
   ONECLI_URL: 'http://localhost:10254',
   TIMEZONE: 'America/Los_Angeles',
+  MONOREPO_PATH: '',
+  WORKTREE_BASE: '/tmp/nanoclaw-test-worktrees',
+  EXT_REPOS_BASE: '/tmp/nanoclaw-test-ext-repos',
+}));
+
+// Mock workspace-config — default to monorepo mode (no workspace.json)
+vi.mock('./workspace-config.js', () => ({
+  loadWorkspaceConfig: vi.fn(() => null),
+  cloneExternalRepo: vi.fn(async () => '/tmp/nanoclaw-test-ext-repos/test-repo-123'),
+  isExclusive: vi.fn((c: unknown) => (c as { mode?: string } | null)?.mode === 'exclusive'),
 }));
 
 // Mock logger
@@ -225,5 +235,191 @@ describe('container-runner timeout behavior', () => {
     const result = await resultPromise;
     expect(result.status).toBe('success');
     expect(result.newSessionId).toBe('session-456');
+  });
+});
+
+// ─── Workspace mode — mount configuration ────────────────────────────────────
+
+import { spawn } from 'child_process';
+import { loadWorkspaceConfig, cloneExternalRepo, isExclusive } from './workspace-config.js';
+
+/**
+ * Helper: run a container and capture the args passed to spawn().
+ * Returns immediately after spawn is called (before container output).
+ */
+async function captureSpawnArgs(
+  group: RegisteredGroup,
+  isMainFlag: boolean,
+): Promise<string[]> {
+  const mockSpawnFn = vi.mocked(spawn);
+  const resultPromise = runContainerAgent(
+    group,
+    { ...testInput, isMain: isMainFlag },
+    () => {},
+  );
+
+  // Give async setup (loadWorkspaceConfig / cloneExternalRepo) time to run
+  await vi.advanceTimersByTimeAsync(5);
+
+  // Emit output + close so the promise resolves
+  emitOutputMarker(fakeProc, { status: 'success', result: 'ok' });
+  await vi.advanceTimersByTimeAsync(5);
+  fakeProc.emit('close', 0);
+  await vi.advanceTimersByTimeAsync(5);
+  await resultPromise;
+
+  // Return the args array passed to spawn (second call arg)
+  const calls = mockSpawnFn.mock.calls;
+  const lastCall = calls[calls.length - 1];
+  return lastCall[1] as string[];
+}
+
+describe('workspace mode — monorepo (no workspace.json)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fakeProc = createFakeProcess();
+    // Default: no workspace.json → monorepo mode
+    vi.mocked(loadWorkspaceConfig).mockReturnValue(null);
+    vi.mocked(isExclusive).mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('does not mount /workspace/extra/repo for monorepo mode', async () => {
+    const args = await captureSpawnArgs(testGroup, false);
+    const argsStr = args.join(' ');
+    expect(argsStr).not.toContain('/workspace/extra/repo');
+  });
+
+  it('does not call cloneExternalRepo for monorepo mode', async () => {
+    await captureSpawnArgs(testGroup, false);
+    expect(cloneExternalRepo).not.toHaveBeenCalled();
+  });
+});
+
+describe('workspace mode — exclusive', () => {
+  const FAKE_TOKEN = 'ghp_fake_exclusive_token_xyz';
+  const FAKE_CLONE_DIR = '/tmp/nanoclaw-test-ext-repos/org-mythos-123';
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fakeProc = createFakeProcess();
+
+    // Exclusive workspace config
+    vi.mocked(loadWorkspaceConfig).mockReturnValue({
+      mode: 'exclusive',
+      repo: 'org/mythos',
+      branch: 'main',
+      tokenEnvVar: 'GH_PAT_TOKEN_MYTHOS',
+    });
+    vi.mocked(isExclusive).mockReturnValue(true);
+    vi.mocked(cloneExternalRepo).mockResolvedValue(FAKE_CLONE_DIR);
+
+    // Inject the token into the process environment for this test
+    process.env.GH_PAT_TOKEN_MYTHOS = FAKE_TOKEN;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    delete process.env.GH_PAT_TOKEN_MYTHOS;
+  });
+
+  it('mounts the cloned repo at /workspace/extra/repo', async () => {
+    const args = await captureSpawnArgs(testGroup, false);
+    const argsStr = args.join(' ');
+    expect(argsStr).toContain(`${FAKE_CLONE_DIR}:/workspace/extra/repo`);
+  });
+
+  it('does NOT mount /workspace/extra/monorepo in exclusive mode', async () => {
+    const args = await captureSpawnArgs(testGroup, false);
+    const argsStr = args.join(' ');
+    expect(argsStr).not.toContain('/workspace/extra/monorepo');
+  });
+
+  it('injects the exclusive token as GH_TOKEN, not the host GH_TOKEN', async () => {
+    // Set a different host GH_TOKEN to ensure exclusive token takes precedence
+    const originalHostToken = process.env.GH_TOKEN;
+    process.env.GH_TOKEN = 'ghp_host_token_should_not_appear';
+
+    const args = await captureSpawnArgs(testGroup, false);
+    const argsStr = args.join(' ');
+
+    expect(argsStr).toContain(`GH_TOKEN=${FAKE_TOKEN}`);
+    expect(argsStr).not.toContain('ghp_host_token_should_not_appear');
+
+    process.env.GH_TOKEN = originalHostToken;
+  });
+
+  it('calls cloneExternalRepo with the correct repo and branch', async () => {
+    await captureSpawnArgs(testGroup, false);
+    expect(cloneExternalRepo).toHaveBeenCalledWith(
+      'org/mythos',
+      'main',
+      FAKE_TOKEN,
+      expect.any(String),
+    );
+  });
+
+  it('returns error when tokenEnvVar is not set on host', async () => {
+    delete process.env.GH_PAT_TOKEN_MYTHOS;
+
+    const result = await runContainerAgent(
+      testGroup,
+      { ...testInput, isMain: false },
+      () => {},
+    );
+
+    expect(result.status).toBe('error');
+    expect(result.error).toContain('GH_PAT_TOKEN_MYTHOS');
+    expect(cloneExternalRepo).not.toHaveBeenCalled();
+  });
+
+  it('returns error when cloneExternalRepo fails', async () => {
+    vi.mocked(cloneExternalRepo).mockRejectedValue(
+      new Error('git clone failed: 128'),
+    );
+
+    const result = await runContainerAgent(
+      testGroup,
+      { ...testInput, isMain: false },
+      () => {},
+    );
+
+    expect(result.status).toBe('error');
+    expect(result.error).toContain('Failed to clone');
+  });
+});
+
+describe('workspace mode — exclusive does not apply to main group', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fakeProc = createFakeProcess();
+    // Even if workspace.json exists with exclusive mode, main containers skip it
+    vi.mocked(loadWorkspaceConfig).mockReturnValue({
+      mode: 'exclusive',
+      repo: 'org/mythos',
+      branch: 'main',
+      tokenEnvVar: 'GH_PAT_TOKEN_MYTHOS',
+    });
+    vi.mocked(isExclusive).mockReturnValue(true);
+    process.env.GH_PAT_TOKEN_MYTHOS = 'ghp_some_token';
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+    delete process.env.GH_PAT_TOKEN_MYTHOS;
+  });
+
+  it('does not clone or mount /workspace/extra/repo for the main group', async () => {
+    const args = await captureSpawnArgs(testGroup, true);
+    const argsStr = args.join(' ');
+    // Main group: workspace config not read → no ext repo mount
+    expect(argsStr).not.toContain('/workspace/extra/repo');
+    expect(cloneExternalRepo).not.toHaveBeenCalled();
   });
 });
