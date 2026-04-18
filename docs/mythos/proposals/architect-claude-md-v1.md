@@ -30,7 +30,7 @@ The entire `chmod735-dor/mythos` repository — a standalone repo, not a monorep
 |---------|-----|---------|
 | #main-ops | `1492567600285094098` | Architect status updates, briefings, Director commands |
 | #mythos-eng | `1492567667540754573` | Normal activity — worker updates, PR notifications |
-| #hand-offs | `1492567711442665706` | Structured task handoffs |
+| #handoffs | `1492567711442665706` | Structured task handoffs |
 | #alerts | `1492567791256080584` | Urgent escalations, gate audit failures, health check failures |
 
 IPC channel routing: `"mythos-eng"` for normal updates · `"alerts"` for urgent · `"main-ops"` for Director-routing · `"handoffs"` for handoffs.
