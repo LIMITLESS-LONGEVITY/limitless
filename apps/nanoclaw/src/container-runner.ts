@@ -81,7 +81,7 @@ function buildVolumeMounts(
     });
 
     // Shadow .env so the agent cannot read secrets from the mounted project root.
-    // Credentials are injected by the OneCLI gateway, never exposed to containers.
+    // Credentials are injected by OneCLI (when configured) or passed via -e flags.
     const envFile = path.join(projectRoot, '.env');
     if (fs.existsSync(envFile)) {
       mounts.push({
@@ -270,19 +270,38 @@ async function buildContainerArgs(
     args.push('-e', `GITHUB_TOKEN=${process.env.GH_TOKEN}`);
   }
 
-  // OneCLI gateway handles credential injection — containers never see real secrets.
-  // The gateway intercepts HTTPS traffic and injects API keys or OAuth tokens.
-  const onecliApplied = await onecli.applyContainerConfig(args, {
-    addHostMapping: false, // Nanoclaw already handles host gateway
-    agent: agentIdentifier,
-  });
-  if (onecliApplied) {
-    logger.info({ containerName }, 'OneCLI gateway config applied');
+  if (ONECLI_URL) {
+    // OneCLI gateway handles credential injection — the gateway intercepts
+    // HTTPS traffic and injects API keys or OAuth tokens so containers never
+    // see the raw secrets.
+    const onecliApplied = await onecli.applyContainerConfig(args, {
+      addHostMapping: false, // Nanoclaw already handles host gateway
+      agent: agentIdentifier,
+    });
+    if (onecliApplied) {
+      logger.info({ containerName }, 'OneCLI gateway config applied');
+    } else {
+      logger.warn(
+        { containerName },
+        'OneCLI gateway not reachable — container will have no credentials',
+      );
+    }
   } else {
-    logger.warn(
-      { containerName },
-      'OneCLI gateway not reachable — container will have no credentials',
-    );
+    // No OneCLI gateway configured — pass CLAUDE_CODE_OAUTH_TOKEN directly
+    // via -e. The token is visible in `docker inspect` on the host; acceptable
+    // for a single-operator VPS where no untrusted users have access.
+    if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+      args.push('-e', `CLAUDE_CODE_OAUTH_TOKEN=${process.env.CLAUDE_CODE_OAUTH_TOKEN}`);
+      logger.info(
+        { containerName },
+        'OneCLI not configured — CLAUDE_CODE_OAUTH_TOKEN injected directly',
+      );
+    } else {
+      logger.warn(
+        { containerName },
+        'OneCLI not configured and CLAUDE_CODE_OAUTH_TOKEN unset — container will have no Anthropic credentials',
+      );
+    }
   }
 
   // Runtime-specific args for host gateway resolution
