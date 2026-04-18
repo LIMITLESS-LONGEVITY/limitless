@@ -227,3 +227,100 @@ describe('container-runner timeout behavior', () => {
     expect(result.newSessionId).toBe('session-456');
   });
 });
+
+describe('OneCLI guard — ONECLI_URL empty', () => {
+  // Re-import container-runner with ONECLI_URL='' to test the guard path.
+  // vi.resetModules() + vi.doMock() lets us override the hoisted config mock
+  // for this describe block only.
+  let runContainerAgentNoOneCLI: typeof import('./container-runner.js').runContainerAgent;
+  let mockApplyContainerConfig: ReturnType<typeof vi.fn>;
+
+  beforeAll(async () => {
+    mockApplyContainerConfig = vi.fn().mockResolvedValue(true);
+    vi.resetModules();
+    vi.doMock('./config.js', () => ({
+      CONTAINER_IMAGE: 'nanoclaw-agent:latest',
+      CONTAINER_MAX_OUTPUT_SIZE: 10485760,
+      CONTAINER_TIMEOUT: 1800000,
+      DATA_DIR: '/tmp/nanoclaw-test-data',
+      GROUPS_DIR: '/tmp/nanoclaw-test-groups',
+      IDLE_TIMEOUT: 1800000,
+      ONECLI_URL: '', // intentionally empty — exercises the guard branch
+      TIMEZONE: 'UTC',
+      MONOREPO_PATH: '',
+      WORKTREE_BASE: '/tmp/nanoclaw-worktrees',
+    }));
+    vi.doMock('@onecli-sh/sdk', () => ({
+      OneCLI: class {
+        applyContainerConfig = mockApplyContainerConfig;
+        createAgent = vi.fn();
+        ensureAgent = vi.fn();
+      },
+    }));
+    const mod = await import('./container-runner.js');
+    runContainerAgentNoOneCLI = mod.runContainerAgent;
+  });
+
+  afterAll(() => {
+    vi.resetModules();
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fakeProc = createFakeProcess();
+    mockApplyContainerConfig.mockClear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('does not call OneCLI.applyContainerConfig when ONECLI_URL is empty', async () => {
+    process.env.CLAUDE_CODE_OAUTH_TOKEN = 'test-oauth-token-xyz';
+
+    const resultPromise = runContainerAgentNoOneCLI(
+      testGroup,
+      testInput,
+      () => {},
+    );
+
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    expect(mockApplyContainerConfig).not.toHaveBeenCalled();
+    delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
+  });
+
+  it('injects CLAUDE_CODE_OAUTH_TOKEN via -e when ONECLI_URL is empty', async () => {
+    process.env.CLAUDE_CODE_OAUTH_TOKEN = 'test-oauth-token-xyz';
+
+    const { spawn } = await import('child_process');
+    const spawnMock = spawn as ReturnType<typeof vi.fn>;
+    spawnMock.mockClear();
+
+    const resultPromise = runContainerAgentNoOneCLI(
+      testGroup,
+      testInput,
+      () => {},
+    );
+
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[] | undefined;
+    expect(dockerArgs).toBeDefined();
+    const tokenArgIdx = dockerArgs!.findIndex(
+      (a, i, arr) =>
+        a === '-e' && arr[i + 1]?.startsWith('CLAUDE_CODE_OAUTH_TOKEN='),
+    );
+    expect(tokenArgIdx).not.toBe(-1);
+
+    delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
+  });
+});
