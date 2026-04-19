@@ -1,7 +1,9 @@
 # Agentic SDLC Governance & Workflow
 
 **Date**: 2026-04-18
-**Amended**: 2026-04-19 (v1.2 — DR-002 findings: NanoClaw deploy pipeline established; DR-001 Phase 3 landing target clarified; Agent Vault confirmed non-replacement; see DR-002)
+**Amended**:
+- 2026-04-19 (v1.1 — agent identity model; see DR-001)
+- 2026-04-19 (v1.2 — DR-002 findings: NanoClaw deploy pipeline established; DR-001 Phase 3 landing target clarified; Agent Vault confirmed non-replacement; see DR-002)
 **Author**: Architect
 **Status**: Proposed — awaiting CEO ratification
 **Applies to**: `LIMITLESS-LONGEVITY/limitless` · `chmod735-dor/mythos` · `chmod735-dor/mythos-ops` · all future repos under this division
@@ -150,13 +152,15 @@ infra/                @<CEO-github-handle>
 docs/                 @<CEO-github-handle>
 ```
 
-Note: Architect agents are not GitHub users and cannot be CODEOWNERS. Human CEO is the required approver.
+Note: Architect agents operate as GitHub App bot users (`limitless-agent[bot]`) and cannot be CODEOWNERS. Human CEO (`chmod735`) is the required approver. See DR-001.
 
 ### 4.2 `chmod735-dor/mythos` — `.github/CODEOWNERS`
 
 ```
 # MYTHOS — CODEOWNERS
 # CEO required for all paths.
+# Note: MYTHOS Architect operates as mythos-agent[bot] (GitHub App bot user)
+# and cannot be CODEOWNERS. See DR-001.
 * @<CEO-github-handle>
 
 # Safety-critical paths — CEO required + safety reviewer when designated
@@ -191,12 +195,14 @@ External team members can be added as CODEOWNERS for specific subtrees (e.g. `si
 A MYTHOS PR is **ratified** when ALL of the following are true at merge time:
 
 1. All checkboxes in the PR body ratification checklist are ticked
-2. CEO has submitted a GitHub Approving Review (not just a comment)
+2. CEO has submitted a GitHub **Approving Review** (not just a comment). This is achievable because agent PRs are authored by `mythos-agent[bot]` (a GitHub App bot identity distinct from the CEO's human account `chmod735`). GitHub's self-approval restriction does not apply — `chmod735` approving `mythos-agent[bot]`'s PR is the standard human-ratifies-automation flow. See DR-001.
 3. The review body contains the word `RATIFIED` or `Approved` explicitly
 4. All required status checks have passed
 5. No unresolved review conversations remain
 
 The merge commit then carries: timestamp (UTC), merge author (CEO GitHub handle), PR number, PR title, and a link to the full PR body including the ratification checklist. This constitutes a durable, attributable, timestamped record.
+
+> **v1.0 workaround retired**: Prior to agent identity implementation (DR-001), a Comment-type review with `RATIFIED` keyword was used as an interim measure because agents pushed as the CEO's GitHub account. This workaround is retired once DR-001 rollout is complete. All future ratifications must use a formal Approving Review (condition #2 above).
 
 ### 5.2 Standard ratification checklist (all MYTHOS PRs)
 
@@ -388,7 +394,27 @@ PR templates live at `.github/pull_request_template.md` in each repo. They are c
 
 All commits follow **Conventional Commits v1.0.0** (https://www.conventionalcommits.org/).
 
-### Format
+### 8.1 Commit attribution hierarchy (v1.1)
+
+Every agent-authored commit carries three layers of attribution:
+
+| Layer | What it records | Where it appears |
+|---|---|---|
+| **GitHub author** | `limitless-agent[bot]` or `mythos-agent[bot]` — the NanoClaw agent system that pushed | Commit history, PR author field, org audit log |
+| **AI model** | `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>` — the underlying model that generated the content | Commit message footer |
+| **Ratifier** | `chmod735` (CEO) — the human who reviewed and squash-merged | Squash merge commit author; PR "Approved by" field |
+
+The `Co-Authored-By` trailer is retained from v1 and must not be removed. It provides AI model-level attribution that is independent of GitHub's identity system and persists in the commit message regardless of any future changes to GitHub's `[bot]` attribution policy.
+
+For per-agent attribution within a division (since all LIMITLESS agents share `limitless-agent[bot]`), include an `Authored-by-agent:` footer in the commit message body:
+
+```
+Authored-by-agent: PATHS Architect
+```
+
+This is optional for LIMITLESS (non-MiFID II) and recommended for MYTHOS (MiFID II attribution).
+
+### 8.2 Format
 
 ```
 type(scope): subject line ≤72 chars
@@ -397,17 +423,19 @@ Body: what and why (not how). Wrap at 72 chars.
 Multiple paragraphs allowed.
 
 Footer:
+Authored-by-agent: <Agent name>
 ROADMAP-REF: P1-INFRA-001
 Reviewed-by: CEO
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 ```
 
-### Rules
+### 8.3 Rules
 
 1. Subject line: imperative mood ("add gate" not "added gate"), ≤72 chars, no trailing period
 2. Breaking changes: append `!` to type (`feat!`) and include `BREAKING CHANGE:` in footer
 3. Agent attribution: always include `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>` (or the model used)
-4. Squash commits on merge: the squash commit message = PR title (already Conventional Commits) + PR body as extended description
+4. Per-agent attribution: include `Authored-by-agent: <name>` in footer (required for MYTHOS, recommended for LIMITLESS)
+5. Squash commits on merge: the squash commit message = PR title (already Conventional Commits) + PR body as extended description
 
 ---
 
@@ -478,8 +506,8 @@ External collaborators operate as **contributors**: they submit PRs, carry requi
 
 | Role | Can author PRs | Required reviewer for subtree | Can merge | Can approve (non-blocking) |
 |------|---------------|-------------------------------|-----------|---------------------------|
-| CEO | ✅ | ✅ (all paths) | ✅ | ✅ |
-| AI Architect | ✅ | ❌ (not a GitHub user) | ❌ | ❌ |
+| CEO (`chmod735`) | ✅ | ✅ (all paths) | ✅ | ✅ |
+| AI Architect (GitHub App bot: `limitless-agent[bot]` / `mythos-agent[bot]`) | ✅ | ❌ (bot users cannot be CODEOWNERS) | ❌ | ❌ |
 | Collaborating team lead | ✅ | ✅ (their subtree) | ❌ | ✅ |
 | Collaborating team member | ✅ | ❌ | ❌ | ✅ |
 
@@ -492,7 +520,7 @@ External collaborators operate as **contributors**: they submit PRs, carry requi
 
 ### 11.3 CEO single-approver scale
 
-**Current state (Phase 1)**: CEO as sole approver is appropriate. All PRs are authored by AI agents; the review burden is ratification of agent output, not peer code review. Volume is manageable (1–3 PRs/day estimated in Phase 1).
+**Current state (Phase 1)**: CEO as sole approver is appropriate. All PRs are authored by AI agents (`limitless-agent[bot]` / `mythos-agent[bot]`); the review burden is ratification of agent output, not peer code review. The author ≠ approver invariant is maintained by the GitHub App identity model (DR-001). Volume is manageable (1–3 PRs/day estimated in Phase 1).
 
 **Scale-up trigger**: When Execution layer implementation begins (Phase 3), designate a **Safety Reviewer** with domain expertise in quantitative trading systems. This person becomes a required reviewer specifically for `engine/gates/`, `engine/ibkr/`, and `db/migrations/`. CEO retains merge authority.
 
@@ -564,7 +592,7 @@ Apply in this order. Do NOT skip steps. Each step is independently verifiable.
 
 1. `[OPEN: legal review before Phase 4]` — Whether a formal DPA with GitHub is required for MiFID II record-keeping. Low risk for single-operator account; legal review before live trading.
 2. `[OPEN: Safety Reviewer designation]` — Designate by Phase 3 kick-off. External quantitative trading / regulatory expert preferred.
-3. `[OPEN: signed commits tooling]` — CEO must configure GPG/SSH commit signing before MYTHOS branch protection Step 1.4 is activated. Requires: `git config --global user.signingkey <key>` and `git config --global commit.gpgsign true`. *Note: v1.1 (PR #60) partially resolves this — squash merges on `main` are GitHub-signed automatically. Local signing remains recommended for CEO-authored direct commits.*
+3. `[RESOLVED: signed commits tooling — v1.1]` — The "Require signed commits" ruleset on `main` applies to commits pushed *to* `main`. Agents push to PR branches, not `main`. The squash merge commit on `main` is created server-side by GitHub when the CEO clicks "Squash and merge" via the web UI — GitHub automatically signs this commit, producing a "Verified" badge without any CEO local GPG/SSH configuration. CEO local signing is recommended as best practice for CEO-authored commits (e.g., emergency direct merges per §1.2 mythos-ops exception) but is not required for branch protection to function. See DR-001 Option C rationale.
 4. `[OPEN: PR #1 on chmod735-dor/mythos]` — Confirm whether PR #1 is open. If so, apply grandfather clause per DQ4 before activating branch protection.
 5. `[OPEN: DR-001 Phase 3 implementation — v1.2]` — DR-001 Phase 3 (GitHub App installation token in container-runner) is **unblocked by DR-002 Phase 4** (VPS migration to monorepo clone + deploy pipeline). Landing target: `apps/nanoclaw/src/container-runner.ts`. Deployment: GitHub Actions pipeline (DR-002). Implementation PR title: `feat(nanoclaw): GitHub App installation token at container spawn (DR-001 Phase 3)`. File this handoff after DR-002 is ratified and DR-002 Phases 1–4 are complete.
 6. `[OPEN: MYTHOS OneCLI provisioning — v1.2]` — After DR-002 Phase 4 (MYTHOS VPS on git clone), provision a dedicated OneCLI instance for the `mythos` VPS user (DR-002 Phase 5). Once live, the `CLAUDE_CODE_OAUTH_TOKEN` direct injection from PR #53 is replaced by OneCLI credential routing. See `docs/plans/nanoclaw-source-of-truth-rollout.md` §Phase 5. The PR #53 direct injection remains valid as interim until OneCLI is live.
