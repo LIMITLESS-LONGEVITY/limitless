@@ -34,7 +34,7 @@ ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Install agent-browser and claude-code globally
-RUN npm install -g agent-browser @anthropic-ai/claude-code pnpm
+RUN npm install -g agent-browser @anthropic-ai/claude-code
 
 # Create app directory
 WORKDIR /app
@@ -58,9 +58,7 @@ RUN mkdir -p /workspace/group /workspace/global /workspace/extra /workspace/ipc/
 # Container input (prompt, group info) is passed via stdin JSON.
 # Credentials are injected by the host's credential proxy — never passed here.
 # Follow-up messages arrive via IPC files in /workspace/ipc/input/
-# Copy entrypoint script (handles credentials + git worktree fixup)
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+RUN printf '#!/bin/bash\nset -e\n# Write credentials to /etc/environment so ALL processes see them (PAM-level)\n# This is the OS-level fix — survives any process model, subagent spawning, etc.\nif [ -n "$GH_TOKEN" ]; then\n  echo "GH_TOKEN=$GH_TOKEN" >> /etc/environment\n  echo "GITHUB_TOKEN=$GH_TOKEN" >> /etc/environment\n  export GH_TOKEN GITHUB_TOKEN="$GH_TOKEN"\nfi\ncd /app && npx tsc --outDir /tmp/dist 2>&1 >&2\nln -s /app/node_modules /tmp/dist/node_modules\nchmod -R a-w /tmp/dist\ncat > /tmp/input.json\nnode /tmp/dist/index.js < /tmp/input.json\n' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Source /etc/environment in every bash invocation (including non-interactive subagent shells)
 # This ensures GH_TOKEN and other credentials written by the entrypoint are available
