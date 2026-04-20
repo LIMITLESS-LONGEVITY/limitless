@@ -1,9 +1,12 @@
 # Agentic SDLC Governance & Workflow
 
 **Date**: 2026-04-18
+**Amended**: 2026-04-19 (v1.2 — DR-002 findings: NanoClaw deploy pipeline established; DR-001 Phase 3 landing target clarified; Agent Vault confirmed non-replacement; see DR-002)
 **Author**: Architect
 **Status**: Proposed — awaiting CEO ratification
 **Applies to**: `LIMITLESS-LONGEVITY/limitless` · `chmod735-dor/mythos` · `chmod735-dor/mythos-ops` · all future repos under this division
+
+> **v1.1 note**: A parallel amendment (v1.1, PR #60) resolves the agent-identity/ratification-flow gap (DR-001). If PR #60 merges before this PR, v1.2 applies on top of v1.1. Both amendments are additive and non-conflicting.
 
 ---
 
@@ -561,5 +564,8 @@ Apply in this order. Do NOT skip steps. Each step is independently verifiable.
 
 1. `[OPEN: legal review before Phase 4]` — Whether a formal DPA with GitHub is required for MiFID II record-keeping. Low risk for single-operator account; legal review before live trading.
 2. `[OPEN: Safety Reviewer designation]` — Designate by Phase 3 kick-off. External quantitative trading / regulatory expert preferred.
-3. `[OPEN: signed commits tooling]` — CEO must configure GPG/SSH commit signing before MYTHOS branch protection Step 1.4 is activated. Requires: `git config --global user.signingkey <key>` and `git config --global commit.gpgsign true`.
+3. `[OPEN: signed commits tooling]` — CEO must configure GPG/SSH commit signing before MYTHOS branch protection Step 1.4 is activated. Requires: `git config --global user.signingkey <key>` and `git config --global commit.gpgsign true`. *Note: v1.1 (PR #60) partially resolves this — squash merges on `main` are GitHub-signed automatically. Local signing remains recommended for CEO-authored direct commits.*
 4. `[OPEN: PR #1 on chmod735-dor/mythos]` — Confirm whether PR #1 is open. If so, apply grandfather clause per DQ4 before activating branch protection.
+5. `[OPEN: DR-001 Phase 3 implementation — v1.2]` — DR-001 Phase 3 (GitHub App installation token in container-runner) is **unblocked by DR-002 Phase 4** (VPS migration to monorepo clone + deploy pipeline). Landing target: `apps/nanoclaw/src/container-runner.ts`. Deployment: GitHub Actions pipeline (DR-002). Implementation PR title: `feat(nanoclaw): GitHub App installation token at container spawn (DR-001 Phase 3)`. File this handoff after DR-002 is ratified and DR-002 Phases 1–4 are complete.
+6. `[OPEN: MYTHOS OneCLI provisioning — v1.2]` — After DR-002 Phase 4 (MYTHOS VPS on git clone), provision a dedicated OneCLI instance for the `mythos` VPS user (DR-002 Phase 5). Once live, the `CLAUDE_CODE_OAUTH_TOKEN` direct injection from PR #53 is replaced by OneCLI credential routing. See `docs/plans/nanoclaw-source-of-truth-rollout.md` §Phase 5. The PR #53 direct injection remains valid as interim until OneCLI is live.
+7. `[CONFIRMED: Agent Vault does not replace DR-001 Phase 3 — v1.2]` — OneCLI Agent Vault handles runtime credential policies (rate limiting, approval prompts) for API calls made from inside containers. It does not mint GitHub App installation tokens at container launch time. DR-001 Phase 3 is necessary and proceeds as planned. The two systems are complementary. See DR-002 §Context.
