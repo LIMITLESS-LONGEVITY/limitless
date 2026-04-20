@@ -235,21 +235,6 @@ function buildVolumeMounts(
         containerPath: '/workspace/extra/monorepo',
         readonly: false,
       });
-
-      // Mount parent repo's .git directory at its HOST PATH so worktree references
-      // resolve without modification. The worktree's .git file contains an absolute
-      // host path (e.g., gitdir: /home/.../worktrees/name). By mounting .git at the
-      // same path inside the container, all git operations work transparently.
-      if (MONOREPO_PATH) {
-        const gitDir = path.join(MONOREPO_PATH, '.git');
-        if (fs.existsSync(gitDir) && fs.statSync(gitDir).isDirectory()) {
-          mounts.push({
-            hostPath: gitDir,
-            containerPath: gitDir,
-            readonly: false,
-          });
-        }
-      }
     }
   }
 
