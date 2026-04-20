@@ -1,0 +1,14 @@
+# LIMITLESS monorepo — CODEOWNERS
+# CEO is default approver for all paths.
+* @chmod735
+
+# Per-app domain ownership (CEO + app Architect)
+# Architect handles PR authorship; CEO handles ratification.
+apps/paths/           @chmod735
+apps/cubes/           @chmod735
+apps/hub/             @chmod735
+apps/digital-twin/    @chmod735
+apps/nanoclaw/        @chmod735
+apps/os-dashboard/    @chmod735
+infra/                @chmod735
+docs/                 @chmod735
