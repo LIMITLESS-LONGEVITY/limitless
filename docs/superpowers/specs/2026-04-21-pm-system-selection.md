@@ -18,7 +18,7 @@ This spec formalises the project management (PM) system selection for the LIMITL
 
 1. The division's Spec-Driven Development (SDD) philosophy — specs ARE the source of truth, not tickets.
 2. Autonomous AI agents as first-class PM participants.
-3. Human contributor accessibility — `@aradSmith` must be able to see and act on work without learning Discord handoff schema.
+3. Human contributor orientation — `@aradSmith` must be able to understand the division's ways of working without requiring a dedicated PM tool layer.
 4. The four internal SDD Kernel Services that underpin the autonomous pipeline.
 5. Cost and tooling overhead constraints.
 
@@ -37,7 +37,7 @@ The division currently operates without a formal ticket system. Work is tracked 
 - **`docs/plans/`** — per-feature planning documents.
 - **`docs/superpowers/specs/`** — authoritative specs written before code; the SDD source of truth.
 
-There is no Jira instance, no Linear workspace, no GitHub Issues board, and no sprint cadence. This has worked at solo/duo scale but is insufficient for multi-team coordination.
+There is no Jira instance, no Linear workspace, no GitHub Issues board, and no sprint cadence. This has worked at solo/duo scale and — with proper onboarding documentation — is the correct model for Phase 2 as well.
 
 ### 2.2 Governance Spec §6.3 — JIRA: Smart-Commit Convention
 
@@ -115,7 +115,6 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 - Overhead: ticket hygiene, sprint ceremonies, backlog grooming — non-trivial at small team scale.
 - Violates SDD if ticket descriptions duplicate or paraphrase spec content (they inevitably do).
 - Adds external SaaS dependency to an otherwise self-contained GitHub-native stack.
-- Linear's free tier limits may bind as MYTHOS scales.
 
 ---
 
@@ -134,10 +133,6 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 - `gh issue create`, `gh issue list`, `gh issue edit`, `gh issue close` — all available in Architect container via `gh` CLI.
 - No new tooling required; agents are first-class GitHub Issues participants today.
 
-**`@aradSmith` contributor model:**
-- Standard GitHub contributor workflow; no Discord schema knowledge required.
-- Issues board is a familiar interface.
-
 **Pros:**
 - Single platform (GitHub) — no external SaaS.
 - Agents natively create and manage Issues via `gh` CLI.
@@ -146,10 +141,10 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 - `@aradSmith` sees work on a standard GitHub Issues board.
 
 **Cons:**
-- GitHub Projects UI is less feature-rich than Jira (no time tracking, weaker velocity estimation, no epics natively).
-- Without strict conventions, Issues can sprawl and duplicate spec content.
-- Milestone granularity is coarse; no sub-task nesting without workarounds.
+- Without strict conventions, Issues can sprawl and duplicate spec content, violating SDD.
 - Requires discipline to keep Issues as status mirrors and not planning documents.
+- Introduces a second artifact (Issue + spec) that must stay in sync — the sync discipline is non-trivial under agent-authored workflows.
+- GitHub Projects UI is less feature-rich than Jira for large-scale PM.
 
 ---
 
@@ -171,24 +166,23 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 - No new tooling; agents already produce all these artifacts.
 
 **`@aradSmith` contributor model:**
-- Requires Discord access and familiarity with the handoff schema.
-- GitHub PRs remain the contributor interface; spec reading expected.
-- Onboarding friction: Discord schema is opaque without documentation.
+- Requires understanding of the handoff schema and GitHub PR workflow.
+- Onboarding friction is addressed by documentation (PR-ONB-001–003), not by tooling — see `docs/plans/2026-04-21-human-onboarding-docs-roadmap.md`.
+- GitHub PRs remain the primary contributor delivery interface.
 
 **Pros:**
 - Zero tool overhead — nothing new to configure, pay for, or maintain.
 - Fully SDD-compatible — specs ARE the system; no status/truth split possible.
 - Agents are first-class PM participants with no new capabilities needed.
-- No context split: one place to look for work definition.
+- No context split: one place to look for work definition and status.
 - Self-documenting: every handoff is a Discord message with a structured schema.
+- No sync discipline required across two artifact types.
 
 **Cons:**
-- No structured query capability — cannot ask "show me all blocked tasks" without parsing Discord history.
-- No velocity metrics or sprint cadence.
-- No visual board for human collaborators who don't want to parse Discord + Markdown.
-- Hard for `@aradSmith` to onboard without Discord schema documentation.
-- `MEMORY.md` is an agent-maintained file — can drift or become stale under concurrent task load.
-- Scales poorly beyond two teams; Discord thread history is lossy over time.
+- No structured query capability built-in — cannot ask "show me all blocked tasks" without parsing Discord history or GitHub PR list.
+- No visual board for human collaborators who prefer a ticket interface.
+- `MEMORY.md` is agent-maintained — can drift or become stale under concurrent task load.
+- Requires strong onboarding documentation for new contributors (addressed by PR-ONB-001–003).
 
 ---
 
@@ -196,46 +190,20 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 
 **Description:** Specs and plans remain the definitive SoT. GitHub Issues serve as lightweight status trackers — one Issue per spec or plan, with the Issue body linking to the spec file. Issues track status (open/closed/labelled) but contain no planning content.
 
-**Mechanics:**
-- Issue title = spec filename stem (e.g., `[SPEC] 2026-04-21-agent-config-governance`).
-- Issue body = link to spec + one-paragraph summary + labels.
-- Labels: `in-progress`, `blocked`, `review`, `merged`, `spec`, `plan`, `handoff`.
-- Agents create Issues at handoff time via `gh issue create`.
-- PR body includes `Closes #NNN` — Issue auto-closes on merge.
-- `ROADMAP.md` retains the strategic Kanban (epic-level); Issues are the tactical tracker (spec-level).
-- Discord #handoffs retains the full handoff schema; the Issue is the GitHub-visible record.
-
 **Agent interaction:**
 - `gh issue create` at handoff time — one command, no new tooling.
-- `gh issue edit --add-label blocked` when a handoff is blocked.
 - `gh issue list --label in-progress` for Architect memory queries.
-- Issue body includes `Closes #NNN` in PR — auto-close on merge.
-
-**`@aradSmith` contributor model:**
-- Sees a GitHub Issues board with labelled, linkable work items.
-- Clicks Issue body link to reach the spec — no Discord schema required.
-- PRs auto-close Issues — contributor workflow is standard GitHub.
-
-**JIRA: convention interaction:**
-- If MYTHOS uses Jira, they reference `MYTHOS-47` in their PR descriptions.
-- Jira's GitHub integration reads those references on Jira's side.
-- No LIMITLESS agent changes required.
-- The `JIRA:` smart-commit convention in §6.3 remains reserved as an inert plug-in point.
+- PR body includes `Closes #NNN` — Issue auto-closes on merge.
 
 **Pros:**
-- SDD-compatible: specs are SoT; Issues are status mirrors only.
-- Agent-native: `gh` CLI covers all Issue operations already available in Architect containers.
-- Contributor-friendly: `@aradSmith` sees a standard GitHub Issues board.
-- No external SaaS cost.
+- Contributor-friendly: `@aradSmith` sees a GitHub Issues board without needing Discord context.
 - Structured query: `gh issue list --label blocked` gives instant blocked-task view.
-- PR-to-Issue auto-link (`Closes #NNN`) is zero-overhead delivery signal.
-- Composable: MYTHOS can run Jira in parallel; Issues and Jira are not mutually exclusive.
+- No external SaaS cost.
 
 **Cons:**
 - Two artifacts per task (spec + Issue) must stay in sync — Issue body must not drift from spec scope.
-- Agents must be taught (via CLAUDE.md update) to create Issues at handoff time — a small but real process change.
-- GitHub Projects board still lacks Jira's reporting depth if velocity metrics are later required.
-- Label hygiene requires discipline; stale labels degrade query reliability.
+- Agents must be taught to create Issues at handoff time — a small but real process addition.
+- Introduces a second PM habit before Phase 2 is even declared stable; contributor orientation is better solved by documentation than by a new tooling layer.
 
 ---
 
@@ -245,17 +213,16 @@ Rating scale: **Strong** = serves this kernel service natively and robustly; **P
 
 | Kernel Service | Option A (Jira/Linear) | Option B (GH Issues) | Option C (Spec-as-SoT) | Option D (Hybrid) |
 |---|---|---|---|---|
-| **Planning Layer** (DAG → tasks) | Partial — tickets can represent tasks but spec-to-ticket mapping is manual; agents cannot create tickets autonomously | Partial — Issues can represent tasks; agents create them via `gh`; but DAG structure is flat (no native sub-task hierarchy) | Strong — specs and plans ARE the planning layer; agents write them natively | Strong — specs/plans remain SoT for DAG; Issues are the lightweight task nodes agents can query |
-| **Context/Memory Management** (in-flight, blocked, complete) | Partial — Jira board shows status but agents cannot query or update it; MEMORY.md still needed | Strong — `gh issue list --label in-progress` gives instant structured query; agents can update labels; replaces `MEMORY.md` for task state | Weak — no structured query; requires parsing Discord history + `MEMORY.md`; stale under concurrent load | Strong — `gh issue list` gives structured query; labels encode state; agents update labels at each lifecycle event |
-| **Constraint Enforcement** (governance, branch protection, scope) | Partial — Jira has no awareness of governance spec tiers or branch rules; enforcement still happens at GitHub layer | Partial — GitHub Issues have no enforcement mechanism; enforcement remains at GitHub branch protection + PR review layer | Strong — specs define constraints directly; governance spec is the enforcement document; agents read it natively | Strong — specs define constraints (same as C); Issues inherit spec scope via body link; no constraint logic in Issues |
-| **Self-Healing/Drift Detection** (health checks, VPS drift, NanoClaw drift) | Weak — Jira has no health check integration; alerts would require webhook configuration and a Jira ticket creation step | Partial — `gh issue create` can be used to file drift/health alerts as Issues; requires discipline not to pollute task board | Weak — Discord #alerts is the current channel; no structured query for open alerts; no auto-resolution signal | Partial — health alert Issues can be created and auto-closed via `gh`; labelled `alert` to separate from task Issues; cleaner than C but still not a purpose-built alerting system |
+| **Planning Layer** (DAG → tasks) | Partial — tickets can represent tasks but spec-to-ticket mapping is manual; agents cannot create tickets autonomously | Partial — Issues can represent tasks; agents create them via `gh`; but DAG structure is flat | **Strong** — specs and plans ARE the planning layer; agents write them natively | Strong — same as C for planning |
+| **Context/Memory Management** (in-flight, blocked, complete) | Partial — agents cannot query or update Jira; MEMORY.md still needed | Strong — `gh issue list --label in-progress` gives structured query | Partial — no structured query; requires Discord history + `MEMORY.md`; improvable via PR list queries | Strong — same as B for structured query |
+| **Constraint Enforcement** (governance, branch protection, scope) | Partial — Jira has no awareness of governance spec tiers or branch rules | Partial — Issues have no enforcement mechanism; enforcement remains at GitHub layer | **Strong** — specs define constraints directly; governance spec is the enforcement document | Strong — same as C; Issues inherit spec scope via body link |
+| **Self-Healing/Drift Detection** (health checks, VPS drift, NanoClaw drift) | Weak — no health check integration | Partial — `gh issue create` can file drift/health alerts; requires label discipline | Weak — Discord #alerts is the current channel; no structured query for open alerts | Partial — labelled alert Issues give structured query |
 
 **Summary interpretation:**
 
-- Option A is Partial across all four kernel services because the external system is opaque to agents and requires manual human bridging.
-- Option B is Strong on Context/Memory (the biggest current gap) but Partial elsewhere — it lacks the spec-level planning depth and alerting integration.
-- Option C is Strong on Planning and Constraint Enforcement (because specs are the system) but Weak on Context/Memory and Self-Healing — exactly the two failure modes observed at scale.
-- Option D combines C's strengths (Strong Planning, Strong Constraints) with B's Context/Memory strength (structured `gh` queries), at the cost of a two-artifact discipline requirement.
+- Option C is the strongest on Planning and Constraint Enforcement — the two most critical kernel services for an SDD-first division — because specs ARE the planning and constraint system.
+- Option C's weakness on Context/Memory is real but addressable: the Architect's proactive checks (`gh pr list`, Discord scan) and `MEMORY.md` together serve this role. The shortfall becomes material only at high task concurrency (5+ simultaneous handoffs), which is not the current operating scale.
+- Option D's gain on Context/Memory is the main argument for it; that gain does not outweigh the sync discipline cost and the risk of introducing a second planning habit before Phase 2 is stable.
 
 ---
 
@@ -263,15 +230,15 @@ Rating scale: **Strong** = serves this kernel service natively and robustly; **P
 
 | Criterion | Option A | Option B | Option C | Option D |
 |---|---|---|---|---|
-| SDD-compatible | No — tickets compete with specs | Partial — Issues must be disciplined | Yes — specs ARE the system | Yes — specs SoT; Issues are mirrors |
-| Agent-native | No — no Jira CLI in containers | Yes — `gh` CLI | Yes — agents write all artifacts | Yes — `gh` CLI for Issues |
-| Contributor-friendly (`@aradSmith`) | Yes | Yes | No — Discord schema required | Yes — GitHub Issues board |
-| Structured status query | Yes | Yes | No | Yes |
-| Velocity/sprint metrics | Yes | Partial | No | Partial |
-| External SaaS cost | Jira Free / Linear Free | None | None | None |
-| New tooling required | Yes — Jira/Linear setup | No | No | No (minor CLAUDE.md update) |
-| MYTHOS/Jira composable | N/A (is Jira) | Yes | Yes | Yes |
-| Scales to multi-team | Yes | Partial | No | Yes |
+| SDD-compatible | No — tickets compete with specs | Partial — Issues must be disciplined | **Yes — specs ARE the system** | Yes — specs SoT; Issues are mirrors |
+| Agent-native | No — no Jira CLI in containers | Yes — `gh` CLI | **Yes — agents write all artifacts** | Yes — `gh` CLI for Issues |
+| Contributor-friendly (`@aradSmith`) | Yes | Yes | Requires onboarding docs (PR-ONB-001–003) | Yes — GitHub Issues board |
+| Structured status query | Yes | Yes | Partial (PR list + Discord) | Yes |
+| External SaaS cost | Jira Free / Linear Free | None | **None** | None |
+| New tooling / process required | Yes — Jira/Linear setup | No — but sync discipline required | **No** | Minor — Issue creation convention + CLAUDE.md update |
+| MYTHOS/Jira composable | N/A (is Jira) | Yes | **Yes** | Yes |
+| Single source of truth | No | Partial | **Yes** | Partial |
+| Phase 2 operational risk | High | Medium | **Low — no new habits** | Medium |
 
 ---
 
@@ -290,136 +257,94 @@ Governance spec §6.3 reserves the convention `JIRA: MYTHOS-47` as a smart-commi
 
 Rationale:
 
-1. **Activate** would require: a Jira instance (cost + admin overhead), a Jira project key, and configuration of Jira's GitHub app — none of which is justified by the Option D selection.
+1. **Activate** would require: a Jira instance (cost + admin overhead), a Jira project key, and configuration of Jira's GitHub app — none of which is justified by the Option C selection.
 
-2. **Retire** would require: editing the governance spec, removing the convention, and potentially confusing MYTHOS if they later adopt Jira. The retirement cost exceeds the clutter cost of keeping the reservation.
+2. **Retire** would require editing the governance spec and potentially confusing MYTHOS if they later adopt Jira. The retirement cost exceeds the clutter cost of keeping the reservation.
 
-3. **Keep reserved** costs nothing. The `JIRA:` text in a commit message is a no-op unless a Jira instance with GitHub integration is configured. MYTHOS (`@aradSmith`) may adopt Jira for their own tracking — if they do, their Jira admin configures the integration on Jira's side, and the convention activates automatically for any commit that uses it. No LIMITLESS agent code change is required at that point either, consistent with PR #54's conclusion.
+3. **Keep reserved** costs nothing. The `JIRA:` text in a commit message is a no-op unless a Jira instance with GitHub integration is configured. MYTHOS (`@aradSmith`) may adopt Jira for their own tracking — if they do, their Jira admin configures the integration on Jira's side, and the convention activates automatically for any commit that uses it. No LIMITLESS agent code change is required.
 
-**Action:** No change to governance spec §6.3. Convention remains reserved. MYTHOS is informed (via this spec) that if they configure a Jira instance, the `JIRA: PROJ-ID` convention in commit messages will auto-link without any LIMITLESS-side action.
+**Action:** No change to governance spec §6.3. Convention remains reserved.
 
 ---
 
-## 8. Recommendation: Option D — Hybrid
+## 8. Recommendation: Option C — Spec-as-SoT
 
 ### 8.1 Decision
 
-**Adopt Option D: Spec-as-SoT + GitHub Issues as lightweight status tracker.**
+**Retain and formalise the current Spec-as-SoT model as the canonical PM approach for LIMITLESS Phase 2.**
 
-This is the only option that satisfies all four non-negotiable constraints simultaneously:
-1. SDD compliance (specs are SoT; Issues are status mirrors only).
-2. Agent-native (no new tooling; `gh` CLI covers all required operations).
-3. Contributor-friendly (`@aradSmith` works from a standard GitHub Issues board).
-4. No external SaaS cost or dependency.
+Rationale:
 
-### 8.2 Implementation Convention (Normative)
+1. **SDD fidelity is non-negotiable.** Option C is the only option where specs are not just the truth but the entire PM system. No other option can claim this without qualification.
+2. **Contributor orientation is a documentation problem, not a tooling problem.** The onboarding friction of `@aradSmith` not understanding Discord handoff schema is addressed by PR-ONB-001–003 (Ways of Working guide, CONTRIBUTING.md refresh, README overhaul). Solving it with a new PM tool layer introduces new complexity before Phase 2 is even declared stable.
+3. **No new habits before Phase 2 baseline.** The division is at a transition point — adding a second planning artifact type (Issues) before the 4-document readiness bundle is ratified and `@aradSmith` is onboarded would obscure whether problems stem from process, tooling, or people. Option C preserves a clean baseline.
+4. **Agent-native with zero process change.** Agents already produce every Option C artifact. No CLAUDE.md changes are required by this decision.
 
-The following conventions are binding from the date of CEO ratification.
+### 8.2 What Option C Formalises
 
-#### 8.2.1 Issue Creation — At Handoff Time
+The following are now normative conventions under Option C:
 
-When the Architect creates a handoff in Discord #handoffs, it simultaneously creates a GitHub Issue:
+#### 8.2.1 Spec-as-SoT Conventions (Binding)
 
-```bash
-gh issue create \
-  --title "[SPEC] 2026-04-21-agent-config-governance" \
-  --body "Tracks: docs/superpowers/specs/2026-04-21-agent-config-governance.md
+| Artifact | Purpose | Author | Location |
+|---|---|---|---|
+| `docs/superpowers/specs/YYYY-MM-DD-*.md` | Authoritative work definition (what to build, why, constraints) | Director or Architect | `docs/superpowers/specs/` |
+| `docs/plans/YYYY-MM-DD-*.md` | Execution plan (how to build, rollout phases, rollback) | Architect | `docs/plans/` |
+| Discord #handoffs message | Handoff schema record (From, To, Priority, Repo, Context, Tasks, Verify, PR Naming) | Architect | Discord |
+| `ROADMAP.md` | Strategic Kanban (Backlog → In Progress → Review → Done), epic-level | Director or Architect | Repo root |
+| GitHub PR | Atomic delivery unit; PR description references spec + plan | Agent or human | GitHub |
+| `MEMORY.md` | Architect session context — in-flight task state, cross-session carry-over | Architect | `/workspace/group/` (Architect-side) |
 
-See spec for full scope, tasks, and verification steps.
+#### 8.2.2 Status Queries Under Option C
 
-**Handoff channel:** #handoffs
-**Priority:** P1
-**Assignee:** @specialist-engineer" \
-  --label "in-progress" \
-  --repo LIMITLESS-LONGEVITY/limitless
-```
-
-Rules:
-- Issue title format: `[SPEC] {spec-filename-stem}` or `[PLAN] {plan-filename-stem}`.
-- Issue body: link to spec/plan file + one-paragraph summary + handoff metadata (priority, assignee). No planning content in the body.
-- Initial label: `in-progress` (assigned at creation).
-- One Issue per spec or plan. Not one Issue per task within a spec.
-
-#### 8.2.2 Label Lifecycle
-
-| Stage | Label | Trigger |
-|---|---|---|
-| Handoff created | `in-progress` | Architect creates Issue at handoff time |
-| Blocked | `blocked` | Architect edits label when handoff is blocked (`gh issue edit NNN --add-label blocked --remove-label in-progress`) |
-| PR open for review | `review` | Engineer posts PR; Architect updates label |
-| PR merged | *(Issue auto-closes)* | `Closes #NNN` in PR body triggers GitHub auto-close |
-| Alert (health/drift) | `alert` | Cron health check posts Issue; separate from task Issues |
-
-#### 8.2.3 PR Body Convention
-
-Every PR body must include the Issue close reference:
-
-```
-Closes #NNN
-```
-
-Where `NNN` is the GitHub Issue number created at handoff time. This is a required field in the existing handoff schema's PR Naming section — enforced via PR template or Architect review.
-
-#### 8.2.4 ROADMAP.md — Strategic Kanban
-
-`ROADMAP.md` retains the epic/milestone-level Kanban. It is NOT updated per spec — only per epic milestone. The relationship is:
-
-- `ROADMAP.md` lane → GitHub Milestone (optional, for sprint grouping).
-- GitHub Issue → one spec or plan (tactical tracker).
-- Discord #handoffs → full handoff schema (operational record).
-
-#### 8.2.5 Structured Queries (Architect Memory)
-
-The Architect uses the following `gh` queries as substitutes for `MEMORY.md` task state:
+The Architect uses the following as primary status queries (no Issues board required):
 
 ```bash
-# All in-progress work
-gh issue list --label in-progress --repo LIMITLESS-LONGEVITY/limitless
+# All open PRs — what is in review
+gh pr list --repo LIMITLESS-LONGEVITY/limitless --state open
 
-# All blocked work (requires escalation)
-gh issue list --label blocked --repo LIMITLESS-LONGEVITY/limitless
+# All open PRs by label (if PR labels are used)
+gh pr list --repo LIMITLESS-LONGEVITY/limitless --label "in-progress"
 
-# All open alerts
-gh issue list --label alert --repo LIMITLESS-LONGEVITY/limitless
-
-# Work awaiting review
-gh issue list --label review --repo LIMITLESS-LONGEVITY/limitless
+# Handoff queue — review Discord #handoffs for unexecuted handoffs (proactive 30-min check)
+# MEMORY.md — Architect reads at session start for in-flight task context
 ```
 
-These replace the ad-hoc Discord scroll + `MEMORY.md` scan that is currently the Architect's only memory mechanism.
+#### 8.2.3 `@aradSmith` Contributor Workflow Under Option C
 
-#### 8.2.6 `@aradSmith` Onboarding
+1. Read onboarding docs (PR-ONB-001–003) — Day 1 reading list.
+2. Discover active work: `ROADMAP.md` for strategic priorities; open PRs for tactical work in flight.
+3. Claim work: coordinate via #handoffs or direct Discord message to Director.
+4. Deliver: open PR referencing the relevant spec/plan in the PR body.
+5. Merge: CEO ratifies via Approving Review per governance spec §5.1.
 
-`@aradSmith` contributors interact with the PM system as follows:
+No GitHub Issues board required. If `@aradSmith` wants a board view as a personal aid, see §8.3.
 
-1. View work: GitHub Issues board at `LIMITLESS-LONGEVITY/limitless/issues`.
-2. Understand scope: click Issue body link → spec file in `docs/superpowers/specs/`.
-3. Claim work: comment on Issue or be assigned by Architect.
-4. Deliver: open PR with `Closes #NNN` in body.
-5. Merge: PR merge auto-closes Issue.
+#### 8.2.4 ROADMAP.md as the Strategic Kanban
 
-No Discord access required for basic contributor workflow. Discord is for Architect-level operational coordination.
+`ROADMAP.md` is the canonical top-level view of work. The Architect updates it at:
+- New epic/milestone entering In Progress.
+- Epic/milestone completing (PR merged, spec ratified).
+- Blocker declared (epic moves back to Backlog with a note).
 
-#### 8.2.7 CLAUDE.md Update (Required)
+It is NOT updated per PR — only per epic-level milestone.
 
-The Architect's `CLAUDE.md` (or equivalent system prompt) must be updated to include:
+### 8.3 Optional Implementation Aid — GitHub Issues
 
-> **At handoff time:** Create a GitHub Issue via `gh issue create` with title `[SPEC] {spec-stem}`, body linking to the spec, and label `in-progress`. Record the Issue number in the Discord handoff message.
-> **At PR creation:** Confirm PR body includes `Closes #NNN`.
-> **At PR merge:** Verify Issue is auto-closed; if not, close manually via `gh issue close NNN`.
-> **At blockage:** Update Issue label to `blocked` via `gh issue edit NNN --add-label blocked --remove-label in-progress`.
+GitHub Issues are **not** part of the recommended PM model but are available as an **optional lightweight aid** that does not conflict with Option C if used with discipline.
 
-This update is a pre-condition for Option D to be operational. It should be applied in the same PR that ratifies this spec.
+**When issues may be useful:**
+- `@aradSmith` requests a board view as a personal orientation tool.
+- A sprint-style grouping of in-flight work is needed for external stakeholder communication.
+- The Architect wants a structured `gh issue list --label blocked` query without parsing Discord.
 
-### 8.3 What Option D Does NOT Do
+**If used, the following constraints apply (prevents SDD violation):**
+- Issue body = link to spec/plan only + one-line summary. No planning content in Issues.
+- Issues are created manually or on request — they are not a required step in the handoff flow.
+- Issues do not gate handoffs, PRs, or ratification. They are informational only.
+- If an Issue contradicts a spec, the spec wins — the Issue is closed or corrected.
 
-To prevent scope creep, the following are explicitly out of scope for Option D:
-
-- **Velocity metrics / burndown charts** — not required. If required in Phase 3, GitHub Projects (v2) custom fields can be added without changing this spec.
-- **Sprint ceremonies** — not required. Milestones are optional grouping constructs, not sprint gates.
-- **Jira integration** — not in scope for LIMITLESS. MYTHOS may configure their own Jira instance; the `JIRA:` convention in §6.3 accommodates this without any LIMITLESS action.
-- **GitHub Projects (v2) board** — optional. The Issues list with labels is sufficient. A Projects board can be added later without changing this spec's conventions.
-- **Sub-tasks / issue hierarchies** — not in scope. One spec = one Issue. Tasks within a spec are tracked in the spec document itself.
+**This is not a Phase 2 adoption decision.** If Issues prove useful and the sync discipline holds, a future DR-CFG or governance amendment can formalise them. For now, they are an optional tool, not a normative practice.
 
 ---
 
@@ -428,28 +353,23 @@ To prevent scope creep, the following are explicitly out of scope for Option D:
 ### Phase 1 — Ratification (Day 0)
 
 - [ ] CEO ratifies this spec (status changes to Accepted).
-- [ ] Architect updates `CLAUDE.md` to include Issue creation convention (§8.2.7).
-- [ ] GitHub label set created: `in-progress`, `blocked`, `review`, `alert`, `spec`, `plan`.
-- [ ] PR template updated to include `Closes #NNN` reminder.
+- [ ] No tooling changes required.
+- [ ] Confirm `ROADMAP.md` is current (Architect updates if stale).
+- [ ] Onboarding PR-ONB-001–003 queue confirmed (from `docs/plans/2026-04-21-human-onboarding-docs-roadmap.md`).
 
-### Phase 2 — Retroactive Issue Creation (Days 1–3)
+### Phase 2 — Contributor Onboarding (Day 3+)
 
-- [ ] Architect creates Issues for all currently in-flight specs and plans (those with open PRs or active handoffs).
-- [ ] Each Issue body links to the relevant spec/plan file.
-- [ ] Open PRs updated to include `Closes #NNN` where applicable.
-- [ ] `MEMORY.md` reviewed; stale entries replaced by Issue labels.
+- [ ] PR-ONB-001 (README overhaul) filed and merged.
+- [ ] PR-ONB-002 (CONTRIBUTING.md refresh) filed and merged.
+- [ ] PR-ONB-003 (Ways of Working guide) filed and merged.
+- [ ] `@aradSmith` invited as collaborator; directed to Day-1 reading list.
+- [ ] First handoff to `@aradSmith` issued via Discord #handoffs in standard schema format.
 
-### Phase 3 — `@aradSmith` Onboarding (Day 3+)
+### Phase 3 — Steady State
 
-- [ ] `@aradSmith` invited as collaborator to `LIMITLESS-LONGEVITY/limitless`.
-- [ ] Onboarding document links to GitHub Issues board as primary work-discovery interface.
-- [ ] First MYTHOS-facing Issue created per §8.2.1 convention.
-
-### Phase 4 — Steady State
-
-- [ ] Architect creates Issues at every handoff (norm, not exception).
-- [ ] 30-minute proactive checks include `gh issue list --label blocked` scan.
-- [ ] Daily briefing (#main-ops) includes Issue count summary: in-progress / blocked / review.
+- [ ] Architect's 30-minute proactive checks include: `gh pr list --state open` scan for stale PRs.
+- [ ] Daily briefing (#main-ops) includes: open PR count, unexecuted handoffs in #handoffs, `ROADMAP.md` lane summary.
+- [ ] If structured query gap becomes painful at scale (5+ concurrent handoffs), revisit Option D via a DR-CFG process — do not adopt ad-hoc.
 
 ---
 
@@ -457,12 +377,11 @@ To prevent scope creep, the following are explicitly out of scope for Option D:
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Issues drift from spec content (body grows into planning doc) | Medium | Medium | Convention §8.2.1 is explicit: body = link + summary only. Architect reviews Issues at creation. |
-| Agent forgets to create Issue at handoff time | Medium | Low | `CLAUDE.md` update (§8.2.7) makes it a required step. Architect proactive check includes Issue audit. |
-| `Closes #NNN` missing from PR body | Low | Low | PR template reminder. Architect verifies before merge. |
-| Label hygiene degrades | Low | Medium | Architect 30-min check includes `--label blocked` scan. Stale `in-progress` labels flagged at daily briefing. |
-| MYTHOS configures Jira; `JIRA:` convention activates unexpectedly | Very Low | Low | PR #54: activation requires Jira admin action on MYTHOS's side. No LIMITLESS impact. Noted in §7. |
-| GitHub Issues board overwhelmed by alert Issues | Low | Medium | `alert` label segregates alerts from task Issues. `gh issue list --label alert` is a separate query. |
+| `@aradSmith` finds Option C opaque without onboarding docs | High | Medium | PR-ONB-001–003 are P0 prerequisites for write access (see onboarding roadmap). |
+| `MEMORY.md` drifts under concurrent task load | Medium | Medium | Architect proactive check includes `MEMORY.md` review at session start; stale entries flagged at daily briefing. |
+| ROADMAP.md falls out of date | Medium | Low | Architect updates ROADMAP.md at every epic-level state change (norm, not exception). |
+| Option D adopted informally without governance amendment | Low | Medium | Any Issues board usage is optional and non-normative until a DR-CFG formalises it. Director enforces. |
+| MYTHOS configures Jira; `JIRA:` convention activates unexpectedly | Very Low | Low | Activation requires Jira admin action on MYTHOS's side. No LIMITLESS impact. §6.3 remains reserved. |
 
 ---
 
@@ -470,12 +389,12 @@ To prevent scope creep, the following are explicitly out of scope for Option D:
 
 This spec is considered successfully implemented when:
 
-1. GitHub label set (`in-progress`, `blocked`, `review`, `alert`, `spec`, `plan`) is created on `LIMITLESS-LONGEVITY/limitless`.
-2. `CLAUDE.md` (Architect system prompt) includes the Issue creation convention from §8.2.7.
-3. PR template includes `Closes #NNN` reminder.
-4. At least one handoff-to-Issue-to-PR-to-close cycle is executed end-to-end (smoke test).
-5. `@aradSmith` can navigate from the Issues board to a spec file without Discord access.
-6. Governance spec §6.3 is unchanged (no activation, no retirement of `JIRA:` convention).
+1. CEO ratification received (status → Accepted).
+2. No new PM tooling introduced without a follow-on DR-CFG or governance amendment.
+3. PR-ONB-001–003 (contributor onboarding docs) are filed (gated: write access for `@aradSmith`).
+4. `ROADMAP.md` is current and reflects active Phase 2 work.
+5. Governance spec §6.3 is unchanged (no activation, no retirement of `JIRA:` convention).
+6. `@aradSmith` is able to understand active work from `ROADMAP.md` + open PRs + onboarding docs without requiring Discord access for basic orientation.
 
 ---
 
@@ -484,10 +403,11 @@ This spec is considered successfully implemented when:
 | Date | Decision | Rationale |
 |---|---|---|
 | 2026-04-20 | PR #54 merged | Confirmed Jira is orthogonal to hosting; smart-commit convention inert without Jira instance |
-| 2026-04-21 | Option D selected | Only option satisfying SDD + agent-native + contributor-friendly + zero SaaS cost simultaneously |
+| 2026-04-21 | Option C selected | SDD fidelity, zero tool overhead, agent-native, no new habits before Phase 2 baseline |
+| 2026-04-21 | Option D considered, not adopted | Contributor orientation benefit is real but solved by onboarding docs (PR-ONB-001–003), not PM tooling; sync discipline risk outweighs gain at current scale |
 | 2026-04-21 | §6.3 kept reserved | Retirement cost > clutter cost; MYTHOS Jira composability preserved at zero LIMITLESS cost |
-| 2026-04-21 | `MEMORY.md` partially superseded | `gh issue list` queries replace task-state tracking; `MEMORY.md` retained for Architect session context not captured by Issues |
+| 2026-04-22 | Director confirmed Option C | Prior spec-centered direction held; GitHub Issues noted as optional implementation aid only |
 
 ---
 
-*Proposed by Architect, 2026-04-21. Awaiting CEO ratification.*
+*Proposed by Architect, 2026-04-21. Revised 2026-04-22 per Director review (Option C confirmed). Awaiting CEO ratification.*
