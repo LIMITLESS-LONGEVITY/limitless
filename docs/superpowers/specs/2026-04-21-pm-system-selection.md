@@ -330,7 +330,7 @@ Governance spec §6.3 reserves the convention `JIRA: MYTHOS-47` as a smart-commi
 
 Rationale:
 
-1. **Activate** would require: a Jira instance (cost + admin overhead), a Jira project key, and configuration of Jira's GitHub app — none of which is justified by the Option D selection.
+1. **Activate** would require: a Jira instance (cost + admin overhead), a Jira project key, and configuration of Jira's GitHub app — none of which is warranted at the current phase.
 
 2. **Retire** would require editing the governance spec and potentially confusing MYTHOS if they later adopt Jira. The retirement cost exceeds the clutter cost of keeping the reservation.
 
@@ -340,127 +340,70 @@ Rationale:
 
 ---
 
-## 9. Recommendation: Option D — Hybrid
+## 9. Recommendation: Option C — Spec-as-SoT
 
-> **⚠️ CEO Adjudication Requested**
->
-> This recommendation was temporarily changed to **Option C (Spec-as-SoT)** in commit `7aacbdc` (2026-04-22) based on input from the OpenClaw Director bot. That instruction has been confirmed as not authoritative by the human Director (2026-04-22 10:25 UTC). This document has been restored to the Architect's original analysis conclusion: **Option D**.
->
-> The human Director noted: *"If/when the actual CEO weighs in on Option C vs Option D, that will come through this channel with explicit human framing. The CEO will review both versions and decide."*
->
-> **Option C** is a valid and defensible alternative — it is simpler and keeps the system fully spec-centered. See §4.3 for the full Option C analysis. The trade-off is contributor discoverability vs system simplicity. CEO call.
-
-**Adopt Option D: Spec-as-SoT + GitHub Issues as lightweight status tracker.**
+**Adopt Option C: Spec-Driven Development as the sole PM system.** Specs and plans in `docs/` are the authoritative source of truth; Discord `#handoffs` is task intake; PR state is task completion signal. No additional ticket surface is introduced.
 
 ### 9.1 Decision
 
-Adopt Option D: specs and plans in `docs/` remain the authoritative SoT — nothing changes there. GitHub Issues are introduced as a lightweight, GitHub-native status layer. One Issue per spec or handoff; Issue body contains only a link to the spec file and a one-line summary. Issues track status (open/in-progress/review/closed) but contain no planning content. This gives `@aradSmith` a standard GitHub Issues board without requiring Discord context for basic orientation, while preserving full SDD fidelity.
+Option C codifies the current practice as the canonical PM model for LIMITLESS Phase 2 and beyond. It is the most faithful expression of the CEO's SDD framing: "The Spec is the Code." Adding a ticket layer — even a lightweight one — introduces a second artifact that must stay in sync with specs, at a cost that exceeds the Phase 2 benefit.
 
-Option C remains a valid and defensible alternative — it is simpler and keeps the system fully spec-centered. The trade-off is contributor discoverability vs system simplicity. If the CEO determines that contributor orientation is better solved by documentation alone (PR-ONB-001–003) rather than a PM tooling addition, Option C is the correct answer. See §4.3 for the full Option C analysis.
+Option D (GitHub Issues as lightweight status mirrors) was the Architect's original draft recommendation and was independently evaluated as a valid alternative. The CEO's confirmed position, after independent Architect analysis and review of both options, is that Option D's discoverability benefit is better addressed by the onboarding documentation roadmap (PR-ONB-001–003) than by a new PM convention. Contributor orientation is an onboarding problem, not a PM-model problem.
 
-### 9.2 Option D Implementation
+### 9.2 Artifact Table Under Option C
 
-#### 9.2.1 Issue Creation Convention (Binding)
+| Artifact | Role | Authoritative? |
+|---|---|---|
+| `docs/superpowers/specs/` | Design decisions, PM model, option analysis | ✅ Yes — spec is SoT |
+| `docs/plans/` | Rollout plans, implementation roadmaps | ✅ Yes |
+| `docs/decisions/DR-NNN-*` | Decision Records for infrastructure changes | ✅ Yes |
+| Discord `#handoffs` | Task dispatch queue; CEO/Director → Architect | ✅ Yes |
+| GitHub PRs | Task completion artifact; one PR per spec | ✅ Yes |
+| `MEMORY.md` (Director) | Cross-task state; active task tracking | ✅ Yes (Director-scoped) |
+| GitHub Issues | Not introduced at Phase 2 | ❌ Not used |
+| Jira / Linear | Not adopted | ❌ Not used |
 
-At handoff execution time, the executing agent runs:
+### 9.3 Status Queries Under Option C
 
-```bash
-gh issue create \
-  --title "[spec filename]" \
-  --body "Implements: [link to spec in docs/superpowers/specs/]" \
-  --label "in-progress" \
-  --repo LIMITLESS-LONGEVITY/limitless
-```
-
-One Issue per spec/handoff. Issue body contains only the spec link and a one-line summary. No planning content in the Issue body.
-
-#### 9.2.2 Label Lifecycle
-
-`in-progress` → `review` → auto-closed on PR merge
-
-- Agent sets `in-progress` at handoff execution.
-- Agent or human sets `review` when PR is opened.
-- Issue auto-closes via `Closes #NNN` in PR body on merge (GitHub-native).
-
-#### 9.2.3 PR Body Convention
-
-Every PR that implements a spec includes in the PR body:
-
-```
-Closes #NNN
-Implements: docs/superpowers/specs/YYYY-MM-DD-[spec-name].md
-```
-
-#### 9.2.4 Artifact Table Under Option D
-
-| Artifact | Purpose | Author | Location |
-|---|---|---|---|
-| `docs/superpowers/specs/YYYY-MM-DD-*.md` | Authoritative work definition (what to build, why, constraints) | Director or Architect | `docs/superpowers/specs/` |
-| `docs/plans/YYYY-MM-DD-*.md` | Execution plan (how to build, rollout phases, rollback) | Architect | `docs/plans/` |
-| GitHub Issue | Status tracker — links to spec; carries label lifecycle | Agent (at handoff execution) | GitHub Issues |
-| Discord #handoffs message | Handoff schema record (From, To, Priority, Repo, Context, Tasks, Verify, PR Naming) | Architect | Discord |
-| `ROADMAP.md` | Strategic Kanban (Backlog → In Progress → Review → Done), epic-level | Director or Architect | Repo root |
-| GitHub PR | Atomic delivery unit; PR description references spec + plan + `Closes #NNN` | Agent or human | GitHub |
-| `MEMORY.md` | Architect session context — in-flight task state, cross-session carry-over | Architect | `/workspace/group/` (Architect-side) |
-
-#### 9.2.5 Status Queries Under Option D
+Agents and humans discover active work via:
 
 ```bash
-# All in-progress Issues
-gh issue list --repo LIMITLESS-LONGEVITY/limitless --label "in-progress"
+# Active handoffs (unexecuted)
+# → Read Discord #handoffs channel
 
-# All blocked Issues
-gh issue list --repo LIMITLESS-LONGEVITY/limitless --label "blocked"
-
-# All open PRs — what is in review
+# Active PRs (in-progress work)
 gh pr list --repo LIMITLESS-LONGEVITY/limitless --state open
 
-# Handoff queue — review Discord #handoffs for unexecuted handoffs (proactive 30-min check)
-# MEMORY.md — Architect reads at session start for in-flight task context
+# Active tasks in Director memory
+# → Read MEMORY.md on VPS-1
+
+# Spec inventory (recent)
+gh api repos/LIMITLESS-LONGEVITY/limitless/contents/docs/superpowers/specs --jq '.[].name' | sort -r | head -20
 ```
 
-#### 9.2.6 `@aradSmith` Contributor Workflow Under Option D
+For `@aradSmith`, PR-ONB-003 (Ways of Working guide) explains how to use these surfaces without requiring Discord context for basic orientation.
 
-1. Read onboarding docs (PR-ONB-001–003) — Day 1 reading list.
-2. Discover active work: GitHub Issues board (`--label in-progress`) for tactical work in flight; `ROADMAP.md` for strategic priorities.
-3. Claim work: coordinate via #handoffs or direct Discord message to Director.
-4. Deliver: open PR referencing the relevant spec/plan and `Closes #NNN` in the PR body.
-5. Merge: CEO ratifies via Approving Review per governance spec §5.1. Issue auto-closes.
+### 9.4 §6.3 Compatibility
 
-No external SaaS required. Standard GitHub Issues board is the contributor-facing view.
-
-#### 9.2.7 CLAUDE.md Update Required
-
-The Architect's `CLAUDE.md` (or equivalent agent instruction document) must be updated to include the Issue creation step in the handoff execution flow. This is the only process addition Option D requires.
-
-### 9.3 §6.3 JIRA: Convention Under Option D
-
-The `JIRA:` smart-commit convention in the governance spec remains reserved as-is. No change. See §8 of this spec. GitHub Issues (Option D) and JIRA smart-commit conventions are orthogonal — MYTHOS can adopt Jira for their own tracking without affecting the LIMITLESS Issues board.
+Option C does not activate or retire the `JIRA:` smart-commit convention. See §8 — convention remains reserved as-is.
 
 ---
 
 ## 10. Migration Plan
 
+Option C requires no migration — it codifies current practice. The work is documentation, not tooling.
+
 ### Phase 1 — Ratification (Day 0)
 
 - [ ] CEO ratifies this spec (status changes to Accepted).
-- [ ] CLAUDE.md updated to include `gh issue create` step at handoff execution time.
-- [ ] Confirm `ROADMAP.md` is current (Architect updates if stale).
 - [ ] Onboarding PR-ONB-001–003 queue confirmed (from `docs/plans/2026-04-21-human-onboarding-docs-roadmap.md`).
 
 ### Phase 2 — Contributor Onboarding (Day 3+)
 
-- [ ] PR-ONB-001 (README overhaul) filed and merged — includes reference to GitHub Issues board as work discovery surface.
-- [ ] PR-ONB-002 (CONTRIBUTING.md refresh) filed and merged — includes `Closes #NNN` PR body convention.
-- [ ] PR-ONB-003 (Ways of Working guide) filed and merged — includes Issue lifecycle (label flow).
+- [ ] PR-ONB-001 (README overhaul) filed and merged — introduces the spec-as-SoT model to new contributors.
+- [ ] PR-ONB-002 (CONTRIBUTING.md refresh) filed and merged — explains how to navigate Discord `#handoffs` and GitHub PRs as the PM surface.
+- [ ] PR-ONB-003 (Ways of Working guide) filed and merged — explains spec navigation, PR lifecycle, and how to discover active work without a ticket board.
 - [ ] `@aradSmith` invited as collaborator; directed to Day-1 reading list.
-- [ ] First handoff to `@aradSmith` issued via Discord #handoffs in standard schema format; corresponding Issue created at handoff execution.
-
-### Phase 3 — Steady State
-
-- [ ] Architect's 30-minute proactive checks include: `gh issue list --label in-progress` scan for stale Issues; `gh pr list --state open` scan for stale PRs.
-- [ ] Daily briefing (#main-ops) includes: open Issue count by label, open PR count, unexecuted handoffs in #handoffs, `ROADMAP.md` lane summary.
-- [ ] If sync discipline between Issues and specs becomes a recurring problem at scale, revisit Option C via a DR-CFG process — do not revert ad-hoc.
 
 ---
 
@@ -468,11 +411,9 @@ The `JIRA:` smart-commit convention in the governance spec remains reserved as-i
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Issue body drifts from spec scope (spec-vs-Issue sync discipline failure) | Medium | Medium | Issue body convention is strictly: spec link + one-line summary only. No planning content in Issues. Enforced by CLAUDE.md convention. |
-| `@aradSmith` finds Option D Issues board insufficient without onboarding docs | Medium | Medium | PR-ONB-001–003 are P0 prerequisites for write access (see onboarding roadmap). Issues board is the discovery surface; docs explain the workflow. |
-| `MEMORY.md` drifts under concurrent task load | Medium | Medium | Architect proactive check includes `MEMORY.md` review at session start; stale entries flagged at daily briefing. `gh issue list` now supplements MEMORY.md as structured query. |
-| ROADMAP.md falls out of date | Medium | Low | Architect updates ROADMAP.md at every epic-level state change (norm, not exception). |
-| Option C adopted informally (Issues board abandoned) | Low | Medium | Any reversion to pure Option C is non-normative until a DR-CFG formalises it. Director enforces. |
+| `@aradSmith` finds spec-only navigation disorienting compared to a ticket board | Medium | Medium | PR-ONB-001–003 are P0 prerequisites for write access; these docs are explicitly designed to solve contributor orientation without requiring a ticket surface. |
+| `MEMORY.md` drifts under concurrent task load | Medium | Medium | Architect proactive check includes `MEMORY.md` review at session start; stale entries flagged at daily briefing. |
+| Option D informally adopted without governance amendment | Low | Low | Any future adoption of GitHub Issues as a PM surface requires a DR-CFG or governance spec amendment — cannot be introduced ad-hoc. |
 | MYTHOS configures Jira; `JIRA:` convention activates unexpectedly | Very Low | Low | Activation requires Jira admin action on MYTHOS's side. No LIMITLESS impact. §6.3 remains reserved. |
 
 ---
@@ -482,12 +423,10 @@ The `JIRA:` smart-commit convention in the governance spec remains reserved as-i
 This spec is considered successfully implemented when:
 
 1. CEO ratification received (status → Accepted).
-2. CLAUDE.md updated to include `gh issue create` at handoff execution time (one-line addition).
-3. PR-ONB-001–003 (contributor onboarding docs) are filed (gated: write access for `@aradSmith`); onboarding docs reference the GitHub Issues board as work discovery surface.
-4. `ROADMAP.md` is current and reflects active Phase 2 work.
-5. Governance spec §6.3 is unchanged (no activation, no retirement of `JIRA:` convention).
-6. `@aradSmith` is able to discover active work from the GitHub Issues board (`--label in-progress`) + `ROADMAP.md` + onboarding docs without requiring Discord access for basic orientation.
-7. At least one Issue created per the Option D convention (verifiable via `gh issue list --repo LIMITLESS-LONGEVITY/limitless`).
+2. PR-ONB-001–003 (contributor onboarding docs) filed; docs explain how to navigate the spec-as-SoT PM stack.
+3. Governance spec §6.3 is unchanged (no activation, no retirement of `JIRA:` convention).
+4. `@aradSmith` can identify active work and understand the PR lifecycle using the onboarding docs without requiring a ticket board or Discord access for basic orientation.
+5. Any future decision to introduce GitHub Issues or another ticket surface is handled via a DR-CFG governance spec amendment, not an ad-hoc convention addition.
 
 ---
 
@@ -496,11 +435,9 @@ This spec is considered successfully implemented when:
 | Date | Decision | Rationale |
 |---|---|---|
 | 2026-04-20 | PR #54 merged | Confirmed Jira is orthogonal to hosting; smart-commit convention inert without Jira instance |
-| 2026-04-21 | Option D selected as Architect's recommendation | Contributor discoverability via GitHub Issues board; structured query via `gh issue list`; no external SaaS; SDD-compatible when Issue body is strictly a spec link |
-| 2026-04-21 | Option C considered, not adopted | Option C is simpler and fully SDD-compatible; deferred pending CEO adjudication on contributor orientation trade-off |
-| 2026-04-21 | §6.3 kept reserved | Retirement cost > clutter cost; MYTHOS Jira composability preserved at zero LIMITLESS cost |
-| 2026-04-22 | Recommendation temporarily changed to Option C | Bot-directed (not authoritative) — restored to Option D per human Director confirmation |
-
----
-
-*Proposed by Architect, 2026-04-21. Restored to Option D recommendation 2026-04-22 per human Director confirmation (bot-directed revert to Option C in commit 7aacbdc confirmed not authoritative). CEO verbatim SDD framing added as foundational context. Awaiting CEO ratification on Option C vs Option D — see §9 adjudication note.*
+| 2026-04-21 | Option D selected as Architect's initial draft recommendation | Contributor discoverability via GitHub Issues; structured query via `gh issue list`; no external SaaS; SDD-compatible when Issue body is strictly a spec link |
+| 2026-04-21 | Option C identified as valid alternative | Simpler; fully SDD-compatible; deferred to CEO adjudication on contributor orientation trade-off |
+| 2026-04-21 | §6.3 kept reserved | Retirement cost exceeds clutter cost; MYTHOS Jira composability preserved at zero LIMITLESS cost |
+| 2026-04-22 | Recommendation temporarily changed to Option C by bot-Director | Not authoritative — bot impersonation incident. See `docs/superpowers/specs/2026-04-22-bot-feedback-loop-incident.md` (PR #82) |
+| 2026-04-22 | Recommendation temporarily restored to Option D by Architect | Misapplied authority chain during incident recovery — also not authoritative |
+| 2026-04-22 | **Option C confirmed as ratified recommendation by CEO (Path A)** | CEO reviewed independent Architect analysis (PR #79 comment `4295621726`) and confirmed Option C directly. Ratification is by CEO on the substance, not by inheritance from bot-Director reasoning. The bot-Director's conclusion happened to align with independent Architect analysis and CEO judgment. See PR #79 audit-recovery discussion and incident report §7. |
