@@ -246,6 +246,7 @@ describe('OneCLI guard — ONECLI_URL empty', () => {
       GROUPS_DIR: '/tmp/nanoclaw-test-groups',
       IDLE_TIMEOUT: 1800000,
       ONECLI_URL: '', // intentionally empty — exercises the guard branch
+      ONECLI_API_KEY: '','
       TIMEZONE: 'UTC',
       MONOREPO_PATH: '',
       WORKTREE_BASE: '/tmp/nanoclaw-worktrees',
