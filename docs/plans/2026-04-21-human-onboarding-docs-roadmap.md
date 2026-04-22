@@ -6,7 +6,7 @@
 | **Author** | Architect |
 | **Status** | Proposed — awaiting CEO ratification |
 | **Applies to** | `@aradSmith` and all future human contributors to LIMITLESS |
-| **References** | DR-001, DR-002, governance spec, Q1–Q5 (Phase 2 readiness assessment) |
+| **References** | DR-001, DR-002, governance spec, Q1–Q5 (`@aradSmith` activation decisions — see §CEO Decisions Required below) |
 
 ---
 
@@ -18,19 +18,38 @@ The deliverable of each PR listed here is a human-readable document. Together th
 
 ---
 
-## Cross-Reference: Phase 2 Readiness Open Questions
+## Cross-Reference: @aradSmith Activation Decisions (Q1–Q5)
 
-The Director identified five open questions (Q1–Q5) that must be answered before greenlighting `@aradSmith` onboarding. This PR (the one this document is part of) addresses four of them. The table below maps each question to its resolution.
+The Phase 2 Readiness Report (`docs/superpowers/specs/2026-04-21-agentic-sdlc-phase-2-readiness-report.md` §6.1) identifies **five CEO decisions blocking `@aradSmith`'s full activation**. These are distinct from the Phase 2 readiness topics covered by the current PR (see §Phase 2 Readiness Topics / PR #79 Coverage below).
 
-| ID | Question | Status | Resolved by |
-|----|----------|--------|-------------|
-| **Q1** | Are agents correctly configured, versioned, and auditable? | Resolved (this PR) | `docs/superpowers/specs/2026-04-21-agent-config-governance.md` |
-| **Q2** | Is the AI Director proven and ready to operate autonomously? | Resolved (this PR) | `docs/plans/2026-04-21-director-validation-plan.md` |
-| **Q3** | Do we have a PM system that scales to two dev teams? | Resolved (this PR) | `docs/superpowers/specs/2026-04-21-pm-system-selection.md` |
-| **Q4** | Do we have documentation for `@aradSmith` to get productive? | **This document** — roadmap for producing that documentation | `docs/plans/2026-04-21-human-onboarding-docs-roadmap.md` |
-| **Q5** | Is the agent identity model (DR-001) and deploy pipeline (DR-002) production-ready for multi-team use? | Partially resolved | See §Q5 note below |
+The recommended answers below are from the Director's readiness report (§6.2) — they are **proposals, not yet CEO-ratified decisions**. The CONTRIBUTING.md (PR-ONB-002) and WAYS-OF-WORKING guide (PR-ONB-003) **cannot be finalised** until the CEO confirms or revises these answers.
 
-### Q5 — Partial Gap Note
+| ID | Topic | Decision Needed | Recommended Answer (§6.2 — proposal only) |
+|----|-------|-----------------|-------------------------------------------|
+| **Q1** | Signed-commits capability | Does Arad have GPG/SSH commit signing? Spec §1.2 requires it on MYTHOS | Require GPG or SSH signing before activation. Have Arad configure it as part of CONTRIBUTING.md. |
+| **Q2** | Review/merge flow with 2 humans | Arad → Write (not Admin)? Both as CODEOWNERS → require both or one? Formal Approving Review now that author ≠ approver? | Q2a: Move Admin → Write once CODEOWNERS PRs merge. Q2b: One-of-both on most paths; both-required on safety-critical. Q2c: Human-to-human Approving Review works today (self-approval block only affects agents). |
+| **Q3** | Architectural-dispute resolution | §11.1 says escalate to CEO. Via Discord #handoffs? Decision Record? | Decision Record in `docs/decisions/DR-NNN-...` authored by whichever side opens dispute; CEO ratifies. Discussion surface = PR comments on the DR PR. |
+| **Q4** | Safety-critical path gate | `engine/gates/`, `engine/ibkr/`, `db/migrations/` are CEO-only. What if Arad touches adjacent code? | Explicit doc contract in `engine/gates/README.md` listing upstream inputs + invariants. Any PR changing those inputs must cite the contract in its body. |
+| **Q5** | Emergency-direct-merge exception | §1.2 mythos-ops 24h ops patch authority. Arad gets this, or CEO-only? | CEO-only. Arad can open the follow-up PR but direct-merge authority requires operator accountability. |
+
+> **Source:** `docs/superpowers/specs/2026-04-21-agentic-sdlc-phase-2-readiness-report.md` §6.1 (decisions) and §6.2 (recommended answers).
+
+---
+
+## Phase 2 Readiness Topics (PR #79 Coverage)
+
+The current PR (#79) addresses four Phase 2 readiness topics. The table below maps each topic to its resolution document. These are **not** the same as Q1–Q5 above.
+
+| # | Topic | Status | Resolved by |
+|---|-------|--------|-------------|
+| **Topic 1** | Are agents correctly configured, versioned, and auditable? | Resolved (this PR) | `docs/superpowers/specs/2026-04-21-agent-config-governance.md` |
+| **Topic 2** | Is the AI Director proven and ready to operate autonomously? | Resolved (this PR) | `docs/plans/2026-04-21-director-validation-plan.md` |
+| **Topic 3** | Do we have a PM system that scales to two dev teams? | Resolved (this PR) | `docs/superpowers/specs/2026-04-21-pm-system-selection.md` |
+| **Topic 5** | Do we have documentation for `@aradSmith` to get productive? | **This document** — roadmap for producing that documentation | `docs/plans/2026-04-21-human-onboarding-docs-roadmap.md` |
+
+> **Note on numbering:** The CEO's numbering skipped 4; "Topic 5" is preserved here to match the deliverable filename.
+
+### Topic 5 — Partial Gap Note (DR-001/DR-002)
 
 **Resolved so far:**
 - DR-001 (merged PR #60): GitHub Apps identity model defined. Specifies that `limitless-agent[bot]` is the canonical agent author identity and that agent commits must be distinguishable from human commits.
@@ -41,6 +60,24 @@ The Director identified five open questions (Q1–Q5) that must be answered befo
 - DR-002 Phases 3–7 (GitHub Actions deploy pipeline, VPS migration) are planned but not yet implemented.
 
 **Implication for onboarding gating:** `@aradSmith` may be granted reviewer access (read-only PR review) immediately after this PR merges. Write access is gated on PR-ONB-001 + PR-ONB-002 + PR-ONB-003 merging **and** DR-001 Phase 3 being deployed. See §Gating @aradSmith Access below.
+
+---
+
+## CEO Decisions Required Before PR-ONB-002/003 Can Be Filed
+
+PR-ONB-002 (CONTRIBUTING.md) and PR-ONB-003 (Ways of Working guide) cover signed-commits setup, permission model, architectural-dispute resolution, safety-critical path gate, and emergency-merge rules. **These documents cannot be written without knowing the CEO's confirmed answers to Q1–Q5.**
+
+The recommended answers below are Director proposals from the Phase 2 Readiness Report §6.2. Each requires formal CEO affirmation or revision before the relevant onboarding doc can be filed.
+
+| Decision | Recommended Answer (Director proposal) | Status |
+|----------|-----------------------------------------|--------|
+| **Q1 — Signed-commits:** Require GPG or SSH commit signing before `@aradSmith` activation? | Yes — require GPG or SSH signing. Have Arad configure it as part of CONTRIBUTING.md. | Pending CEO confirmation |
+| **Q2a — Permissions:** Move `@aradSmith` from Admin → Write once CODEOWNERS PRs merge? | Yes — Write, not Admin. | Pending CEO confirmation |
+| **Q2b — CODEOWNERS approval:** One-of-both reviewers sufficient on most paths; both-required on safety-critical paths? | Yes — one-of-both generally; both-required for safety-critical. | Pending CEO confirmation |
+| **Q2c — Approving Review:** Human-to-human Approving Review works today (self-approval block affects agents only)? | Yes — no change needed today. | Pending CEO confirmation |
+| **Q3 — Dispute resolution:** Architectural disputes escalated via Decision Record in `docs/decisions/DR-NNN-...`; CEO ratifies; discussion surface = PR comments on the DR PR? | Yes — Decision Record workflow. | Pending CEO confirmation |
+| **Q4 — Safety-critical gate:** Explicit doc contract in `engine/gates/README.md`; any PR changing upstream inputs must cite the contract? | Yes — doc contract required. | Pending CEO confirmation |
+| **Q5 — Emergency direct-merge:** CEO-only; `@aradSmith` can open follow-up PR but not direct-merge? | Yes — CEO-only direct-merge authority. | Pending CEO confirmation |
 
 ---
 
@@ -135,7 +172,7 @@ If `README.md` becomes too long, overflow architectural detail into `docs/DIVISI
 | **Priority** | P0 — blocks day-1 onboarding |
 | **Owner** | Director (human) drafts; Architect reviews |
 | **Effort** | S |
-| **Dependencies** | DR-001 merged (done — PR #60); governance spec merged (done) |
+| **Dependencies** | DR-001 merged (done — PR #60); governance spec merged (done); **CEO answers to Q1–Q5 required** (signed-commits policy, permission model, safety-critical gate, emergency-merge rules — see §CEO Decisions Required above) |
 
 **Content summary:**
 
@@ -143,11 +180,16 @@ The existing `CONTRIBUTING.md` may predate the agentic SDLC. This PR refreshes i
 
 - **Branch naming conventions**: `feat/`, `fix/`, `chore/`, `docs/` prefixes; kebab-case slugs; include ticket/DR number where applicable
 - **Commit conventions**: Conventional Commits format (`type(scope): description`); when to use `!` for breaking changes; co-authorship attribution for agent-assisted work
+- **Signed-commits setup** (Q1): GPG or SSH signing configuration for `@aradSmith` — content depends on CEO confirmation of Q1
 - **PR workflow**: DRAFT → ready-for-review → ratification → merge; what each stage means; who can move a PR between stages
 - **Working alongside agent PRs**: Agents push to their own branches; humans review agent PRs on the same bar as human PRs — no rubber-stamping; how to leave review comments on agent PRs
 - **Governance tiers quick-reference**: Tier 0 (CEO only), Tier 1 (Director + CEO), Tier 2 (Architect-proposed, Director-ratified), Tier 3 (routine agent work)
+- **CODEOWNERS approval model** (Q2): One-of-both vs. both-required — content depends on CEO confirmation of Q2
+- **Safety-critical path gate** (Q4): Which paths require the doc-contract citation — content depends on CEO confirmation of Q4
 - **What `limitless-agent[bot]` commits mean**: The bot identity, when it appears, what it implies about authorship and review responsibility
 - **Squash merge policy**: All PRs squash-merged to main; commit message = PR title
+
+> **Filing gate:** This PR cannot be filed until the CEO has formally confirmed or revised answers to Q1, Q2, and Q4. See §CEO Decisions Required above.
 
 ---
 
@@ -160,13 +202,14 @@ The existing `CONTRIBUTING.md` may predate the agentic SDLC. This PR refreshes i
 | **Priority** | P0 — blocks day-1 onboarding |
 | **Owner** | Architect drafts |
 | **Effort** | M |
-| **Dependencies** | Governance spec merged (done); DR-001 merged (done — PR #60) |
+| **Dependencies** | Governance spec merged (done); DR-001 merged (done — PR #60); **CEO answers to Q1–Q5 required** (dispute resolution workflow, emergency-merge authority, permission model — see §CEO Decisions Required above) |
 
 **Content summary:**
 
 This is the operational field guide for human contributors. It answers: "How does work actually happen here?"
 
 - **How decisions are made**: The spec → DR → PR flow. When a decision needs a DR. When a spec suffices. Who ratifies each tier.
+- **Architectural-dispute resolution** (Q3): Decision Record workflow — content depends on CEO confirmation of Q3
 - **Discord channel guide**:
   - `#main-ops` — Architect status updates, daily briefings, session summaries. Read to stay informed; post only if you are the Architect.
   - `#workbench-ops` — Specialist engineer (NanoClaw) updates. Read to track in-flight work.
@@ -176,8 +219,11 @@ This is the operational field guide for human contributors. It answers: "How doe
 - **How to read a handoff**: Handoff schema fields explained (From, To, Priority, Repo, Context, Tasks, Verify, PR Naming). How to tell if a handoff is blocked.
 - **How to submit a feature request**: Post to `#human` with: what you want, why, which app/service it affects, urgency. Director will decompose into tasks and file handoffs.
 - **How to escalate a blocker**: Post to `#alerts` if it is a service health issue. Post to `#human` if it requires Director or CEO decision. Do not let blockers sit silently.
+- **Emergency direct-merge authority** (Q5): Who holds ops-patch authority — content depends on CEO confirmation of Q5
 - **How agent PRs get ratified (§5 flow)**: Architect proposes → Director reviews → CEO ratifies and merges. Human contributors review on the same bar as any other PR.
 - **MiFID II audit trail note**: Why the division maintains structured commit history, decision records, and Discord logs. Regulatory context for financial services AI tooling.
+
+> **Filing gate:** This PR cannot be filed until the CEO has formally confirmed or revised answers to Q3 and Q5 (dispute resolution and emergency-merge authority). See §CEO Decisions Required above.
 
 ---
 
@@ -293,8 +339,8 @@ No prerequisites beyond this PR merging.
 | # | Gate | Status |
 |---|------|--------|
 | 1 | PR-ONB-001 merged (`README.md` overhaul) | Not yet — pending this roadmap ratification |
-| 2 | PR-ONB-002 merged (`CONTRIBUTING.md` refresh) | Not yet — pending this roadmap ratification |
-| 3 | PR-ONB-003 merged (`docs/WAYS-OF-WORKING.md`) | Not yet — pending this roadmap ratification |
+| 2 | PR-ONB-002 merged (`CONTRIBUTING.md` refresh) | Not yet — pending CEO Q1/Q2/Q4 confirmation and this roadmap ratification |
+| 3 | PR-ONB-003 merged (`docs/WAYS-OF-WORKING.md`) | Not yet — pending CEO Q3/Q5 confirmation and this roadmap ratification |
 | 4 | DR-001 Phase 3 deployed (GitHub App installation tokens replacing CEO PAT) | Not yet — planned, not implemented |
 
 **Why Gate 4 matters:** Until DR-001 Phase 3 is live, agents commit using the CEO PAT. This means `@aradSmith` cannot easily distinguish agent commits from CEO commits by GitHub identity alone. Granting write access before this is resolved creates authorship confusion and potential for mis-attribution. Once GitHub App tokens are live, `limitless-agent[bot]` appears unambiguously as the agent identity, and `@aradSmith`'s commits are cleanly attributable to their GitHub account.
@@ -312,26 +358,28 @@ No prerequisites beyond this PR merging.
 
 ## Summary Table
 
-| PR | Title | Path | Priority | Owner | Effort | Dependencies | Q-Ref |
-|----|-------|------|----------|-------|--------|--------------|-------|
-| PR-ONB-001 | Division README overhaul | `README.md` | P0 | Director/Architect | M | None | Q4 |
-| PR-ONB-002 | CONTRIBUTING.md refresh | `CONTRIBUTING.md` | P0 | Director/Architect | S | DR-001 (done) | Q4 |
-| PR-ONB-003 | Ways of Working guide | `docs/WAYS-OF-WORKING.md` | P0 | Architect | M | Governance spec (done), DR-001 (done) | Q4 |
-| PR-ONB-004 | App architecture overview | `docs/ARCHITECTURE.md` | P1 | Architect | L | None | Q4 |
-| PR-ONB-005 | Agent interaction guide | `docs/AGENT-INTERACTION.md` | P1 | Director | M | DR-001 (done), agent config spec (this PR) | Q4, Q1 |
-| PR-ONB-006 | Glossary and acronym guide | `docs/GLOSSARY.md` | P2 | Architect | S | None | Q4 |
+| PR | Title | Path | Priority | Owner | Effort | Dependencies | Topic-Ref |
+|----|-------|------|----------|-------|--------|--------------|-----------|
+| PR-ONB-001 | Division README overhaul | `README.md` | P0 | Director/Architect | M | None | Topic 5 |
+| PR-ONB-002 | CONTRIBUTING.md refresh | `CONTRIBUTING.md` | P0 | Director/Architect | S | DR-001 (done); **CEO Q1, Q2, Q4** | Topic 5, Q1, Q2, Q4 |
+| PR-ONB-003 | Ways of Working guide | `docs/WAYS-OF-WORKING.md` | P0 | Architect | M | Governance spec (done), DR-001 (done); **CEO Q3, Q5** | Topic 5, Q3, Q5 |
+| PR-ONB-004 | App architecture overview | `docs/ARCHITECTURE.md` | P1 | Architect | L | None | Topic 5 |
+| PR-ONB-005 | Agent interaction guide | `docs/AGENT-INTERACTION.md` | P1 | Director | M | DR-001 (done), agent config spec (this PR) | Topic 5, Q1 |
+| PR-ONB-006 | Glossary and acronym guide | `docs/GLOSSARY.md` | P2 | Architect | S | None | Topic 5 |
 
 ---
 
 ## Next Steps
 
 1. **This PR merges** → `@aradSmith` reviewer access granted immediately.
-2. **Director files PR-ONB-001, PR-ONB-002, PR-ONB-003** → Target: within 5 business days of this PR merging.
-3. **Architect files PR-ONB-004, PR-ONB-006** → Target: within 10 business days.
-4. **Director files PR-ONB-005** → Target: within 10 business days (requires human perspective).
-5. **DR-001 Phase 3 deployed** → Write access granted to `@aradSmith`.
-6. **All P0 PRs merged** → Onboarding session scheduled with `@aradSmith`.
+2. **CEO confirms or revises Q1–Q5** → Unblocks PR-ONB-002 and PR-ONB-003 (see §CEO Decisions Required above).
+3. **Director files PR-ONB-001** → Target: within 5 business days of this PR merging (no CEO decisions required).
+4. **Director files PR-ONB-002, PR-ONB-003** → Target: within 5 business days of CEO Q1–Q5 confirmation.
+5. **Architect files PR-ONB-004, PR-ONB-006** → Target: within 10 business days (no CEO decisions required).
+6. **Director files PR-ONB-005** → Target: within 10 business days (requires human perspective).
+7. **DR-001 Phase 3 deployed** → Write access granted to `@aradSmith`.
+8. **All P0 PRs merged** → Onboarding session scheduled with `@aradSmith`.
 
 ---
 
-*This document is part of the Phase 2 Readiness PR addressing Q1–Q4. It was authored by the Architect and is proposed for CEO ratification.*
+*This document is part of the Phase 2 Readiness PR addressing Topics 1, 2, 3, and 5. It was authored by the Architect and is proposed for CEO ratification. Note: the CEO's numbering skipped 4; "Topic 5" is preserved in this deliverable filename to match that numbering.*
