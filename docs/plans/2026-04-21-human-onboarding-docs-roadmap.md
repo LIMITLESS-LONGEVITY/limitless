@@ -18,21 +18,29 @@ The deliverable of each PR listed here is a human-readable document. Together th
 
 ---
 
-## Cross-Reference: @aradSmith Activation Decisions (Q1–Q5)
+## Cross-Reference: Q1–Q5 Multi-Human Governance Decisions
 
-The Phase 2 Readiness Report (`docs/superpowers/specs/2026-04-21-agentic-sdlc-phase-2-readiness-report.md` §6.1) identifies **five CEO decisions blocking `@aradSmith`'s full activation**. These are distinct from the Phase 2 readiness topics covered by the current PR (see §Phase 2 Readiness Topics / PR #79 Coverage below).
+The Phase 2 Readiness Report §6.1 identifies five operator decisions that must be made before `@aradSmith` can be fully activated. These are **not engineering questions** — they require explicit CEO decisions. Until these are answered, CONTRIBUTING.md (PR-ONB-002) cannot be finalised.
 
-The recommended answers below are from the Director's readiness report (§6.2) — they are **proposals, not yet CEO-ratified decisions**. The CONTRIBUTING.md (PR-ONB-002) and WAYS-OF-WORKING guide (PR-ONB-003) **cannot be finalised** until the CEO confirms or revises these answers.
+**Source:** `docs/superpowers/specs/2026-04-21-agentic-sdlc-phase-2-readiness-report.md §6.1`
 
-| ID | Topic | Decision Needed | Recommended Answer (§6.2 — proposal only) |
-|----|-------|-----------------|-------------------------------------------|
-| **Q1** | Signed-commits capability | Does Arad have GPG/SSH commit signing? Spec §1.2 requires it on MYTHOS | Require GPG or SSH signing before activation. Have Arad configure it as part of CONTRIBUTING.md. |
-| **Q2** | Review/merge flow with 2 humans | Arad → Write (not Admin)? Both as CODEOWNERS → require both or one? Formal Approving Review now that author ≠ approver? | Q2a: Move Admin → Write once CODEOWNERS PRs merge. Q2b: One-of-both on most paths; both-required on safety-critical. Q2c: Human-to-human Approving Review works today (self-approval block only affects agents). |
-| **Q3** | Architectural-dispute resolution | §11.1 says escalate to CEO. Via Discord #handoffs? Decision Record? | Decision Record in `docs/decisions/DR-NNN-...` authored by whichever side opens dispute; CEO ratifies. Discussion surface = PR comments on the DR PR. |
-| **Q4** | Safety-critical path gate | `engine/gates/`, `engine/ibkr/`, `db/migrations/` are CEO-only. What if Arad touches adjacent code? | Explicit doc contract in `engine/gates/README.md` listing upstream inputs + invariants. Any PR changing those inputs must cite the contract in its body. |
-| **Q5** | Emergency-direct-merge exception | §1.2 mythos-ops 24h ops patch authority. Arad gets this, or CEO-only? | CEO-only. Arad can open the follow-up PR but direct-merge authority requires operator accountability. |
+| # | Decision | Question | Director's Suggested Answer | CEO Decision Required |
+|---|---|---|---|---|
+| **Q1** | Signed-commits | Does `@aradSmith` have GPG/SSH commit signing? Spec §1.2 requires it on MYTHOS. | Require before activation; configure via CONTRIBUTING.md | ☐ |
+| **Q2a** | Permission level | Should Arad move from Admin → Write once CODEOWNERS PRs merge? | Yes — Write is steady state; Admin only for bootstrap | ☐ |
+| **Q2b** | CODEOWNERS semantics | One-of-both, or both-required on review paths? | One-of-both on standard paths; both-required on safety-critical | ☐ |
+| **Q2c** | Formal Approving Review | Is a formal GitHub Approving Review required for Arad's PRs? | Yes — human-to-human works today; no self-approval block | ☐ (informational, no new decision needed) |
+| **Q3** | Dispute resolution | §11.1 says escalate to CEO. Via Discord, or Decision Record? | Decision Record in `docs/decisions/DR-NNN-...`; discussion in PR comments | ☐ |
+| **Q4** | Safety-critical adjacency | `engine/gates/`, `engine/ibkr/`, `db/migrations/` are CEO-only. What if Arad touches adjacent code? | Doc contract in `engine/gates/README.md`; PRs must cite contract | ☐ |
+| **Q5** | Emergency-direct-merge | §1.2 mythos-ops 24h ops patch authority — Arad or CEO-only? | CEO-only; Arad opens follow-up PR but cannot direct-merge | ☐ |
 
-> **Source:** `docs/superpowers/specs/2026-04-21-agentic-sdlc-phase-2-readiness-report.md` §6.1 (decisions) and §6.2 (recommended answers).
+### Dependency for CONTRIBUTING.md (PR-ONB-002)
+
+PR-ONB-002 (`CONTRIBUTING.md`) **cannot be filed until Q1–Q5 above are confirmed by the CEO.** The CONTRIBUTING.md is the authoritative reference for all five decisions. Filing it with placeholder answers would create a governance document that contradicts the actual decisions.
+
+**Gate:** PR-ONB-002 filing is blocked on CEO confirming the table above (or revising the suggested answers).
+
+All other onboarding PRs (PR-ONB-001, PR-ONB-003) can proceed once this PR merges — they don't depend on Q1–Q5.
 
 ---
 
@@ -361,7 +369,7 @@ No prerequisites beyond this PR merging.
 | PR | Title | Path | Priority | Owner | Effort | Dependencies | Topic-Ref |
 |----|-------|------|----------|-------|--------|--------------|-----------|
 | PR-ONB-001 | Division README overhaul | `README.md` | P0 | Director/Architect | M | None | Topic 5 |
-| PR-ONB-002 | CONTRIBUTING.md refresh | `CONTRIBUTING.md` | P0 | Director/Architect | S | DR-001 (done); **CEO Q1, Q2, Q4** | Topic 5, Q1, Q2, Q4 |
+| PR-ONB-002 | CONTRIBUTING.md refresh | `CONTRIBUTING.md` | P0 | Director/Architect | S | DR-001 (done); **Blocked on Q1–Q5 CEO confirmation** | Topic 5, Q1, Q2, Q4 |
 | PR-ONB-003 | Ways of Working guide | `docs/WAYS-OF-WORKING.md` | P0 | Architect | M | Governance spec (done), DR-001 (done); **CEO Q3, Q5** | Topic 5, Q3, Q5 |
 | PR-ONB-004 | App architecture overview | `docs/ARCHITECTURE.md` | P1 | Architect | L | None | Topic 5 |
 | PR-ONB-005 | Agent interaction guide | `docs/AGENT-INTERACTION.md` | P1 | Director | M | DR-001 (done), agent config spec (this PR) | Topic 5, Q1 |
