@@ -6,6 +6,11 @@ import { PassThrough } from 'stream';
 const OUTPUT_START_MARKER = '---NANOCLAW_OUTPUT_START---';
 const OUTPUT_END_MARKER = '---NANOCLAW_OUTPUT_END---';
 
+// Mock @octokit/auth-app
+vi.mock('@octokit/auth-app', () => ({
+  createAppAuth: vi.fn(),
+}));
+
 // Mock config
 vi.mock('./config.js', () => ({
   CONTAINER_IMAGE: 'nanoclaw-agent:latest',
@@ -106,6 +111,7 @@ vi.mock('child_process', async () => {
 });
 
 import { runContainerAgent, ContainerOutput } from './container-runner.js';
+import { createAppAuth } from '@octokit/auth-app';
 import type { RegisteredGroup } from './types.js';
 
 const testGroup: RegisteredGroup = {
@@ -225,6 +231,185 @@ describe('container-runner timeout behavior', () => {
     const result = await resultPromise;
     expect(result.status).toBe('success');
     expect(result.newSessionId).toBe('session-456');
+  });
+});
+
+// Helper: find a -e FLAG=VALUE arg in docker spawn args
+function findEnvArg(dockerArgs: string[], name: string): string | undefined {
+  for (let i = 0; i + 1 < dockerArgs.length; i++) {
+    if (dockerArgs[i] === '-e' && dockerArgs[i + 1]?.startsWith(`${name}=`)) {
+      return dockerArgs[i + 1].slice(name.length + 1);
+    }
+  }
+  return undefined;
+}
+
+describe('GitHub App token injection', () => {
+  let spawnMock: ReturnType<typeof vi.fn>;
+  const APP_ENV_KEYS = [
+    'LIMITLESS_APP_ID', 'LIMITLESS_APP_INSTALLATION_ID',
+    'LIMITLESS_APP_PRIVATE_KEY', 'LIMITLESS_BOT_USER_ID',
+    'MYTHOS_APP_ID', 'MYTHOS_APP_INSTALLATION_ID',
+    'MYTHOS_APP_PRIVATE_KEY', 'MYTHOS_BOT_USER_ID',
+    'GH_TOKEN',
+  ] as const;
+
+  beforeAll(async () => {
+    const cp = await import('child_process');
+    spawnMock = cp.spawn as ReturnType<typeof vi.fn>;
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fakeProc = createFakeProcess();
+    spawnMock.mockClear();
+    vi.mocked(createAppAuth).mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    for (const key of APP_ENV_KEYS) delete process.env[key];
+  });
+
+  it('happy path: injects App token and bot git identity when App creds are set', async () => {
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockResolvedValue({ token: 'ghs_app_token_123', type: 'installation' }) as never,
+    );
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_APP_PRIVATE_KEY = 'fake-pem-key';
+    process.env.LIMITLESS_BOT_USER_ID = '111111';
+
+    const resultPromise = runContainerAgent(testGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GH_TOKEN')).toBe('ghs_app_token_123');
+    expect(findEnvArg(dockerArgs, 'GITHUB_TOKEN')).toBe('ghs_app_token_123');
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_NAME')).toBe('limitless-agent[bot]');
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_EMAIL')).toBe(
+      '111111+limitless-agent[bot]@users.noreply.github.com',
+    );
+    expect(findEnvArg(dockerArgs, 'GIT_COMMITTER_NAME')).toBe('limitless-agent[bot]');
+    expect(findEnvArg(dockerArgs, 'GIT_COMMITTER_EMAIL')).toBe(
+      '111111+limitless-agent[bot]@users.noreply.github.com',
+    );
+  });
+
+  it('fallback: CEO GH_TOKEN injected when App token generation throws', async () => {
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockRejectedValue(new Error('JWT sign failed')) as never,
+    );
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_APP_PRIVATE_KEY = 'fake-key';
+    process.env.GH_TOKEN = 'ceo-personal-pat';
+
+    const resultPromise = runContainerAgent(testGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    const { logger } = await import('./logger.js');
+    expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      'App token generation failed — falling back to CEO GH_TOKEN',
+    );
+
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GH_TOKEN')).toBe('ceo-personal-pat');
+    // No bot identity on fallback
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_NAME')).toBeUndefined();
+  });
+
+  it('MYTHOS routing: AGENT_ROLE=mythos-architect uses MYTHOS_APP_* and mythos-agents[bot]', async () => {
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockResolvedValue({ token: 'ghs_mythos_token', type: 'installation' }) as never,
+    );
+    process.env.MYTHOS_APP_ID = '99999';
+    process.env.MYTHOS_APP_INSTALLATION_ID = '88888';
+    process.env.MYTHOS_APP_PRIVATE_KEY = 'mythos-key';
+    process.env.MYTHOS_BOT_USER_ID = '222222';
+
+    const mythosGroup = {
+      ...testGroup,
+      containerConfig: { envVars: { AGENT_ROLE: 'mythos-architect' } },
+    };
+
+    const resultPromise = runContainerAgent(mythosGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    expect(createAppAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ appId: 99999, installationId: 88888 }),
+    );
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_EMAIL')).toBe(
+      '222222+mythos-agents[bot]@users.noreply.github.com',
+    );
+  });
+
+  it('LIMITLESS routing: AGENT_ROLE=paths-architect uses LIMITLESS_APP_* and limitless-agent[bot]', async () => {
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockResolvedValue({ token: 'ghs_limitless_token', type: 'installation' }) as never,
+    );
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_APP_PRIVATE_KEY = 'limitless-key';
+    process.env.LIMITLESS_BOT_USER_ID = '111111';
+
+    const limitlessGroup = {
+      ...testGroup,
+      containerConfig: { envVars: { AGENT_ROLE: 'paths-architect' } },
+    };
+
+    const resultPromise = runContainerAgent(limitlessGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    expect(createAppAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ appId: 12345, installationId: 67890 }),
+    );
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_EMAIL')).toBe(
+      '111111+limitless-agent[bot]@users.noreply.github.com',
+    );
+  });
+
+  it('no AGENT_ROLE defaults to LIMITLESS App creds', async () => {
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockResolvedValue({ token: 'ghs_default_token', type: 'installation' }) as never,
+    );
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_APP_PRIVATE_KEY = 'limitless-key';
+    process.env.LIMITLESS_BOT_USER_ID = '111111';
+
+    // testGroup has no containerConfig — AGENT_ROLE is undefined
+    const resultPromise = runContainerAgent(testGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    expect(createAppAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ appId: 12345 }),
+    );
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GH_TOKEN')).toBe('ghs_default_token');
   });
 });
 

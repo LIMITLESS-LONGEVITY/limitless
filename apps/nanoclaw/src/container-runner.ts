@@ -30,12 +30,65 @@ import {
 import { OneCLI } from '@onecli-sh/sdk';
 import { validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
+import { createAppAuth } from '@octokit/auth-app';
 
 const onecli = new OneCLI({ url: ONECLI_URL, apiKey: ONECLI_API_KEY });
 
 // Sentinel markers for robust output parsing (must match agent-runner)
 const OUTPUT_START_MARKER = '---NANOCLAW_OUTPUT_START---';
 const OUTPUT_END_MARKER = '---NANOCLAW_OUTPUT_END---';
+
+interface GhCredentials {
+  token: string | undefined;
+  botLogin: string | undefined;
+  botUserId: string | undefined;
+}
+
+async function generateInstallationToken(
+  appId: string,
+  installationId: string,
+  privateKey: string,
+): Promise<string> {
+  const auth = createAppAuth({
+    appId: parseInt(appId, 10),
+    privateKey,
+    installationId: parseInt(installationId, 10),
+  });
+  const result = await auth({ type: 'installation' });
+  return result.token;
+}
+
+async function resolveGhCredentials(
+  agentRole: string | undefined,
+  containerName: string,
+): Promise<GhCredentials> {
+  const isMythos = agentRole?.startsWith('mythos-') ?? false;
+  const appId = isMythos ? process.env.MYTHOS_APP_ID : process.env.LIMITLESS_APP_ID;
+  const installationId = isMythos
+    ? process.env.MYTHOS_APP_INSTALLATION_ID
+    : process.env.LIMITLESS_APP_INSTALLATION_ID;
+  const privateKey = isMythos
+    ? process.env.MYTHOS_APP_PRIVATE_KEY
+    : process.env.LIMITLESS_APP_PRIVATE_KEY;
+  const botUserId = isMythos
+    ? process.env.MYTHOS_BOT_USER_ID
+    : process.env.LIMITLESS_BOT_USER_ID;
+  const botLogin = isMythos ? 'mythos-agents[bot]' : 'limitless-agent[bot]';
+
+  if (appId && installationId && privateKey) {
+    try {
+      const token = await generateInstallationToken(appId, installationId, privateKey);
+      logger.info({ containerName, isMythos }, 'GitHub App installation token generated');
+      return { token, botLogin, botUserId };
+    } catch (err) {
+      logger.warn({ err }, 'App token generation failed — falling back to CEO GH_TOKEN');
+    }
+  }
+
+  // No App credentials configured (or generation failed) — fall back to CEO token.
+  // Bot identity is not injected on fallback; commits land as CEO identity.
+  return { token: process.env.GH_TOKEN, botLogin: undefined, botUserId: undefined };
+}
 
 export interface ContainerInput {
   prompt: string;
@@ -64,6 +117,7 @@ interface VolumeMount {
 function buildVolumeMounts(
   group: RegisteredGroup,
   isMain: boolean,
+  ghCredentials: GhCredentials,
 ): VolumeMount[] {
   const mounts: VolumeMount[] = [];
   const projectRoot = process.cwd();
@@ -143,8 +197,16 @@ function buildVolumeMounts(
     CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
     CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1',
     CLAUDE_CODE_DISABLE_AUTO_MEMORY: '0',
-    GH_TOKEN: process.env.GH_TOKEN || '',
-    GITHUB_TOKEN: process.env.GH_TOKEN || '',
+    GH_TOKEN: ghCredentials.token || '',
+    GITHUB_TOKEN: ghCredentials.token || '',
+    ...(ghCredentials.botLogin && ghCredentials.botUserId
+      ? {
+          GIT_AUTHOR_NAME: ghCredentials.botLogin,
+          GIT_AUTHOR_EMAIL: `${ghCredentials.botUserId}+${ghCredentials.botLogin}@users.noreply.github.com`,
+          GIT_COMMITTER_NAME: ghCredentials.botLogin,
+          GIT_COMMITTER_EMAIL: `${ghCredentials.botUserId}+${ghCredentials.botLogin}@users.noreply.github.com`,
+        }
+      : {}),
   };
   // Merge containerConfig.envVars (e.g., AGENT_ROLE, AGENT_SCOPE)
   const groupEnvVars = group.containerConfig?.envVars || {};
@@ -273,17 +335,26 @@ function buildVolumeMounts(
 async function buildContainerArgs(
   mounts: VolumeMount[],
   containerName: string,
-  agentIdentifier?: string,
+  agentIdentifier: string | undefined,
+  ghCredentials: GhCredentials,
 ): Promise<string[]> {
   const args: string[] = ['run', '-i', '--rm', '--name', containerName];
 
   // Pass host timezone so container's local time matches the user's
   args.push('-e', `TZ=${TIMEZONE}`);
 
-  // Pass GitHub token for git push + PR creation in worker containers
-  if (process.env.GH_TOKEN) {
-    args.push('-e', `GH_TOKEN=${process.env.GH_TOKEN}`);
-    args.push('-e', `GITHUB_TOKEN=${process.env.GH_TOKEN}`);
+  // Inject GitHub credentials: App installation token (preferred) or CEO token (fallback).
+  // Bot git identity env vars are only set when an App token was successfully generated.
+  if (ghCredentials.token) {
+    args.push('-e', `GH_TOKEN=${ghCredentials.token}`);
+    args.push('-e', `GITHUB_TOKEN=${ghCredentials.token}`);
+    if (ghCredentials.botLogin && ghCredentials.botUserId) {
+      const botEmail = `${ghCredentials.botUserId}+${ghCredentials.botLogin}@users.noreply.github.com`;
+      args.push('-e', `GIT_AUTHOR_NAME=${ghCredentials.botLogin}`);
+      args.push('-e', `GIT_AUTHOR_EMAIL=${botEmail}`);
+      args.push('-e', `GIT_COMMITTER_NAME=${ghCredentials.botLogin}`);
+      args.push('-e', `GIT_COMMITTER_EMAIL=${botEmail}`);
+    }
   }
 
   if (ONECLI_URL) {
@@ -357,9 +428,16 @@ export async function runContainerAgent(
   const groupDir = resolveGroupFolderPath(group.folder);
   fs.mkdirSync(groupDir, { recursive: true });
 
-  const mounts = buildVolumeMounts(group, input.isMain);
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');
   const containerName = `nanoclaw-${safeName}-${Date.now()}`;
+
+  // Resolve GitHub credentials before building container config.
+  // Generates a short-lived App installation token (1h TTL) keyed to the
+  // agent's division, or falls back to the CEO GH_TOKEN if App creds are absent.
+  const agentRole = group.containerConfig?.envVars?.AGENT_ROLE;
+  const ghCredentials = await resolveGhCredentials(agentRole, containerName);
+
+  const mounts = buildVolumeMounts(group, input.isMain, ghCredentials);
   // Main group uses the default OneCLI agent; others use their own agent.
   const agentIdentifier = input.isMain
     ? undefined
@@ -368,6 +446,7 @@ export async function runContainerAgent(
     mounts,
     containerName,
     agentIdentifier,
+    ghCredentials,
   );
 
   logger.debug(
