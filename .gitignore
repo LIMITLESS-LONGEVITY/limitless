@@ -32,3 +32,8 @@ TEMP/
 *.pdf
 *.docx
 test-results/
+
+keys/
+*.pem
+*.private-key
+temp/

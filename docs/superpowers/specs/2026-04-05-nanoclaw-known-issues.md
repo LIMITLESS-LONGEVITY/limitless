@@ -235,6 +235,49 @@ VPS-specific config (not in repo):
 
 ---
 
+---
+
+## 6. Git Worktree Ownership Mismatch in Containers (FIXED)
+
+**Severity:** High — blocked container task execution for all Architects
+**Discovered:** 2026-04-03 (post-Phase-0 deploy verification)
+**Fixed:** Immediate `chown` + deploy rule, no code change required
+
+### Problem
+
+After the Phase 0 monorepo sync, NanoClaw worker containers were failing with git permission errors when attempting to operate on the worktree mounted at `/workspace/extra/monorepo`. The git working tree was owned by `root` (UID 0) while the container process runs as `limitless` (UID 1000). Git refuses to operate on directories it does not own.
+
+```
+fatal: detected dubious ownership in repository at '/workspace/extra/monorepo'
+To add an exception for this directory, call:
+  git config --global --add safe.directory /workspace/extra/monorepo
+```
+
+Even with `safe.directory` workarounds in CLAUDE.md, write operations (`git add`, `git commit`, `git worktree add`) failed because the UID mismatch is enforced at the filesystem level, not just git's safety check.
+
+### Root Cause
+
+Manual SSH operations during Phase 0 setup were run as `root` (direct `sudo su` session), which created worktree directories and git index files owned by UID 0. NanoClaw's systemd service runs as `limitless` (UID 1000) and spawns containers with the same UID. The mismatch was invisible until containers actually attempted write operations.
+
+### Fix
+
+**Immediate:** `chown -R limitless:limitless /home/limitless/projects/limitless` and `/tmp/nanoclaw-worktrees/` to realign all ownership to UID 1000.
+
+**Ongoing deploy rule:** All VPS operations that touch the monorepo or worktree directories must be run as the `limitless` user:
+
+```bash
+# Correct
+sudo -u limitless git -C /home/limitless/projects/limitless pull
+sudo -u limitless npm run build
+
+# Wrong — creates root-owned files in the git index
+sudo git -C /home/limitless/projects/limitless pull
+```
+
+### Why Not a Code Fix
+
+The container-runner could defensively `chown` worktrees after creation, but this would require the NanoClaw process to have `sudo` or `CAP_CHOWN` capability — expanding the attack surface unnecessarily. The correct fix is a process guardrail: never create or modify worktree content as root. This is a deploy-time discipline issue, not a software bug.
+
 ## Tracking
 
 | Issue | Severity | Status | Fix |
@@ -244,3 +287,4 @@ VPS-specific config (not in repo):
 | Director commands don't reach Architect | Medium | **FIXED** | Bot allowlist: TRUSTED_BOT_IDS env var (PR #19) |
 | Stale CLAUDE.md after deploy | Low | **FIXED** | Deploy script now: `rm -rf dist/ && npm run build` + container kill |
 | GH_TOKEN not reaching subagent shells | High | **FIXED** | 3-layer injection: Docker -e → /etc/environment → /etc/bash.bashrc (PR #19) |
+| Git worktree ownership mismatch | High | **FIXED** | UID 1000 alignment confirmed. Deploy rule: never create worktrees as root |
