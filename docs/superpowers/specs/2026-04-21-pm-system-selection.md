@@ -12,6 +12,42 @@
 
 ---
 
+## CEO Framing — Why This Question Matters
+
+*The following is the CEO's verbatim framing of this question, reproduced in full as the authoritative context for this analysis.*
+
+---
+
+> Currently Agile is the most popular methodology/framework used in software development for the SDLC. Human led teams use Jira (or similar product like Linear) for software project management. While this fits humans we have already seen the introduction of agentic AI is now changing the SDLC. Spec-Driven Development is leading the way for agentic oriented SDLC and is being described as "The Waterfall Strikes Back"—but with a fundamental architectural twist that prevents it from suffering Waterfall's historical failures.
+>
+> The key distinction is that while Waterfall uses specifications as static documentation, Agentic SDD treats them as executable artifacts and "version control for your thinking." In this model:
+> - **The Spec is the Code**: The "Agentic Operating System" you are building serves as the runtime that materializes the specification into reality.
+> - **Velocity Negates Rigidity**: Because an agent can implement a 50-page spec in minutes rather than months, the "cost of being wrong" (Waterfall's biggest flaw) drops to near zero.
+> - **Recursive Iteration**: You aren't just doing "Big Design Up Front"; you are doing "Continuous Design" where the spec is the primary surface of iteration, not the source code.
+>
+> This transition represents a move from "Vibe Coding" (ad-hoc prompting) to "Architectural Determinism," where the developer's role shifts from a line-by-line implementer to a high-level system orchestrator.
+>
+> What we now need to figure out is how our new agentic AI oriented SDLC integrates the components of the pre-agentic AI SDLC into it. Are we using Jira and if so how? Are the humans directing the agents in our framework (e.g. the Director and the Architect) opening Jira tickets for them and are the agents using Jira themselves to go through the development workflow for the tickets?
+>
+> If we are not using Jira what are we using instead? Is the human only using Discord (to direct a task at an agent) and GitHub (to review and merge PRs) to replace the whole Jira workflow? Will this be enough in complicated development projects?
+
+---
+
+### Agentic OS — Kernel Services Required (CEO's §5)
+
+The CEO identifies four kernel services any Agentic OS must provide. These serve as the evaluation criteria for the PM options analysis below:
+
+| Kernel Service | Description |
+|---|---|
+| **Planning Layer** | Decomposing high-level intent into a directed acyclic graph (DAG) of tasks |
+| **Context/Memory Management** | Ensuring agents don't "forget" the spec when working on a specific file (long-context problem) |
+| **Constraint Enforcement** | A governance layer ensuring agent-generated code never violates the "Living Spec" |
+| **Self-Healing / Drift Detection** | Automatically identifying when code diverges from spec and triggering repair |
+
+*These four criteria are used throughout §§ below to evaluate each option.*
+
+---
+
 ## 1. Purpose
 
 This spec formalises the project management (PM) system selection for the LIMITLESS Software Development Division as it transitions into Phase 2: onboarding the MYTHOS collaborating team (`@aradSmith`) and operating two parallel development tracks. The decision must account for:
@@ -294,7 +330,7 @@ Governance spec §6.3 reserves the convention `JIRA: MYTHOS-47` as a smart-commi
 
 Rationale:
 
-1. **Activate** would require: a Jira instance (cost + admin overhead), a Jira project key, and configuration of Jira's GitHub app — none of which is justified by the Option C selection.
+1. **Activate** would require: a Jira instance (cost + admin overhead), a Jira project key, and configuration of Jira's GitHub app — none of which is justified by the Option D selection.
 
 2. **Retire** would require editing the governance spec and potentially confusing MYTHOS if they later adopt Jira. The retirement cost exceeds the clutter cost of keeping the reservation.
 
@@ -304,81 +340,102 @@ Rationale:
 
 ---
 
-## 9. Recommendation: Option C — Spec-as-SoT (Codified)
+## 9. Recommendation: Option D — Hybrid
+
+> **⚠️ CEO Adjudication Requested**
+>
+> This recommendation was temporarily changed to **Option C (Spec-as-SoT)** in commit `7aacbdc` (2026-04-22) based on input from the OpenClaw Director bot. That instruction has been confirmed as not authoritative by the human Director (2026-04-22 10:25 UTC). This document has been restored to the Architect's original analysis conclusion: **Option D**.
+>
+> The human Director noted: *"If/when the actual CEO weighs in on Option C vs Option D, that will come through this channel with explicit human framing. The CEO will review both versions and decide."*
+>
+> **Option C** is a valid and defensible alternative — it is simpler and keeps the system fully spec-centered. See §4.3 for the full Option C analysis. The trade-off is contributor discoverability vs system simplicity. CEO call.
+
+**Adopt Option D: Spec-as-SoT + GitHub Issues as lightweight status tracker.**
 
 ### 9.1 Decision
 
-Adopt Option C: formally codify the Spec-as-SoT approach LIMITLESS already uses in practice. No new tooling, no new PM surface. The spec files in `docs/superpowers/specs/`, DRs in `docs/decisions/`, the handoff schema in `#handoffs`, and PR state in GitHub together constitute the complete PM stack. This PR is itself evidence that the system works.
+Adopt Option D: specs and plans in `docs/` remain the authoritative SoT — nothing changes there. GitHub Issues are introduced as a lightweight, GitHub-native status layer. One Issue per spec or handoff; Issue body contains only a link to the spec file and a one-line summary. Issues track status (open/in-progress/review/closed) but contain no planning content. This gives `@aradSmith` a standard GitHub Issues board without requiring Discord context for basic orientation, while preserving full SDD fidelity.
 
-Option D's GitHub Issues layer offers genuine ergonomic benefit for incoming human contributors (e.g., `@aradSmith`), but that benefit is bounded and solvable through onboarding documentation rather than a PM model change. Introducing a second planning surface before Phase 2 is declared ready would add synchronisation overhead and split canonical truth. Option C remains the correct answer at this stage.
+Option C remains a valid and defensible alternative — it is simpler and keeps the system fully spec-centered. The trade-off is contributor discoverability vs system simplicity. If the CEO determines that contributor orientation is better solved by documentation alone (PR-ONB-001–003) rather than a PM tooling addition, Option C is the correct answer. See §4.3 for the full Option C analysis.
 
-GitHub Issues as a status-mirror layer is noted as a **future optional extension** — the right time to evaluate it is after Phase 2 is stable, not before it is declared ready. This preserves the option without acting on it prematurely.
+### 9.2 Option D Implementation
 
-### 9.2 What Option C Formalises
+#### 9.2.1 Issue Creation Convention (Binding)
 
-The following are now normative conventions under Option C:
+At handoff execution time, the executing agent runs:
 
-#### 9.2.1 Spec-as-SoT Conventions (Binding)
+```bash
+gh issue create \
+  --title "[spec filename]" \
+  --body "Implements: [link to spec in docs/superpowers/specs/]" \
+  --label "in-progress" \
+  --repo LIMITLESS-LONGEVITY/limitless
+```
+
+One Issue per spec/handoff. Issue body contains only the spec link and a one-line summary. No planning content in the Issue body.
+
+#### 9.2.2 Label Lifecycle
+
+`in-progress` → `review` → auto-closed on PR merge
+
+- Agent sets `in-progress` at handoff execution.
+- Agent or human sets `review` when PR is opened.
+- Issue auto-closes via `Closes #NNN` in PR body on merge (GitHub-native).
+
+#### 9.2.3 PR Body Convention
+
+Every PR that implements a spec includes in the PR body:
+
+```
+Closes #NNN
+Implements: docs/superpowers/specs/YYYY-MM-DD-[spec-name].md
+```
+
+#### 9.2.4 Artifact Table Under Option D
 
 | Artifact | Purpose | Author | Location |
 |---|---|---|---|
 | `docs/superpowers/specs/YYYY-MM-DD-*.md` | Authoritative work definition (what to build, why, constraints) | Director or Architect | `docs/superpowers/specs/` |
 | `docs/plans/YYYY-MM-DD-*.md` | Execution plan (how to build, rollout phases, rollback) | Architect | `docs/plans/` |
+| GitHub Issue | Status tracker — links to spec; carries label lifecycle | Agent (at handoff execution) | GitHub Issues |
 | Discord #handoffs message | Handoff schema record (From, To, Priority, Repo, Context, Tasks, Verify, PR Naming) | Architect | Discord |
 | `ROADMAP.md` | Strategic Kanban (Backlog → In Progress → Review → Done), epic-level | Director or Architect | Repo root |
-| GitHub PR | Atomic delivery unit; PR description references spec + plan | Agent or human | GitHub |
+| GitHub PR | Atomic delivery unit; PR description references spec + plan + `Closes #NNN` | Agent or human | GitHub |
 | `MEMORY.md` | Architect session context — in-flight task state, cross-session carry-over | Architect | `/workspace/group/` (Architect-side) |
 
-#### 9.2.2 Status Queries Under Option C
-
-The Architect uses the following as primary status queries (no Issues board required):
+#### 9.2.5 Status Queries Under Option D
 
 ```bash
+# All in-progress Issues
+gh issue list --repo LIMITLESS-LONGEVITY/limitless --label "in-progress"
+
+# All blocked Issues
+gh issue list --repo LIMITLESS-LONGEVITY/limitless --label "blocked"
+
 # All open PRs — what is in review
 gh pr list --repo LIMITLESS-LONGEVITY/limitless --state open
-
-# All open PRs by label (if PR labels are used)
-gh pr list --repo LIMITLESS-LONGEVITY/limitless --label "in-progress"
 
 # Handoff queue — review Discord #handoffs for unexecuted handoffs (proactive 30-min check)
 # MEMORY.md — Architect reads at session start for in-flight task context
 ```
 
-#### 9.2.3 `@aradSmith` Contributor Workflow Under Option C
+#### 9.2.6 `@aradSmith` Contributor Workflow Under Option D
 
 1. Read onboarding docs (PR-ONB-001–003) — Day 1 reading list.
-2. Discover active work: `ROADMAP.md` for strategic priorities; open PRs for tactical work in flight.
+2. Discover active work: GitHub Issues board (`--label in-progress`) for tactical work in flight; `ROADMAP.md` for strategic priorities.
 3. Claim work: coordinate via #handoffs or direct Discord message to Director.
-4. Deliver: open PR referencing the relevant spec/plan in the PR body.
-5. Merge: CEO ratifies via Approving Review per governance spec §5.1.
+4. Deliver: open PR referencing the relevant spec/plan and `Closes #NNN` in the PR body.
+5. Merge: CEO ratifies via Approving Review per governance spec §5.1. Issue auto-closes.
 
-No GitHub Issues board required. If `@aradSmith` wants a board view as a personal aid, see §9.3.
+No external SaaS required. Standard GitHub Issues board is the contributor-facing view.
 
-#### 9.2.4 ROADMAP.md as the Strategic Kanban
+#### 9.2.7 CLAUDE.md Update Required
 
-`ROADMAP.md` is the canonical top-level view of work. The Architect updates it at:
-- New epic/milestone entering In Progress.
-- Epic/milestone completing (PR merged, spec ratified).
-- Blocker declared (epic moves back to Backlog with a note).
+The Architect's `CLAUDE.md` (or equivalent agent instruction document) must be updated to include the Issue creation step in the handoff execution flow. This is the only process addition Option D requires.
 
-It is NOT updated per PR — only per epic-level milestone.
+### 9.3 §6.3 JIRA: Convention Under Option D
 
-### 9.3 Option C Implementation Notes
-
-**Option C "implementation" is documentation, not tooling.** The PM stack is already in place. The only required action is ensuring every engineer — human and agent — knows where to look:
-
-- **Active work:** `docs/superpowers/specs/` for authoritative work definitions; `#handoffs` for the queued handoff backlog.
-- **Delivery status:** open GitHub PRs (`gh pr list --repo LIMITLESS-LONGEVITY/limitless --state open`).
-- **Strategic direction:** `ROADMAP.md` for epic-level lane state.
-- **In-flight agent context:** `MEMORY.md` at session start.
-
-No new tooling is required. No new step is added to the handoff flow. No CLAUDE.md update is needed.
-
-**Governance amendment (follow-on PR):** A §13 addition to the governance spec (`docs/superpowers/specs/2026-04-18-agentic-sdlc-governance.md`) or an extension of §8 in that spec should formally name the canonical PM stack as: Discord (#handoffs, #main-ops) + GitHub (PRs, branch protection) + Specs (`docs/superpowers/specs/`) + Decision Records (`docs/decisions/`). This naming should be done in a follow-on PR after this readiness bundle is ratified — not before.
-
-**§6.3 JIRA: convention:** The `JIRA:` smart-commit convention in the governance spec remains reserved as-is. No change. See §8 of this spec.
-
-**GitHub Issues as future optional extension:** GitHub Issues as a status-mirror layer is not adopted in Phase 2. If the structured query gap becomes painful at scale (5+ concurrent handoffs) or `@aradSmith` requests a board view, this can be evaluated via a DR-CFG process after Phase 2 is declared stable. It is not adopted ad-hoc.
+The `JIRA:` smart-commit convention in the governance spec remains reserved as-is. No change. See §8 of this spec. GitHub Issues (Option D) and JIRA smart-commit conventions are orthogonal — MYTHOS can adopt Jira for their own tracking without affecting the LIMITLESS Issues board.
 
 ---
 
@@ -387,23 +444,23 @@ No new tooling is required. No new step is added to the handoff flow. No CLAUDE.
 ### Phase 1 — Ratification (Day 0)
 
 - [ ] CEO ratifies this spec (status changes to Accepted).
-- [ ] No tooling changes required.
+- [ ] CLAUDE.md updated to include `gh issue create` step at handoff execution time.
 - [ ] Confirm `ROADMAP.md` is current (Architect updates if stale).
 - [ ] Onboarding PR-ONB-001–003 queue confirmed (from `docs/plans/2026-04-21-human-onboarding-docs-roadmap.md`).
 
 ### Phase 2 — Contributor Onboarding (Day 3+)
 
-- [ ] PR-ONB-001 (README overhaul) filed and merged.
-- [ ] PR-ONB-002 (CONTRIBUTING.md refresh) filed and merged.
-- [ ] PR-ONB-003 (Ways of Working guide) filed and merged.
+- [ ] PR-ONB-001 (README overhaul) filed and merged — includes reference to GitHub Issues board as work discovery surface.
+- [ ] PR-ONB-002 (CONTRIBUTING.md refresh) filed and merged — includes `Closes #NNN` PR body convention.
+- [ ] PR-ONB-003 (Ways of Working guide) filed and merged — includes Issue lifecycle (label flow).
 - [ ] `@aradSmith` invited as collaborator; directed to Day-1 reading list.
-- [ ] First handoff to `@aradSmith` issued via Discord #handoffs in standard schema format.
+- [ ] First handoff to `@aradSmith` issued via Discord #handoffs in standard schema format; corresponding Issue created at handoff execution.
 
 ### Phase 3 — Steady State
 
-- [ ] Architect's 30-minute proactive checks include: `gh pr list --state open` scan for stale PRs.
-- [ ] Daily briefing (#main-ops) includes: open PR count, unexecuted handoffs in #handoffs, `ROADMAP.md` lane summary.
-- [ ] If structured query gap becomes painful at scale (5+ concurrent handoffs), revisit Option D via a DR-CFG process — do not adopt ad-hoc.
+- [ ] Architect's 30-minute proactive checks include: `gh issue list --label in-progress` scan for stale Issues; `gh pr list --state open` scan for stale PRs.
+- [ ] Daily briefing (#main-ops) includes: open Issue count by label, open PR count, unexecuted handoffs in #handoffs, `ROADMAP.md` lane summary.
+- [ ] If sync discipline between Issues and specs becomes a recurring problem at scale, revisit Option C via a DR-CFG process — do not revert ad-hoc.
 
 ---
 
@@ -411,10 +468,11 @@ No new tooling is required. No new step is added to the handoff flow. No CLAUDE.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| `@aradSmith` finds Option C opaque without onboarding docs | High | Medium | PR-ONB-001–003 are P0 prerequisites for write access (see onboarding roadmap). |
-| `MEMORY.md` drifts under concurrent task load | Medium | Medium | Architect proactive check includes `MEMORY.md` review at session start; stale entries flagged at daily briefing. |
+| Issue body drifts from spec scope (spec-vs-Issue sync discipline failure) | Medium | Medium | Issue body convention is strictly: spec link + one-line summary only. No planning content in Issues. Enforced by CLAUDE.md convention. |
+| `@aradSmith` finds Option D Issues board insufficient without onboarding docs | Medium | Medium | PR-ONB-001–003 are P0 prerequisites for write access (see onboarding roadmap). Issues board is the discovery surface; docs explain the workflow. |
+| `MEMORY.md` drifts under concurrent task load | Medium | Medium | Architect proactive check includes `MEMORY.md` review at session start; stale entries flagged at daily briefing. `gh issue list` now supplements MEMORY.md as structured query. |
 | ROADMAP.md falls out of date | Medium | Low | Architect updates ROADMAP.md at every epic-level state change (norm, not exception). |
-| Option D adopted informally without governance amendment | Low | Medium | Any Issues board usage is optional and non-normative until a DR-CFG formalises it. Director enforces. |
+| Option C adopted informally (Issues board abandoned) | Low | Medium | Any reversion to pure Option C is non-normative until a DR-CFG formalises it. Director enforces. |
 | MYTHOS configures Jira; `JIRA:` convention activates unexpectedly | Very Low | Low | Activation requires Jira admin action on MYTHOS's side. No LIMITLESS impact. §6.3 remains reserved. |
 
 ---
@@ -424,11 +482,12 @@ No new tooling is required. No new step is added to the handoff flow. No CLAUDE.
 This spec is considered successfully implemented when:
 
 1. CEO ratification received (status → Accepted).
-2. No new PM tooling introduced without a follow-on DR-CFG or governance amendment.
-3. PR-ONB-001–003 (contributor onboarding docs) are filed (gated: write access for `@aradSmith`).
+2. CLAUDE.md updated to include `gh issue create` at handoff execution time (one-line addition).
+3. PR-ONB-001–003 (contributor onboarding docs) are filed (gated: write access for `@aradSmith`); onboarding docs reference the GitHub Issues board as work discovery surface.
 4. `ROADMAP.md` is current and reflects active Phase 2 work.
 5. Governance spec §6.3 is unchanged (no activation, no retirement of `JIRA:` convention).
-6. `@aradSmith` is able to understand active work from `ROADMAP.md` + open PRs + onboarding docs without requiring Discord access for basic orientation.
+6. `@aradSmith` is able to discover active work from the GitHub Issues board (`--label in-progress`) + `ROADMAP.md` + onboarding docs without requiring Discord access for basic orientation.
+7. At least one Issue created per the Option D convention (verifiable via `gh issue list --repo LIMITLESS-LONGEVITY/limitless`).
 
 ---
 
@@ -437,11 +496,11 @@ This spec is considered successfully implemented when:
 | Date | Decision | Rationale |
 |---|---|---|
 | 2026-04-20 | PR #54 merged | Confirmed Jira is orthogonal to hosting; smart-commit convention inert without Jira instance |
-| 2026-04-21 | Option C selected | SDD fidelity, zero tool overhead, agent-native, no new habits before Phase 2 baseline |
-| 2026-04-21 | Option D considered, not adopted | Contributor orientation benefit is real but solved by onboarding docs (PR-ONB-001–003), not PM tooling; sync discipline risk outweighs gain at current scale |
+| 2026-04-21 | Option D selected as Architect's recommendation | Contributor discoverability via GitHub Issues board; structured query via `gh issue list`; no external SaaS; SDD-compatible when Issue body is strictly a spec link |
+| 2026-04-21 | Option C considered, not adopted | Option C is simpler and fully SDD-compatible; deferred pending CEO adjudication on contributor orientation trade-off |
 | 2026-04-21 | §6.3 kept reserved | Retirement cost > clutter cost; MYTHOS Jira composability preserved at zero LIMITLESS cost |
-| 2026-04-22 | Option C confirmed; Option D noted as future optional extension | Contributor orientation solved by onboarding docs, not PM model change; GitHub Issues status-mirror layer deferred until after Phase 2 is declared stable |
+| 2026-04-22 | Recommendation temporarily changed to Option C | Bot-directed (not authoritative) — restored to Option D per human Director confirmation |
 
 ---
 
-*Proposed by Architect, 2026-04-21. Revised 2026-04-22 per Director review (Option C confirmed; CEO verbatim SDD framing added; Option D noted as future optional extension). Awaiting CEO ratification.*
+*Proposed by Architect, 2026-04-21. Restored to Option D recommendation 2026-04-22 per human Director confirmation (bot-directed revert to Option C in commit 7aacbdc confirmed not authoritative). CEO verbatim SDD framing added as foundational context. Awaiting CEO ratification on Option C vs Option D — see §9 adjudication note.*
