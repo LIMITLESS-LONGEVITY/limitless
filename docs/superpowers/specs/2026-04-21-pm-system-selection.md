@@ -24,9 +24,46 @@ This spec formalises the project management (PM) system selection for the LIMITL
 
 ---
 
-## 2. Background
+## 2. CEO's Question — Verbatim
 
-### 2.1 Current PM State
+The following is the CEO's exact framing of the PM system selection question, as posed in `docs/superpowers/specs/SDLC phase 2 readiness report questions.md` (Topic 3):
+
+> Currently Agile is the most popular methodology/framework used in software development for the SDLC. Human led teams use Jira (or similar product like Linear) for software project management. While this fits humans we have already seen the introduction of agentic AI is now changing the SDLC. Spec-Driven Development is leading the way for agentic oriented SDLC and is being described as "The Waterfall Strikes Back"—but with a fundamental architectural twist that prevents it from suffering Waterfall's historical failures.
+>
+> The key distinction is that while Waterfall uses specifications as static documentation, Agentic SDD treats them as executable artifacts and "version control for your thinking." In this model: The Spec is the Code; Velocity Negates Rigidity; Recursive Iteration. This transition represents a move from "Vibe Coding" to "Architectural Determinism," where the developer's role shifts from a line-by-line implementer to a high-level system orchestrator.
+>
+> What we now need to figure out is how our new agentic AI oriented SDLC integrates the components of the pre-agentic AI SDLC into it. Are we using Jira and if so how? Are the humans directing the agents in our framework (e.g. the Director and the Architect) opening Jira tickets for them and are the agents using Jira themselves to go through the development workflow? If we are not using Jira what are we using instead? Is the human only using Discord (to direct a task at an agent) and GitHub (to review and merge PRs) to replace the whole Jira workflow? Will this be enough in complicated development projects?
+
+### 2.1 CEO's Supporting Research — SDLC Comparative Analysis
+
+The CEO's question file also contains a brief research report supporting this framing. Cited verbatim from that file for context:
+
+**§2 — Comparative Analysis: The SDLC Evolution** (from `docs/superpowers/specs/SDLC phase 2 readiness report questions.md`):
+
+> | Feature | Traditional Waterfall | Modern Agile | Agentic Spec-Driven (SDD) |
+> | :--- | :--- | :--- | :--- |
+> | **Primary Artifact** | Comprehensive Documentation | Working Software | **Machine-Readable Spec** |
+> | **Iteration Cycle** | Months / Years | 2 - 4 Weeks (Sprints) | **Minutes / Hours (Agentic Loops)** |
+> | **Role of Developer** | Implementer | Collaborator | **Architect / Orchestrator** |
+> | **Change Cost** | Extremely High | Moderate | **Near-Zero (Regeneration)** |
+> | **Reliability** | High (if spec is perfect) | Variable (Speed over depth) | **High (Deterministic & Verifiable)** |
+
+**§5 — Architectural Requirements for an Agentic OS** (from `docs/superpowers/specs/SDLC phase 2 readiness report questions.md`):
+
+> To successfully move from Agile to an Agentic SDLC, your "Agentic Operating System" must provide the following "Kernel" services:
+>
+> 1. **Planning Layer:** Decomposing high-level intent into a directed acyclic graph (DAG) of tasks.
+> 2. **Context/Memory Management:** Ensuring agents don't "forget" the spec when working on a specific file (solving the long-context window problem).
+> 3. **Constraint Enforcement:** A governance layer that ensures agent-generated code never violates the "Living Spec."
+> 4. **Self-Healing/Drift Detection:** Automatically identifying when the code has diverged from the specification and triggering an agentic "repair" cycle.
+
+These four Kernel services are the lens through which all PM option evaluation in §6 of this spec is conducted.
+
+---
+
+## 3. Background
+
+### 3.1 Current PM State
 
 The division currently operates without a formal ticket system. Work is tracked through:
 
@@ -39,7 +76,7 @@ The division currently operates without a formal ticket system. Work is tracked 
 
 There is no Jira instance, no Linear workspace, no GitHub Issues board, and no sprint cadence. This has worked at solo/duo scale and — with proper onboarding documentation — is the correct model for Phase 2 as well.
 
-### 2.2 Governance Spec §6.3 — JIRA: Smart-Commit Convention
+### 3.2 Governance Spec §6.3 — JIRA: Smart-Commit Convention
 
 The governance spec (`2026-04-18-agentic-sdlc-governance.md`) §6.3 reserves the following smart-commit convention:
 
@@ -49,7 +86,7 @@ JIRA: PROJ-123
 
 The spec explicitly states: _"No tooling change required today — the convention is reserved."_ This was a forward-looking placeholder, not an active integration. As of the date of this spec, zero commits in the monorepo use this convention and no Jira instance is configured.
 
-### 2.3 PR #54 Findings
+### 3.3 PR #54 Findings
 
 PR #54 (`2026-04-18-gitlab-jira-adoption-analysis.md`, merged 2026-04-20) reached the following conclusions relevant to this decision:
 
@@ -57,9 +94,9 @@ PR #54 (`2026-04-18-gitlab-jira-adoption-analysis.md`, merged 2026-04-20) reache
 2. Smart-ID references (`JIRA: MYTHOS-47`) work without any Architect container changes — they are inert text strings that Jira's GitHub integration reads on Jira's side.
 3. Collaborating teams (MYTHOS) can use Jira for their own PM tracking without affecting LIMITLESS agent tooling.
 
-These findings constrain Options A (Jira) and shape the §6.3 resolution in §7.
+These findings constrain Options A (Jira) and shape the §6.3 resolution in §8.
 
-### 2.4 SDD Framing (CEO Mandate)
+### 3.4 SDD Framing (CEO Mandate)
 
 The CEO's SDD mandate governs all tooling decisions:
 
@@ -69,7 +106,7 @@ Any option that causes ticket content to diverge from or duplicate spec content 
 
 ---
 
-## 3. SDD Kernel Services
+## 4. SDD Kernel Services
 
 The division's autonomous pipeline depends on four internal Kernel Services. Every PM option must be evaluated against its ability to serve each:
 
@@ -84,7 +121,7 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 
 ---
 
-## 4. Options
+## 5. Options
 
 ### Option A — Jira / Linear (External SaaS)
 
@@ -207,7 +244,7 @@ These services are not replaced by a PM tool — they are _served_ by one. The e
 
 ---
 
-## 5. SDD Kernel Services Coverage Matrix
+## 6. SDD Kernel Services Coverage Matrix
 
 Rating scale: **Strong** = serves this kernel service natively and robustly; **Partial** = serves it with workarounds or incompletely; **Weak** = does not serve it or actively hinders it.
 
@@ -226,7 +263,7 @@ Rating scale: **Strong** = serves this kernel service natively and robustly; **P
 
 ---
 
-## 6. Comparative Summary
+## 7. Comparative Summary
 
 | Criterion | Option A | Option B | Option C | Option D |
 |---|---|---|---|---|
@@ -242,7 +279,7 @@ Rating scale: **Strong** = serves this kernel service natively and robustly; **P
 
 ---
 
-## 7. §6.3 JIRA: Smart-Commit Convention Resolution
+## 8. §6.3 JIRA: Smart-Commit Convention Resolution
 
 ### Current State
 
@@ -267,24 +304,21 @@ Rationale:
 
 ---
 
-## 8. Recommendation: Option C — Spec-as-SoT
+## 9. Recommendation: Option C — Spec-as-SoT (Codified)
 
-### 8.1 Decision
+### 9.1 Decision
 
-**Retain and formalise the current Spec-as-SoT model as the canonical PM approach for LIMITLESS Phase 2.**
+Adopt Option C: formally codify the Spec-as-SoT approach LIMITLESS already uses in practice. No new tooling, no new PM surface. The spec files in `docs/superpowers/specs/`, DRs in `docs/decisions/`, the handoff schema in `#handoffs`, and PR state in GitHub together constitute the complete PM stack. This PR is itself evidence that the system works.
 
-Rationale:
+Option D's GitHub Issues layer offers genuine ergonomic benefit for incoming human contributors (e.g., `@aradSmith`), but that benefit is bounded and solvable through onboarding documentation rather than a PM model change. Introducing a second planning surface before Phase 2 is declared ready would add synchronisation overhead and split canonical truth. Option C remains the correct answer at this stage.
 
-1. **SDD fidelity is non-negotiable.** Option C is the only option where specs are not just the truth but the entire PM system. No other option can claim this without qualification.
-2. **Contributor orientation is a documentation problem, not a tooling problem.** The onboarding friction of `@aradSmith` not understanding Discord handoff schema is addressed by PR-ONB-001–003 (Ways of Working guide, CONTRIBUTING.md refresh, README overhaul). Solving it with a new PM tool layer introduces new complexity before Phase 2 is even declared stable.
-3. **No new habits before Phase 2 baseline.** The division is at a transition point — adding a second planning artifact type (Issues) before the 4-document readiness bundle is ratified and `@aradSmith` is onboarded would obscure whether problems stem from process, tooling, or people. Option C preserves a clean baseline.
-4. **Agent-native with zero process change.** Agents already produce every Option C artifact. No CLAUDE.md changes are required by this decision.
+GitHub Issues as a status-mirror layer is noted as a **future optional extension** — the right time to evaluate it is after Phase 2 is stable, not before it is declared ready. This preserves the option without acting on it prematurely.
 
-### 8.2 What Option C Formalises
+### 9.2 What Option C Formalises
 
 The following are now normative conventions under Option C:
 
-#### 8.2.1 Spec-as-SoT Conventions (Binding)
+#### 9.2.1 Spec-as-SoT Conventions (Binding)
 
 | Artifact | Purpose | Author | Location |
 |---|---|---|---|
@@ -295,7 +329,7 @@ The following are now normative conventions under Option C:
 | GitHub PR | Atomic delivery unit; PR description references spec + plan | Agent or human | GitHub |
 | `MEMORY.md` | Architect session context — in-flight task state, cross-session carry-over | Architect | `/workspace/group/` (Architect-side) |
 
-#### 8.2.2 Status Queries Under Option C
+#### 9.2.2 Status Queries Under Option C
 
 The Architect uses the following as primary status queries (no Issues board required):
 
@@ -310,7 +344,7 @@ gh pr list --repo LIMITLESS-LONGEVITY/limitless --label "in-progress"
 # MEMORY.md — Architect reads at session start for in-flight task context
 ```
 
-#### 8.2.3 `@aradSmith` Contributor Workflow Under Option C
+#### 9.2.3 `@aradSmith` Contributor Workflow Under Option C
 
 1. Read onboarding docs (PR-ONB-001–003) — Day 1 reading list.
 2. Discover active work: `ROADMAP.md` for strategic priorities; open PRs for tactical work in flight.
@@ -318,9 +352,9 @@ gh pr list --repo LIMITLESS-LONGEVITY/limitless --label "in-progress"
 4. Deliver: open PR referencing the relevant spec/plan in the PR body.
 5. Merge: CEO ratifies via Approving Review per governance spec §5.1.
 
-No GitHub Issues board required. If `@aradSmith` wants a board view as a personal aid, see §8.3.
+No GitHub Issues board required. If `@aradSmith` wants a board view as a personal aid, see §9.3.
 
-#### 8.2.4 ROADMAP.md as the Strategic Kanban
+#### 9.2.4 ROADMAP.md as the Strategic Kanban
 
 `ROADMAP.md` is the canonical top-level view of work. The Architect updates it at:
 - New epic/milestone entering In Progress.
@@ -329,26 +363,26 @@ No GitHub Issues board required. If `@aradSmith` wants a board view as a persona
 
 It is NOT updated per PR — only per epic-level milestone.
 
-### 8.3 Optional Implementation Aid — GitHub Issues
+### 9.3 Option C Implementation Notes
 
-GitHub Issues are **not** part of the recommended PM model but are available as an **optional lightweight aid** that does not conflict with Option C if used with discipline.
+**Option C "implementation" is documentation, not tooling.** The PM stack is already in place. The only required action is ensuring every engineer — human and agent — knows where to look:
 
-**When issues may be useful:**
-- `@aradSmith` requests a board view as a personal orientation tool.
-- A sprint-style grouping of in-flight work is needed for external stakeholder communication.
-- The Architect wants a structured `gh issue list --label blocked` query without parsing Discord.
+- **Active work:** `docs/superpowers/specs/` for authoritative work definitions; `#handoffs` for the queued handoff backlog.
+- **Delivery status:** open GitHub PRs (`gh pr list --repo LIMITLESS-LONGEVITY/limitless --state open`).
+- **Strategic direction:** `ROADMAP.md` for epic-level lane state.
+- **In-flight agent context:** `MEMORY.md` at session start.
 
-**If used, the following constraints apply (prevents SDD violation):**
-- Issue body = link to spec/plan only + one-line summary. No planning content in Issues.
-- Issues are created manually or on request — they are not a required step in the handoff flow.
-- Issues do not gate handoffs, PRs, or ratification. They are informational only.
-- If an Issue contradicts a spec, the spec wins — the Issue is closed or corrected.
+No new tooling is required. No new step is added to the handoff flow. No CLAUDE.md update is needed.
 
-**This is not a Phase 2 adoption decision.** If Issues prove useful and the sync discipline holds, a future DR-CFG or governance amendment can formalise them. For now, they are an optional tool, not a normative practice.
+**Governance amendment (follow-on PR):** A §13 addition to the governance spec (`docs/superpowers/specs/2026-04-18-agentic-sdlc-governance.md`) or an extension of §8 in that spec should formally name the canonical PM stack as: Discord (#handoffs, #main-ops) + GitHub (PRs, branch protection) + Specs (`docs/superpowers/specs/`) + Decision Records (`docs/decisions/`). This naming should be done in a follow-on PR after this readiness bundle is ratified — not before.
+
+**§6.3 JIRA: convention:** The `JIRA:` smart-commit convention in the governance spec remains reserved as-is. No change. See §8 of this spec.
+
+**GitHub Issues as future optional extension:** GitHub Issues as a status-mirror layer is not adopted in Phase 2. If the structured query gap becomes painful at scale (5+ concurrent handoffs) or `@aradSmith` requests a board view, this can be evaluated via a DR-CFG process after Phase 2 is declared stable. It is not adopted ad-hoc.
 
 ---
 
-## 9. Migration Plan
+## 10. Migration Plan
 
 ### Phase 1 — Ratification (Day 0)
 
@@ -373,7 +407,7 @@ GitHub Issues are **not** part of the recommended PM model but are available as 
 
 ---
 
-## 10. Risks and Mitigations
+## 11. Risks and Mitigations
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
@@ -385,7 +419,7 @@ GitHub Issues are **not** part of the recommended PM model but are available as 
 
 ---
 
-## 11. Acceptance Criteria
+## 12. Acceptance Criteria
 
 This spec is considered successfully implemented when:
 
@@ -398,7 +432,7 @@ This spec is considered successfully implemented when:
 
 ---
 
-## 12. Decision Log
+## 13. Decision Log
 
 | Date | Decision | Rationale |
 |---|---|---|
@@ -406,8 +440,8 @@ This spec is considered successfully implemented when:
 | 2026-04-21 | Option C selected | SDD fidelity, zero tool overhead, agent-native, no new habits before Phase 2 baseline |
 | 2026-04-21 | Option D considered, not adopted | Contributor orientation benefit is real but solved by onboarding docs (PR-ONB-001–003), not PM tooling; sync discipline risk outweighs gain at current scale |
 | 2026-04-21 | §6.3 kept reserved | Retirement cost > clutter cost; MYTHOS Jira composability preserved at zero LIMITLESS cost |
-| 2026-04-22 | Director confirmed Option C | Prior spec-centered direction held; GitHub Issues noted as optional implementation aid only |
+| 2026-04-22 | Option C confirmed; Option D noted as future optional extension | Contributor orientation solved by onboarding docs, not PM model change; GitHub Issues status-mirror layer deferred until after Phase 2 is declared stable |
 
 ---
 
-*Proposed by Architect, 2026-04-21. Revised 2026-04-22 per Director review (Option C confirmed). Awaiting CEO ratification.*
+*Proposed by Architect, 2026-04-21. Revised 2026-04-22 per Director review (Option C confirmed; CEO verbatim SDD framing added; Option D noted as future optional extension). Awaiting CEO ratification.*
