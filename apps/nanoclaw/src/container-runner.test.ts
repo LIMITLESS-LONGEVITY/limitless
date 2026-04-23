@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 import { PassThrough } from 'stream';
 
@@ -20,6 +20,9 @@ vi.mock('./config.js', () => ({
   GROUPS_DIR: '/tmp/nanoclaw-test-groups',
   IDLE_TIMEOUT: 1800000, // 30min
   ONECLI_URL: 'http://localhost:10254',
+  ONECLI_API_KEY: '',
+  MONOREPO_PATH: '',
+  WORKTREE_BASE: '/tmp/nanoclaw-worktrees',
   TIMEZONE: 'America/Los_Angeles',
 }));
 
@@ -431,7 +434,7 @@ describe('OneCLI guard — ONECLI_URL empty', () => {
       GROUPS_DIR: '/tmp/nanoclaw-test-groups',
       IDLE_TIMEOUT: 1800000,
       ONECLI_URL: '', // intentionally empty — exercises the guard branch
-      ONECLI_API_KEY: '','
+      ONECLI_API_KEY: '',
       TIMEZONE: 'UTC',
       MONOREPO_PATH: '',
       WORKTREE_BASE: '/tmp/nanoclaw-worktrees',
