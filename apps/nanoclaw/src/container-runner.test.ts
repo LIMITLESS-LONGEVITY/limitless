@@ -251,9 +251,11 @@ describe('GitHub App token injection', () => {
   let spawnMock: ReturnType<typeof vi.fn>;
   const APP_ENV_KEYS = [
     'LIMITLESS_APP_ID', 'LIMITLESS_APP_INSTALLATION_ID',
-    'LIMITLESS_APP_PRIVATE_KEY', 'LIMITLESS_BOT_USER_ID',
+    'LIMITLESS_APP_PRIVATE_KEY', 'LIMITLESS_APP_PRIVATE_KEY_PATH',
+    'LIMITLESS_BOT_USER_ID',
     'MYTHOS_APP_ID', 'MYTHOS_APP_INSTALLATION_ID',
-    'MYTHOS_APP_PRIVATE_KEY', 'MYTHOS_BOT_USER_ID',
+    'MYTHOS_APP_PRIVATE_KEY', 'MYTHOS_APP_PRIVATE_KEY_PATH',
+    'MYTHOS_BOT_USER_ID',
     'GH_TOKEN',
   ] as const;
 
@@ -413,6 +415,114 @@ describe('GitHub App token injection', () => {
     );
     const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
     expect(findEnvArg(dockerArgs, 'GH_TOKEN')).toBe('ghs_default_token');
+  });
+
+  it('PATH-only: reads PEM from filesystem when _PATH is set and inline is unset', async () => {
+    const fs = (await import('fs')).default;
+    vi.mocked(fs.existsSync).mockImplementation(
+      (p) => p === '/etc/nanoclaw/limitless-app.pem',
+    );
+    vi.mocked(fs.readFileSync).mockImplementation(
+      ((p: string) =>
+        p === '/etc/nanoclaw/limitless-app.pem'
+          ? 'file-backed-pem-content'
+          : '') as unknown as typeof fs.readFileSync,
+    );
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockResolvedValue({ token: 'ghs_from_file', type: 'installation' }) as never,
+    );
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_APP_PRIVATE_KEY_PATH = '/etc/nanoclaw/limitless-app.pem';
+    process.env.LIMITLESS_BOT_USER_ID = '111111';
+
+    const resultPromise = runContainerAgent(testGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    expect(createAppAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appId: 12345,
+        installationId: 67890,
+        privateKey: 'file-backed-pem-content',
+      }),
+    );
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GH_TOKEN')).toBe('ghs_from_file');
+
+    // Restore default fs mock behavior for subsequent tests
+    vi.mocked(fs.existsSync).mockImplementation(() => false);
+    vi.mocked(fs.readFileSync).mockImplementation(
+      (() => '') as unknown as typeof fs.readFileSync,
+    );
+  });
+
+  it('precedence: _PATH wins when both _PATH and _PRIVATE_KEY are set', async () => {
+    const fs = (await import('fs')).default;
+    vi.mocked(fs.existsSync).mockImplementation(
+      (p) => p === '/etc/nanoclaw/limitless-app.pem',
+    );
+    vi.mocked(fs.readFileSync).mockImplementation(
+      ((p: string) =>
+        p === '/etc/nanoclaw/limitless-app.pem'
+          ? 'pem-from-file-should-win'
+          : '') as unknown as typeof fs.readFileSync,
+    );
+    vi.mocked(createAppAuth).mockReturnValue(
+      vi.fn().mockResolvedValue({ token: 'ghs_path_wins', type: 'installation' }) as never,
+    );
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_APP_PRIVATE_KEY = 'inline-pem-should-be-ignored';
+    process.env.LIMITLESS_APP_PRIVATE_KEY_PATH = '/etc/nanoclaw/limitless-app.pem';
+    process.env.LIMITLESS_BOT_USER_ID = '111111';
+
+    const resultPromise = runContainerAgent(testGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    expect(createAppAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ privateKey: 'pem-from-file-should-win' }),
+    );
+    // Explicitly confirm the inline value did NOT reach createAppAuth
+    expect(createAppAuth).not.toHaveBeenCalledWith(
+      expect.objectContaining({ privateKey: 'inline-pem-should-be-ignored' }),
+    );
+
+    // Restore default fs mock behavior for subsequent tests
+    vi.mocked(fs.existsSync).mockImplementation(() => false);
+    vi.mocked(fs.readFileSync).mockImplementation(
+      (() => '') as unknown as typeof fs.readFileSync,
+    );
+  });
+
+  it('neither _PATH nor _PRIVATE_KEY set: no App auth, falls through to CEO GH_TOKEN', async () => {
+    process.env.LIMITLESS_APP_ID = '12345';
+    process.env.LIMITLESS_APP_INSTALLATION_ID = '67890';
+    process.env.LIMITLESS_BOT_USER_ID = '111111';
+    // Deliberately no LIMITLESS_APP_PRIVATE_KEY, no LIMITLESS_APP_PRIVATE_KEY_PATH
+    process.env.GH_TOKEN = 'ceo-pat-fallback';
+
+    const resultPromise = runContainerAgent(testGroup, testInput, () => {});
+    emitOutputMarker(fakeProc, { status: 'success', result: 'Done' });
+    await vi.advanceTimersByTimeAsync(10);
+    fakeProc.emit('close', 0);
+    await vi.advanceTimersByTimeAsync(10);
+    await resultPromise;
+
+    // App auth path never invoked when no private key source is available
+    expect(createAppAuth).not.toHaveBeenCalled();
+    const dockerArgs = spawnMock.mock.calls[0]?.[1] as string[];
+    expect(findEnvArg(dockerArgs, 'GH_TOKEN')).toBe('ceo-pat-fallback');
+    // No bot identity injected on CEO-token fallback
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_NAME')).toBeUndefined();
+    expect(findEnvArg(dockerArgs, 'GIT_AUTHOR_EMAIL')).toBeUndefined();
   });
 });
 
