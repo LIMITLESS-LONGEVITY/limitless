@@ -11,6 +11,16 @@ const envConfig = readEnvFile([
   'ONECLI_URL',
   'ONECLI_API_KEY',
   'TZ',
+  // GitHub App credentials for DR-001 Phase 3 container identity injection.
+  // Optional — if absent, container-runner falls back to GH_TOKEN (CEO PAT).
+  'LIMITLESS_APP_ID',
+  'LIMITLESS_APP_INSTALLATION_ID',
+  'LIMITLESS_APP_PRIVATE_KEY',
+  'LIMITLESS_BOT_USER_ID',
+  'MYTHOS_APP_ID',
+  'MYTHOS_APP_INSTALLATION_ID',
+  'MYTHOS_APP_PRIVATE_KEY',
+  'MYTHOS_BOT_USER_ID',
 ]);
 
 export const ASSISTANT_NAME =
