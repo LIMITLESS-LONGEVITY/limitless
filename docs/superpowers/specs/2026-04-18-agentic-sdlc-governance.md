@@ -261,7 +261,16 @@ Include in every MYTHOS PR body:
 
 **False attestation is a ratification-integrity failure** under §5.1 and invalidates the ratification audit record. The CEO ratifier relies on `[x]` as confirmation the step was performed, not as confirmation it was written or planned. This applies to both MYTHOS and LIMITLESS PR checklists.
 
-Agents (Architects and workers) must have actually executed the verification step — via mounted worktree, temp clone, or dispatched runner — before marking `[x]`. If no execution path is available, the checkbox stays `[ ]` with a clear explanation. See Architect CLAUDE.md `§Verification discipline` for the enumerated execution paths.
+Agents (Architects and workers) must have actually executed the verification step — via temp clone, mounted worktree, or dispatched runner — before marking `[x]`. If no execution path is available, the checkbox stays `[ ]` with a clear explanation.
+
+**Verification paths for main-group Architects** (Directive 3 confirmed, 2026-04-23): main-group Architect sessions do NOT receive a monorepo mount. The worktree mount at `/workspace/extra/monorepo` is only provisioned for worker-group containers with `AGENT_SCOPE` set. Main sessions receive the NanoClaw project root at `/workspace/project`. Temp-clone is the first-class verification path for main-group Architects, not a fallback or workaround:
+
+```bash
+cd /tmp && gh repo clone LIMITLESS-LONGEVITY/limitless && cd limitless
+gh pr checkout <PR#>
+pnpm install --no-frozen-lockfile
+cd apps/<app> && pnpm test
+```
 
 ---
 
