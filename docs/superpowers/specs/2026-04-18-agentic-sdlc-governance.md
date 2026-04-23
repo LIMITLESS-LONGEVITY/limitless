@@ -251,6 +251,27 @@ Include in every MYTHOS PR body:
 
 **Open question**: Whether a formal Data Processing Agreement (DPA) with GitHub is required for MiFID II record-keeping purposes. Atlassian and similar enterprise tools typically carry DPAs. GitHub offers a DPA via the GitHub Customer Agreement (Enterprise). For a single-operator IBKR account, regulatory risk is low but legal review is recommended before Phase 4 live trading. Flag: `[OPEN: legal review before Phase 4]`
 
+### 5.5 Checklist attestation convention (CEO Directive 1, 2026-04-23)
+
+`[x]` in any PR body checklist represents **executed + verified green**. The step was run in a real environment and passed. It does NOT mean planned, written, or reviewed.
+
+`[ ]` with an inline note is the correct convention for written-but-unexecuted steps:
+- `[ ] Tests written; execution pending CI`
+- `[ ] Tests written; execution blocked — container lacks monorepo mount`
+
+**False attestation is a ratification-integrity failure** under §5.1 and invalidates the ratification audit record. The CEO ratifier relies on `[x]` as confirmation the step was performed, not as confirmation it was written or planned. This applies to both MYTHOS and LIMITLESS PR checklists.
+
+Agents (Architects and workers) must have actually executed the verification step — via temp clone, mounted worktree, or dispatched runner — before marking `[x]`. If no execution path is available, the checkbox stays `[ ]` with a clear explanation.
+
+**Verification paths for main-group Architects** (Directive 3 confirmed, 2026-04-23): main-group Architect sessions do NOT receive a monorepo mount. The worktree mount at `/workspace/extra/monorepo` is only provisioned for worker-group containers with `AGENT_SCOPE` set. Main sessions receive the NanoClaw project root at `/workspace/project`. Temp-clone is the first-class verification path for main-group Architects, not a fallback or workaround:
+
+```bash
+cd /tmp && gh repo clone LIMITLESS-LONGEVITY/limitless && cd limitless
+gh pr checkout <PR#>
+pnpm install --no-frozen-lockfile
+cd apps/<app> && pnpm test
+```
+
 ---
 
 ## 6. Issue / Ticket Linkage
