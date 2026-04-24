@@ -12,3 +12,8 @@ apps/nanoclaw/        @chmod735
 apps/os-dashboard/    @chmod735
 infra/                @chmod735
 docs/                 @chmod735
+
+# Governance: workflow edits always route through CEO until multi-human
+# team ratified in Q4. Explicit line (even though wildcard covers) so the
+# ownership of this path can evolve independently of the wildcard.
+.github/workflows/    @chmod735
