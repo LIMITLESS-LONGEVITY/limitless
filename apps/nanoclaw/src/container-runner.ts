@@ -58,6 +58,28 @@ async function generateInstallationToken(
   return result.token;
 }
 
+/**
+ * Resolve a GitHub App private key, preferring a file path over an inline value.
+ *
+ * Inline PEM (`*_APP_PRIVATE_KEY`) is fragile in environment-variable form —
+ * multi-line PEMs break systemd `EnvironmentFile=` parsing and leak into
+ * process listings. File-based delivery (`*_APP_PRIVATE_KEY_PATH`) is the
+ * preferred transport for DR-001 Phase 3; inline remains as a fallback for
+ * legacy setups.
+ *
+ * Precedence: `_PATH` (when set AND the file exists) wins; otherwise fall
+ * back to the inline `_PRIVATE_KEY` value.
+ */
+function loadPrivateKey(
+  inline: string | undefined,
+  pathVar: string | undefined,
+): string | undefined {
+  if (pathVar && fs.existsSync(pathVar)) {
+    return fs.readFileSync(pathVar, 'utf-8');
+  }
+  return inline;
+}
+
 async function resolveGhCredentials(
   agentRole: string | undefined,
   containerName: string,
@@ -68,8 +90,11 @@ async function resolveGhCredentials(
     ? process.env.MYTHOS_APP_INSTALLATION_ID
     : process.env.LIMITLESS_APP_INSTALLATION_ID;
   const privateKey = isMythos
-    ? process.env.MYTHOS_APP_PRIVATE_KEY
-    : process.env.LIMITLESS_APP_PRIVATE_KEY;
+    ? loadPrivateKey(process.env.MYTHOS_APP_PRIVATE_KEY, process.env.MYTHOS_APP_PRIVATE_KEY_PATH)
+    : loadPrivateKey(
+        process.env.LIMITLESS_APP_PRIVATE_KEY,
+        process.env.LIMITLESS_APP_PRIVATE_KEY_PATH,
+      );
   const botUserId = isMythos
     ? process.env.MYTHOS_BOT_USER_ID
     : process.env.LIMITLESS_BOT_USER_ID;
