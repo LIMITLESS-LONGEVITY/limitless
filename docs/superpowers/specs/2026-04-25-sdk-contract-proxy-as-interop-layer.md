@@ -29,16 +29,43 @@ proxy's header are independent computations that drift over time.**
 
 ## The contract
 
+Source-grounded against OneCLI as it exists at
+`https://github.com/onecli/onecli` (clone inspected 2026-04-25).
+Citations are file paths in that repo.
+
 | Layer | Owns |
 |---|---|
-| `claude-agent-sdk` (callee) | Request body shape, `anthropic-beta` header, prompt-cache fields, OAuth bearer construction, retry semantics, SSE consumption |
-| Proxy / gateway (interop layer) | Routing, observability (logs/metrics), credential storage + retrieval, optional response caching, SSL termination, enforcing org-level allow/deny rules |
+| `claude-agent-sdk` (callee) | Request body shape, `anthropic-beta` header, prompt-cache fields, retry semantics, SSE consumption. Constructs `Authorization: Bearer <token>` when given an OAuth token directly (e.g., via `CLAUDE_CODE_OAUTH_TOKEN` env). |
+| OneCLI gateway (interop layer) | (1) Per-agent-token + per-host CONNECT policy via `PolicyEngine` (`apps/gateway/src/connect.rs:120-129`). (2) Static credential injection — for `api.anthropic.com`, sets `x-api-key: <password>` AND removes `authorization`; for all other hosts, sets `Authorization: Bearer <password>` (`apps/gateway/src/inject.rs:154-170`). (3) Generic configurable header injection via `generic`-typed secrets — operator-defined `headerName` + `valueFormat`. **This is the trap that broke us 2026-04-25.** (4) In-memory metadata cache for CONNECT resolution + injection rules (`apps/gateway/src/cache.rs`). (5) MITM TLS interception. |
 | Anthropic API (server) | Schema validation, billing, model selection, response generation |
+
+What OneCLI does NOT own (verified by source inspection):
+
+- **OAuth flows / token refresh / JWT awareness.** OneCLI's
+  `vault_credential_to_rules` (`apps/gateway/src/inject.rs:143-170`) is
+  pure static-header replacement from a stored password. No OAuth code
+  path exists in the gateway.
+- **Response-body caching.** The cache (`cache.rs`) caches CONNECT
+  resolution + injection rules only. No HTTP response bodies are
+  cached or replayed.
+- **`anthropic-beta` as a first-class concept.** Grep across
+  `apps/gateway/`, `apps/web/`, and docs returns zero matches for any
+  variant of `anthropic-beta` / `anthropic_beta`. OneCLI has no
+  built-in handling. Any `anthropic-beta` injection MUST be
+  operator-configured via a `generic` secret — and that path is the
+  bug surface this spec exists to forbid.
+- **Org-level allow/deny lists.** Policy is per-agent-token + per-host
+  pattern, not org-wide. Per-agent scoping is the only allowlist
+  surface OneCLI exposes.
 
 The SDK and the API are direct counterparties. They communicate over a
 versioned wire format that the SDK author and the API team co-evolve. A
 proxy that *modifies* that wire format puts itself in the middle of a
-contract it has no signing authority on.
+contract it has no signing authority on. **The OneCLI feature that
+broke us was `generic`-typed secrets used as a generic header injector
+for an SDK-owned header — operator misuse of a legitimate primitive,
+not a OneCLI bug.** The rule generalizes beyond OneCLI: don't use ANY
+proxy's generic-header-injection feature to inject SDK-owned headers.
 
 ## The binding rule
 
