@@ -1,0 +1,12 @@
+{
+  "_doc": "Initial-state TEMPLATE for the agentic-SDLC research-wave dispatcher. The live state file lives at /home/limitless/research-sequence-state.json on VPS-1 and is mutated by the dispatcher every cron tick. Copy this template to that path on first deploy. Do NOT commit live state — it changes constantly.",
+  "sequence": ["A.1", "A.2", "A.3", "A.4", "A.5", "B.1", "C.1", "C.2", "D.1"],
+  "current_index": 0,
+  "current_dispatch_id": null,
+  "current_dispatched_at": null,
+  "current_dispatch_msg_id": null,
+  "last_check_at": null,
+  "completed_dispatches": [],
+  "created_at": null,
+  "notes": "Cron polls every 40 min via /home/limitless/research-dispatcher.sh. Dispatcher checks for output file at docs/superpowers/reports/research/<id>-*-2026-04-27.md; if present, marks complete and dispatches next via openclaw to #infra-eng with bind-mount-as-mailbox pointer. First dispatch (A.1) is sent manually; cron only does advancement."
+}
