@@ -203,6 +203,22 @@ The v1.2 governance spec (`docs/superpowers/specs/2026-04-18-agentic-sdlc-govern
 
 These can land as a single follow-on PR after this incident report ratifies. The CEO may also direct that L1 + L2 happen first (operational priority) and the governance amendments follow (codification priority), or reverse the order.
 
+### 8.1 Operational motivation for DR-003 prioritization (added 2026-04-26)
+
+Beyond the bot-feedback-loop safety motivation that originated DR-003, an additional operational value strengthens the case for early prioritization: **eliminating the Comment-review workaround tax on CC-session-originated docs/governance PRs**.
+
+Today, any PR authored from CC session uses the CEO's `gh` credentials. GitHub's API blocks "approve your own pull request" (`addPullRequestReview` returns "Can not approve your own pull request"), forcing those PRs through the Comment-review workaround + admin-bypass squash-merge under ruleset 15502000. PRs #84, #85, #94, and #109 all paid this tax. PR #105 did not because it was authored by `limitless-agent[bot]` (NanoClaw Architect) — making the CEO a non-author and unlocking §5.1 full Approving Review flow.
+
+Once DR-003 ratifies bot directive authority and grants OpenClaw Director scoped PR-authorship rights for Director-class artifacts (governance docs, retros, specs), the natural workflow shifts:
+
+| Before DR-003 | After DR-003 |
+|---|---|
+| CC session authors PR from CEO credentials → CEO is author + would-be approver → Comment-review workaround | OpenClaw Director authors PR (or NanoClaw Architect for code-touching docs) → CEO is reviewer only → §5.1 formal Approving Review |
+| Self-approval block hit; admin-bypass merge | Standard ruleset path; no admin-bypass needed |
+| Asymmetric audit trail vs bot-authored PRs | Uniform audit trail across all PR classes |
+
+This isn't a primary justification for DR-003 (the bot-feedback-loop safety case is). But it's a concrete operational dividend that reduces the friction tax on every governance/docs PR, and aligns with the broader goal of routing work to the agent best fit for it (Director writes Director-class artifacts). Memory anchor: `feedback_route_pr_authorship_to_bot.md`.
+
 ---
 
 ## 9. Open Questions
